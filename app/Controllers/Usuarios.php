@@ -1,0 +1,369 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\UsuarioModel;
+use App\Models\DepartamentoModel;
+use App\Models\LaboratorioModel;
+
+class Usuarios extends BaseController
+{
+    public function index()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        if (session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado: No tienes permisos de Administrador.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+
+        $filtros = [
+            'buscar' => $this->request->getGet('buscar'),
+            'rol'    => $this->request->getGet('rol'),
+            'estado' => $this->request->getGet('estado')
+        ];
+
+        $page    = (int)($this->request->getGet('page') ?? 1);
+        $perPage = 8;
+        $offset  = ($page - 1) * $perPage;
+
+        $data['roles_disponibles'] = $usuarioModel->getRolesDisponibles();
+        $data['usuarios']          = $usuarioModel->getUsuariosFiltrados($filtros, $perPage, $offset);
+        $total                     = $usuarioModel->countUsuarios($filtros);
+
+        $pager = \Config\Services::pager();
+        $pager->store('default', $page, $perPage, $total);
+        $data['pager'] = $pager;
+
+        return view('usuarios/index', $data);
+    }
+
+    public function generarPdfUsuarios()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $usuarioModel = new UsuarioModel();
+
+        $filtros = [
+            'buscar' => $this->request->getGet('buscar'),
+            'rol'    => $this->request->getGet('rol'),
+            'estado' => $this->request->getGet('estado')
+        ];
+
+        $paginaInicio = (int)($this->request->getGet('pagina_inicio') ?? 1);
+        $paginaFin    = (int)($this->request->getGet('pagina_fin') ?? $paginaInicio);
+        
+        $porPagina = 8;
+        $offset    = ($paginaInicio - 1) * $porPagina;
+        $limite    = (($paginaFin - $paginaInicio) + 1) * $porPagina;
+
+        $data['usuarios'] = $usuarioModel->getUsuariosFiltrados($filtros, $limite, $offset);
+
+        $html = view('usuarios/usuarios_pdf', $data);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        
+        $dompdf->stream("Reporte_Usuarios_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
+    }
+
+    public function editar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $usuarioModel = new UsuarioModel();
+        $data['usuario'] = $usuarioModel->findById($id);
+
+        if (!$data['usuario']) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'Usuario no encontrado.');
+        }
+
+        $labModel   = new LaboratorioModel();
+        $deptoModel = new DepartamentoModel();
+
+        $data['departamentos'] = $deptoModel->getDepartamentos();
+        $data['id_departamento_actual'] = null;
+
+        if (!empty($data['usuario']['laboratorio_id'])) {
+            // Removido método mágico ->find(), usamos la consulta clásica por ID
+            $labActual = $labModel->findLaboratorio((int)$data['usuario']['laboratorio_id']);
+            if ($labActual) {
+                $data['id_departamento_actual'] = $labActual['departamento_id'];
+            }
+        }
+
+        if (!empty($data['id_departamento_actual'])) {
+            $data['laboratorios'] = $labModel->getLaboratoriosFiltrados($data['id_departamento_actual']);
+        } else {
+            $data['laboratorios'] = [];
+        }
+
+        return view('usuarios/editar', $data);
+    }
+
+    public function actualizar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $usuarioModel = new UsuarioModel();
+        $usuarioActual = $usuarioModel->findById($id);
+
+        if (!$usuarioActual) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'Usuario no encontrado.');
+        }
+
+        $username       = trim($this->request->getPost('username'));
+        $cedula         = trim($this->request->getPost('cedula'));
+        $rol            = $this->request->getPost('rol');
+        $nuevaClave     = $this->request->getPost('password');
+        $eliminarPregunta = $this->request->getPost('eliminar_pregunta');
+        $id_laboratorio = $this->request->getPost('id_laboratorio') ?? null;
+
+        if (empty($username) || empty($cedula) || empty($rol) || empty($id_laboratorio)) {
+            return redirect()->back()->with('error', 'Los campos Nombre, Cédula, Rol y Laboratorio son estrictamente requeridos.');
+        }
+
+        if ($usuarioModel->existeCedulaExcluyendoId($cedula, $id)) {
+            return redirect()->back()->with('error', "La cédula '{$cedula}' ya pertenece a otro usuario registrado.");
+        }
+
+        $datosUpdate = [
+            'username'       => $username,
+            'cedula'         => $cedula,
+            'rol'            => $rol,
+            'laboratorio_id' => (int)$id_laboratorio 
+        ];
+
+        if (!empty($nuevaClave)) {
+            $datosUpdate['password'] = password_hash($nuevaClave, PASSWORD_DEFAULT);
+        }
+
+        $logPregunta = "";
+        if ($eliminarPregunta === '1') {
+            $datosUpdate['pregunta_seguridad']  = null;
+            $datosUpdate['respuesta_seguridad'] = null;
+            $logPregunta = " y se eliminaron sus credenciales de seguridad";
+        }
+
+        // Ejecuta consulta clásica interna en el modelo
+        $usuarioModel->updateUsuario($id, $datosUpdate);
+
+        $this->registrarBitacora(
+            'Modificación Completa de Usuario', 
+            'Administración', 
+            "Se actualizaron los datos del usuario '" . $username . "'" . $logPregunta
+        );
+
+        return redirect()->to(base_url('usuarios'))->with('success', 'Información de usuario actualizada con éxito.');
+    }
+
+    public function deshabilitar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        if ($id == session()->get('usuario_id')) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta de administrador.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuario = $usuarioModel->findById($id);
+
+        if (!$usuario) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'Usuario no registrado.');
+        }
+
+        $nuevoEstado = ($usuario['status'] == 1) ? 0 : 1;
+        $accionTexto = ($nuevoEstado == 1) ? 'Habilitar' : 'Deshabilitar';
+
+        $usuarioModel->updateUsuario($id, ['status' => $nuevoEstado]);
+
+        $this->registrarBitacora(
+            $accionTexto . ' Usuario', 
+            'Administración', 
+            "Se cambió el estado de " . $usuario['username'] . " a " . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo')
+        );
+
+        return redirect()->to(base_url('usuarios'))->with('success', "Estado modificado a '" . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo') . "' con éxito.");
+    }   
+
+    public function eliminar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        if ($id == session()->get('usuario_id')) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes eliminar tu propia cuenta del sistema.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuario = $usuarioModel->findById($id);
+
+        if (!$usuario) {
+            return redirect()->to(base_url('usuarios'))->with('error', 'El usuario que intentas eliminar no existe.');
+        }
+
+        $usuarioModel->deleteUsuario($id);
+
+        $this->registrarBitacora(
+            'Eliminar Usuario Definitivamente', 
+            'Administración', 
+            "Se eliminó de forma permanente al usuario: " . $usuario['username']
+        );
+
+        return redirect()->to(base_url('usuarios'))->with('usuario_eliminado', 'El expediente del usuario ha sido borrado físicamente del sistema.');
+    }
+
+    public function crear()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $deptModel = new DepartamentoModel();
+        $data['departamentos'] = $deptModel->getDepartamentos();
+
+        return view('usuarios/crear', $data);
+    }
+
+    public function guardar()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $usuarioModel = new UsuarioModel();
+
+        $username       = trim($this->request->getPost('username') ?? '');
+        $cedula         = trim($this->request->getPost('cedula') ?? '');
+        $rol            = $this->request->getPost('rol') ?? '';
+        $password       = $this->request->getPost('password') ?? '';
+        $id_laboratorio = $this->request->getPost('id_laboratorio') ?? '';
+
+        if (empty($username)) return redirect()->back()->with('error', 'Falta el campo: Nombre de Usuario (username)')->withInput();
+        if (empty($cedula)) return redirect()->back()->with('error', 'Falta el campo: Cédula de Identidad (cedula)')->withInput();
+        if (empty($rol)) return redirect()->back()->with('error', 'Falta el campo: Rol / Permiso (rol)')->withInput();
+        if (empty($password)) return redirect()->back()->with('error', 'Falta el campo: Contraseña (password)')->withInput();
+        if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Falta el campo: Laboratorio (id_laboratorio)')->withInput();
+
+        if ($usuarioModel->existeCedula($cedula)) {
+            return redirect()->back()->with('error', "Error: La cédula '{$cedula}' ya se encuentra registrada.") ->withInput();
+        }
+
+        $datosNuevo = [
+            'username'       => $username,
+            'cedula'         => $cedula,
+            'rol'            => $rol,
+            'password'       => password_hash($password, PASSWORD_DEFAULT),
+            'laboratorio_id' => (int)$id_laboratorio, 
+            'status'         => 1
+        ];
+
+        $usuarioModel->insertUsuario($datosNuevo);
+
+        $this->registrarBitacora(
+            'Creación de Usuario', 
+            'Administración', 
+            "Se creó exitosamente el usuario: " . $username
+        );
+
+        return redirect()->to(base_url('usuarios'))->with('success', 'Usuario creado e incorporado con éxito.');
+    }
+
+    public function obtener_laboratorios_por_depto($departamento_id = null)
+    {
+        if (ob_get_length()) ob_clean();
+
+        $this->response->setContentType('application/json');
+        $id = (int)$departamento_id;
+        
+        if ($id <= 0) return $this->response->setJSON([]);
+
+        $labModel = new LaboratorioModel();
+        $laboratorios = $labModel->getLaboratoriosFiltrados($id);
+
+        $resultado = [];
+        if (!empty($laboratorios)) {
+            foreach ($laboratorios as $lab) {
+                $resultado[] = [
+                    'id'     => $lab['id'],
+                    'nombre' => $lab['nombre']
+                ];
+            }
+        }
+
+        return $this->response->setJSON($resultado);
+    }
+
+    public function configurar_pregunta()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        return view('login/configurar_pregunta');
+    }
+
+    public function guardar_pregunta()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $session = session();
+        $idUsuario = $session->get('usuario_id');
+
+        $pregunta  = $this->request->getPost('pregunta_seguridad');
+        $respuesta = $this->request->getPost('respuesta_seguridad');
+
+        if (empty($pregunta) || empty($respuesta)) {
+            return redirect()->back()->with('error', 'Debes seleccionar una pregunta y escribir tu respuesta.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuarioModel->updateUsuario($idUsuario, [
+            'pregunta_seguridad'  => $pregunta,
+            'respuesta_seguridad' => password_hash($respuesta, PASSWORD_DEFAULT)
+        ]);
+
+        $this->registrarBitacora(
+            'Configuración Inicial de Seguridad', 
+            'Seguridad', 
+            "El usuario " . $session->get('username') . " estableció su pregunta de recuperación con éxito."
+        );
+
+        return redirect()->to(base_url('interfazinicial/menuusuario'))->with('success', 'Pregunta de seguridad guardada correctamente.');
+    }
+
+    public function cambiar_password_post()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $session = session();
+        $userId = $session->get('usuario_id'); 
+
+        $currentPassword = $this->request->getPost('current_password');
+        $newPassword     = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            return redirect()->back()->with('error', 'Todos los campos del formulario son estrictamente obligatorios.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->with('error', 'La nueva contraseña y su confirmación no coinciden.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuario = $usuarioModel->findById($userId);
+
+        if (!$usuario || !password_verify($currentPassword, $usuario['password'])) {
+            return redirect()->back()->with('error', 'La contraseña actual introducida es incorrecta.');
+        }
+
+        $usuarioModel->updateUsuario($userId, [
+            'password' => password_hash($newPassword, PASSWORD_DEFAULT)
+        ]);
+
+        $this->registrarBitacora(
+            'Cambio de Contraseña', 
+            'Seguridad', 
+            "El usuario '" . $usuario['username'] . "' modificó con éxito sus credenciales de acceso."
+        );
+
+        return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
+    }
+}

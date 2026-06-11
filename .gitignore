@@ -1,0 +1,11 @@
+/vendor/
+/writable/
+
+.env
+env
+
+.phpunit.result.cache
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
