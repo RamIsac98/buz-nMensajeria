@@ -20,6 +20,9 @@
         /* Filas alternas para mejor lectura */
         .table-pdf tr:nth-child(even) { background-color: #f2f2f2; }
 
+        /* Línea superior sutil que divide limpiamente cuando cambia el Centro */
+        .linea-agrupador { border-top: 1.5px solid #2073AF; }
+
         /* Pie de página */
         .footer { margin-top: 20px; font-size: 10px; color: #777; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
     </style>
@@ -43,12 +46,27 @@
         </thead>
         <tbody>
             <?php if(!empty($laboratorios)): ?>
+                <?php 
+                // Inicializamos la variable de control antes del ciclo
+                $last_centro = null; 
+                ?>
                 <?php foreach ($laboratorios as $lab): ?>
-                <tr>
-                    <td style="font-weight: bold; color: #1C466E;"><?= $lab['id'] ?></td>
-                    <td><?= esc($lab['nombre']) ?></td>
-                    <td><?= esc($lab['nombre_departamento']) ?></td>
-                </tr>
+                    <?php 
+                    // Evaluamos el centro actual
+                    $current_centro = $lab['nombre_departamento'] ?? '';
+                    $mostrar_centro = ($current_centro !== $last_centro);
+                    
+                    // Actualizamos el control para la próxima iteración
+                    $last_centro = $current_centro;
+                    ?>
+                    
+                    <tr class="<?= $mostrar_centro ? 'linea-agrupador' : '' ?>">
+                        <td style="font-weight: bold; color: #1C466E;"><?= $lab['id'] ?></td>
+                        <td><?= esc($lab['nombre']) ?></td>
+                        <td>
+                            <?= $mostrar_centro ? esc($current_centro) : '' ?>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
@@ -63,7 +81,6 @@
     <div class="footer">
         Reporte Automatizado de Inventario de Laboratorios.
     </div>
-
 
 </body>
 </html>

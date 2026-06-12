@@ -16,6 +16,8 @@
         .status-inactive { color: red; font-weight: bold; }
         .text-muted { color: #888; font-style: italic; }
         .footer { position: fixed; bottom: 0; width: 100%; text-align: right; font-size: 9px; color: #777; border-top: 1px solid #ddd; padding-top: 5px; }
+        /* Línea superior sutil para identificar visualmente el cambio de grupo */
+        .linea-agrupador { border-top: 1.5px solid #1c466e; }
     </style>
 </head>
 <body>
@@ -38,13 +40,43 @@
         </thead>
         <tbody>
             <?php if (!empty($reporte)): ?>
+                <?php 
+                // Inicializamos variables de control para el agrupamiento
+                $last_centro = null;
+                $last_lab = null;
+                ?>
                 <?php foreach ($reporte as $row): ?>
-                    <tr>
-                        <td><?= esc($row['nombre_departmento'] ?? $row['nombre_departamento']) ?></td>
-                        <td><?= !empty($row['nombre_laboratorio']) ? esc($row['nombre_laboratorio']) : '<span class="text-muted">Sin laboratorios registrados</span>' ?></td>
+                    <?php 
+                    // Detectar valores de la fila actual
+                    $current_centro = $row['nombre_departmento'] ?? $row['nombre_departamento'];
+                    $current_lab = $row['nombre_laboratorio'] ?? '';
+
+                    // Evaluamos si el centro o el laboratorio cambiaron respecto a la fila anterior
+                    $mostrar_centro = ($current_centro !== $last_centro);
+                    $mostrar_lab = ($mostrar_centro || $current_lab !== $last_lab);
+
+                    // Guardamos los valores actuales para la siguiente iteración
+                    $last_centro = $current_centro;
+                    $last_lab = $current_lab;
+                    ?>
+                    <tr class="<?= $mostrar_lab ? 'linea-agrupador' : '' ?>">
+                        
+                        <td>
+                            <?= $mostrar_centro ? esc($current_centro) : '' ?>
+                        </td>
+
+                        <td>
+                            <?php if ($mostrar_lab): ?>
+                                <?= !empty($current_lab) ? esc($current_lab) : '<span class="text-muted">Sin laboratorios registrados</span>' ?>
+                            <?php endif; ?>
+                        </td>
+
                         <td><?= !empty($row['nombre_usuario']) ? esc($row['nombre_usuario']) : '<span class="text-muted">Sin usuario asignado</span>' ?></td>
+                        
                         <td><?= !empty($row['cedula_usuario']) ? esc($row['cedula_usuario']) : '-' ?></td>
+                        
                         <td><?= !empty($row['rol_usuario']) ? ucfirst(esc($row['rol_usuario'])) : '-' ?></td>
+                        
                         <td>
                             <?php if ($row['nombre_usuario'] !== null): ?>
                                 <span class="<?= $row['estado_usuario'] == 1 ? 'status-active' : 'status-inactive' ?>">
