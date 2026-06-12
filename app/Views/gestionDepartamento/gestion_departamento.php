@@ -21,7 +21,6 @@
             font-family: Arial, sans-serif;
         }
 
-        /* --- CLASES DE UTILIDAD PERSONALIZADAS --- */
         .bg-custom-success { background-color: var(--azul-oscuro) !important; }
         .text-custom-success { color: var(--azul-oscuro) !important; }
         .btn-custom-success { background-color: var(--azul-oscuro) !important; border-color: var(--azul-oscuro) !important; }
@@ -31,8 +30,6 @@
             border: 1px solid var(--azul-claro) !important;
         }
 
-        /* --- BARRA DE NAVEGACIÓN SUPERIOR (MÁS PEQUEÑA) --- */
-        /* Navbar estilo pestañas del diseño */
         .custom-navbar {
             background-color: var(--azul-claro);
             padding: 0;
@@ -85,10 +82,7 @@
             font-weight: 500;
         }
 
-        /* Sección de usuario con Dropdown */
-        .user-section {
-            padding-right: 25px;
-        }
+        .user-section { padding-right: 25px; }
 
         .user-dropdown-toggle {
             color: white;
@@ -107,16 +101,8 @@
             color: var(--amarillo);
         }
 
-        .user-icon-img {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Personalización del menú desplegable */
-        .custom-dropdown-menu {
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        .user-icon-img { width: 20px; height: 20px; }
+        .custom-dropdown-menu { border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
         .custom-dropdown-menu .dropdown-item {
             font-size: 0.9rem;
@@ -133,9 +119,6 @@
             color: var(--azul-claro);
         }
 
-        
-
-        /* --- COMPONENTES DE FILTROS Y HERRAMIENTAS --- */
         .filter-bar {
             background-color: #ffffff;
             border: 1px solid var(--gris-borde);
@@ -162,12 +145,7 @@
         }
 
         .filter-input:focus { border-color: var(--azul-claro); }
-
-        .main-title {
-            color: var(--azul-oscuro);
-            font-weight: bold;
-            font-size: 1.75rem;
-        }
+        .main-title { color: var(--azul-oscuro); font-weight: bold; font-size: 1.75rem; }
 
         .sub-title {
             color: var(--azul-claro);
@@ -177,19 +155,14 @@
             padding-bottom: 8px;
         }
 
-        /* --- BOTONES BASE Y VARIANTES --- */
-        .btn-base {
-            padding: 6px 16px; /* Ajuste global leve de espaciado interno */
-            border-radius: 6px;
-            font-weight: 500;
-            transition: var(--transicion);
-        }
-        
         .btn-custom {
-            @extend .btn-base;
             background-color: var(--azul-claro);
             color: white;
             border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: var(--transicion);
         }
 
         .btn-custom:hover {
@@ -199,27 +172,19 @@
         }
 
         .btn-outline-custom {
-            @extend .btn-base;
             color: var(--azul-claro);
             border: 1px solid var(--azul-claro);
             background: transparent;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: var(--transicion);
         }
 
-        .btn-outline-custom:hover {
-            background-color: var(--azul-claro);
-            color: white;
-        }
-        
-        .btn-modal-submit {
-            background-color: var(--azul-claro);
-        }
+        .btn-outline-custom:hover { background-color: var(--azul-claro); color: white; }
+        .btn-modal-submit { background-color: var(--azul-claro); }
+        .btn-modal-submit:hover { background-color: var(--azul-oscuro); color: white; }
 
-        .btn-modal-submit:hover {
-            background-color: var(--azul-oscuro);
-            color: white;
-        }
-
-        /* --- TABLA DE DATOS --- */
         .table-custom th {
             color: var(--azul-claro);
             font-weight: bold;
@@ -229,26 +194,10 @@
             padding: 12px 8px;
         }
 
-        .table-custom td {
-            padding: 12px 8px;
-            color: #555555;
-            font-size: 0.9rem;
-            border-bottom: 1px solid #eeeeee;
-        }
+        .table-custom td { padding: 12px 8px; color: #555555; font-size: 0.9rem; border-bottom: 1px solid #eeeeee; }
+        .empty-state { text-align: center; padding: 30px; color: #888; font-style: italic; }
 
-        .empty-state {
-            text-align: center;
-            padding: 30px;
-            color: #888;
-            font-style: italic;
-        }
-
-        .btn-icon {
-            background: none;
-            border: none;
-            padding: 2px 5px;
-            transition: transform 0.2s;
-        }
+        .btn-icon { background: none; border: none; padding: 2px 5px; transition: transform 0.2s; }
         .btn-icon:hover { transform: scale(1.2); }
         .btn-icon svg { width: 20px; height: 20px; }
         .text-gold { color: var(--amarillo); }
@@ -257,64 +206,49 @@
 <body class="px-4 py-3">
 
     <div class="container-fluid">
-            <header class="mb-4">
-                <nav class="custom-navbar rounded-1">
-                    <div class="nav-brand-container">
-                            <div class="logo-placeholder"> 
-                                <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
-                            </div>
-                            
-                            <?php 
-                                $current_path = service('request')->getUri()->getPath();
-                                $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
-                            ?>
-
-                            <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
-                                Inicio
-                            </a>
-
-                            <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom">Solicitud Desechos</a>
-                            <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
-                            <a href="<?= base_url('registro') ?>" class="nav-link-custom">Registro</a>
-                            
-                            <div class="d-flex align-items-center h-100 dropdown">
-                                <a href="#" class="nav-link-custom active dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                                    Configuración
-                                </a>
-                                <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
-                                    <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
-                                    <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
-                                    <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center h-100 user-section">
-
-                            <div class="dropdown">
-                                <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
-                                    <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
-                                    <li>
-                                        <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
-                                            Cambiar contraseña
-                                        </button>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?= base_url('login/salir') ?>">
-                                            Cerrar sesión
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+        <header class="mb-4">
+            <nav class="custom-navbar rounded-1">
+                <div class="nav-brand-container">
+                    <div class="logo-placeholder"> 
+                        <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
                     </div>
-                </nav>
-            </header>
+                    
+                    <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom">Inicio</a>
+                    <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom">Solicitud Desechos</a>
+                    <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
+                    <a href="<?= base_url('registro') ?>" class="nav-link-custom">Registro</a>
+                    
+                    <div class="d-flex align-items-center h-100 dropdown">
+                        <a href="#" class="nav-link-custom active dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                            Configuración
+                        </a>
+                        <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
+                            <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
+                            <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
+                            <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
+                        </ul>
+                    </div>
+                </div>
 
+                <div class="d-flex align-items-center h-100 user-section">
+                    <div class="dropdown">
+                        <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
+                            <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
+                                    Cambiar contraseña
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?= base_url('login/salir') ?>">Cerrar sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
 
         <section class="system-messages">
             <?php if(session()->getFlashdata('success')): ?>
@@ -340,8 +274,8 @@
                     <span class="filter-label">Buscar Laboratorios por Dpto:</span>
                     <select id="filtroDepartamento" class="filter-input bg-white">
                         <option value="todos">-- Mostrar Todos --</option>
-                        <?php if(!empty($departamentos)): ?>
-                            <?php foreach ($departamentos as $depto): ?>
+                        <?php if(!empty($todos_departamentos)): ?>
+                            <?php foreach ($todos_departamentos as $depto): ?>
                                 <option value="<?= $depto['id'] ?>"><?= esc($depto['nombre']) ?></option>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -349,7 +283,7 @@
                 </div>
                 <div>
                     <button class="btn btn-danger btn-sm fw-bold shadow-sm btn-pdf-trigger" data-type="general">
-                        <i class="bi bi-people-fill" style="font-size: 0.85rem;"></i> Reporte General (Usuarios)
+                        Reporte General (Usuarios)
                     </button>
                 </div>         
                 <div class="d-flex gap-3">
@@ -398,9 +332,7 @@
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr>
-                                        <td colspan="3" class="empty-state">No hay departamentos registrados aún.</td>
-                                    </tr>
+                                    <tr><td colspan="3" class="empty-state">No hay departamentos registrados aún.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -408,11 +340,11 @@
                     <nav class="mt-3">
                         <ul class="pagination pagination-sm">
                             <li class="page-item <?= ($pager_dept['actual'] <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] - 1 ?>">Anterior</a>
+                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] - 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Anterior</a>
                             </li>
                             <li class="page-item disabled"><span class="page-link">Pág <?= $pager_dept['actual'] ?> de <?= $pager_dept['total'] ?: 1 ?></span></li>
                             <li class="page-item <?= ($pager_dept['actual'] >= $pager_dept['total']) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] + 1 ?>">Siguiente</a>
+                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] + 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Siguiente</a>
                             </li>
                         </ul>
                     </nav>
@@ -463,11 +395,11 @@
                     <nav class="mt-3">
                         <ul class="pagination pagination-sm">
                             <li class="page-item <?= ($pager_lab['actual'] <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page_lab=<?= $pager_lab['actual'] - 1 ?>">Anterior</a>
+                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] - 1 ?>">Anterior</a>
                             </li>
                             <li class="page-item disabled"><span class="page-link">Pág <?= $pager_lab['actual'] ?> de <?= $pager_lab['total'] ?: 1 ?></span></li>
                             <li class="page-item <?= ($pager_lab['actual'] >= $pager_lab['total']) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page_lab=<?= $pager_lab['actual'] + 1 ?>">Siguiente</a>
+                                <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] + 1 ?>">Siguiente</a>
                             </li>
                         </ul>
                     </nav>
@@ -483,7 +415,7 @@
                     <h5 class="modal-title">Añadir Nuevo Departamento</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="<?= base_url('gestion-departamento/guardar-departamento') ?>" method="POST">
+                <form action="<?= base_url('gestion-departamento/guardar-departamento') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST">
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label class="form-label text-secondary small font-weight-bold text-uppercase">Nombre del Departamento</label>
@@ -506,14 +438,14 @@
                     <h5 class="modal-title">Añadir Nuevo Laboratorio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="<?= base_url('gestion-departamento/guardar-laboratorio') ?>" method="POST">
+                <form action="<?= base_url('gestion-departamento/guardar-laboratorio') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST">
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label class="form-label text-secondary small font-weight-bold text-uppercase">Seleccionar Departamento</label>
                             <select name="departamento_id" class="form-select" required>
                                 <option value="">-- Seleccione un Dpto --</option>
-                                <?php if(!empty($departamentos)): ?>
-                                    <?php foreach ($departamentos as $depto): ?>
+                                <?php if(!empty($todos_departamentos)): ?>
+                                    <?php foreach ($todos_departamentos as $depto): ?>
                                         <option value="<?= $depto['id'] ?>"><?= esc($depto['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -535,7 +467,7 @@
 
     <div class="modal fade" id="modalEditarDepto" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
-            <form action="<?= base_url('gestion-departamento/editar-departamento') ?>" method="POST" class="modal-content border-0 shadow">
+            <form action="<?= base_url('gestion-departamento/editar-departamento') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST" class="modal-content border-0 shadow">
                 <input type="hidden" name="id" id="editDeptoId">
                 <div class="modal-header text-dark bg-warning">
                     <h5 class="modal-title fw-bold">Editar Departamento</h5>
@@ -555,7 +487,7 @@
 
     <div class="modal fade" id="modalEditarLab" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
-            <form action="<?= base_url('gestion-departamento/editar-laboratorio') ?>" method="POST" class="modal-content border-0 shadow">
+            <form action="<?= base_url('gestion-departamento/editar-laboratorio') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST" class="modal-content border-0 shadow">
                 <input type="hidden" name="id" id="editLabId">
                 <div class="modal-header text-dark bg-warning">
                     <h5 class="modal-title fw-bold">Editar Laboratorio</h5>
@@ -598,11 +530,11 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-labelledby="modalCambiarPasswordLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-custom-width">
+    <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
-                    <h5 class="modal-title" id="modalCambiarPasswordLabel">Cambiar Contraseña</h5>
+                    <h5 class="modal-title">Cambiar Contraseña</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="<?= base_url('usuarios/cambiar_password_post') ?>" method="POST">
@@ -634,12 +566,10 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- INSTANCIAS DE MODALES ---
             const modalDepto = new bootstrap.Modal(document.getElementById('modalEditarDepto'));
             const modalLab = new bootstrap.Modal(document.getElementById('modalEditarLab'));
             const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminar'));
 
-            // --- FILTRO DINÁMICO DE LABORATORIOS ---
             const filtroDepto = document.getElementById('filtroDepartamento');
             const filasLabs = document.querySelectorAll('.lab-row');
             const textoFiltro = document.getElementById('textoFiltroLab');
@@ -672,9 +602,7 @@
                 });
             }
 
-            // --- DELEGACIÓN DE EVENTOS PARA EDICIÓN Y ELIMINACIÓN ---
             document.body.addEventListener('click', (e) => {
-                // Editar Departamento
                 const btnEdDepto = e.target.closest('.btn-editar-depto');
                 if (btnEdDepto) {
                     document.getElementById('editDeptoId').value = btnEdDepto.dataset.id;
@@ -683,7 +611,6 @@
                     return;
                 }
 
-                // Editar Laboratorio
                 const btnEdLab = e.target.closest('.btn-editar-lab');
                 if (btnEdLab) {
                     document.getElementById('editLabId').value = btnEdLab.dataset.id;
@@ -698,16 +625,15 @@
                     return;
                 }
 
-                // Confirmar Eliminación Universal
                 const btnDel = e.target.closest('.btn-eliminar-trigger');
                 if (btnDel) {
                     const form = document.getElementById('formEliminar');
-                    form.action = `<?= base_url('gestion-departamento/eliminar-') ?>${btnDel.dataset.tipo}/${btnDel.dataset.id}`;
+                    // Modificado: El formulario dinámico de eliminación captura e inyecta la memoria de páginas activas en el query string del POST
+                    form.action = `<?= base_url('gestion-departamento/eliminar-') ?>${btnDel.dataset.tipo}/${btnDel.dataset.id}?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>`;
                     modalEliminar.show();
                     return;
                 }
 
-                // Generación de PDFs Unificada
                 const btnPdf = e.target.closest('.btn-pdf-trigger');
                 if (btnPdf) {
                     const deptoId = filtroDepto.value;
