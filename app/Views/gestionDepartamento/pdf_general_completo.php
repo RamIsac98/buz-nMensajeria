@@ -21,14 +21,14 @@
 <body>
 
     <div class="header">
-        <h2>REPORTE INTEGRAL: DEPARTAMENTOS, LABORATORIOS Y USUARIOS</h2>
+        <h2>REPORTE INTEGRAL: CENTROS, LABORATORIOS Y USUARIOS</h2>
         <p>Fecha de Emisión: <?= date('d/m/Y h:i A') ?> | Filtro: <?= ($depto_seleccionado === 'todos' || empty($depto_seleccionado)) ? 'Todos los Departamentos' : 'Departamento Seleccionado' ?></p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 20%;">Departamento</th>
+                <th style="width: 20%;">Centro</th>
                 <th style="width: 25%;">Laboratorio Asignado</th>
                 <th style="width: 20%;">Personal / Usuario</th>
                 <th style="width: 12%;">Cédula</th>

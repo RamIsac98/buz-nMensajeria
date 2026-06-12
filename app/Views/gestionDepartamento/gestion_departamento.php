@@ -159,7 +159,7 @@
             background-color: var(--azul-claro);
             color: white;
             border: none;
-            padding: 6px 16px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-weight: 500;
             transition: var(--transicion);
@@ -175,7 +175,7 @@
             color: var(--azul-claro);
             border: 1px solid var(--azul-claro);
             background: transparent;
-            padding: 6px 16px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-weight: 500;
             transition: var(--transicion);
@@ -224,7 +224,7 @@
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
                             <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
-                            <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
+                            <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Centros</a></li>
                             <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
                         </ul>
                     </div>
@@ -267,11 +267,11 @@
         </section>
 
         <main>
-            <h2 class="main-title mb-4 mt-3">Panel de Gestión de Departamento / Laboratorio</h2>
+            <h2 class="main-title mb-4 mt-3">Panel de Gestión de Centros / Laboratorio</h2>
 
             <div class="filter-bar mb-4 mt-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-12">
-                    <span class="filter-label">Buscar Laboratorios por Dpto:</span>
+                    <span class="filter-label">Buscar Laboratorios por Centro:</span>
                     <select id="filtroDepartamento" class="filter-input bg-white">
                         <option value="todos">-- Mostrar Todos --</option>
                         <?php if(!empty($todos_departamentos)): ?>
@@ -283,12 +283,13 @@
                 </div>
                 <div>
                     <button class="btn btn-danger btn-sm fw-bold shadow-sm btn-pdf-trigger" data-type="general">
-                        Reporte General (Usuarios)
+                            <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
+                            Reporte General
                     </button>
                 </div>         
                 <div class="d-flex gap-3">
                     <button type="button" class="btn btn-outline-custom" data-bs-toggle="modal" data-bs-target="#modalNuevoDepartamento">
-                        + Añadir Departamento
+                        + Añadir Centro
                     </button>
                     <button type="button" class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#modalNuevoLaboratorio">
                         + Añadir Laboratorio
@@ -301,13 +302,13 @@
 
             <div class="row g-4">
                 <div class="col-lg-5">
-                    <h3 class="sub-title mb-3">Departamentos Registrados</h3>
+                    <h3 class="sub-title mb-3">Centros Registrados</h3>
                     <div class="table-responsive bg-white p-3 border rounded shadow-sm">
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
                                     <th width="15%">ID</th>
-                                    <th>Nombre del Departamento</th>
+                                    <th>Nombre del Centro</th>
                                     <th width="20%">Acciones</th>
                                 </tr>
                             </thead>
@@ -332,7 +333,7 @@
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr><td colspan="3" class="empty-state">No hay departamentos registrados aún.</td></tr>
+                                    <tr><td colspan="3" class="empty-state">No hay Centros registrados aún.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -358,7 +359,7 @@
                                 <tr>
                                     <th width="10%">ID</th>
                                     <th>Nombre del Laboratorio</th>
-                                    <th>Pertenece al Dpto.</th>
+                                    <th>Pertenece al Centro.</th>
                                     <th width="20%">Acciones</th>
                                 </tr>
                             </thead>

@@ -29,7 +29,7 @@
         <h2>Reporte de Laboratorios</h2>
         <p>Fecha de generación: <?= date('d/m/Y H:i:s') ?></p>
         <?php if(!empty($depto_seleccionado) && $depto_seleccionado !== 'todos'): ?>
-            <p><strong>Departamento filtrado:</strong> <?= esc($laboratorios[0]['nombre_departamento'] ?? 'Seleccionado') ?></p>
+            <p><strong>Centro filtrado:</strong> <?= esc($laboratorios[0]['nombre_departamento'] ?? 'Seleccionado') ?></p>
         <?php endif; ?>
     </div>
 
@@ -38,7 +38,7 @@
             <tr>
                 <th style="width: 10%;">ID</th>
                 <th>Nombre del Laboratorio</th>
-                <th>Departamento</th>
+                <th>Centro</th>
             </tr>
         </thead>
         <tbody>
