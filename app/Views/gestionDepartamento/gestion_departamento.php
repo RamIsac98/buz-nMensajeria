@@ -576,12 +576,12 @@
             const textoFiltro = document.getElementById('textoFiltroLab');
 
             if (filtroDepto) {
-                filtroDepto.addEventListener('change', function() {
-                    const deptoSeleccionado = this.value;
+                // Función reutilizable para ejecutar el filtrado visual
+                const aplicarFiltrado = (deptoSeleccionado) => {
                     let visibles = 0;
 
                     textoFiltro.textContent = (deptoSeleccionado !== 'todos') 
-                        ? `(Filtrados por: ${this.options[this.selectedIndex].text})` 
+                        ? `(Filtrados por: ${filtroDepto.options[filtroDepto.selectedIndex].text})` 
                         : '';
 
                     filasLabs.forEach(fila => {
@@ -600,6 +600,23 @@
                     } else if (visibles > 0 && rowVacia) {
                         rowVacia.remove();
                     }
+                };
+
+                // 1. Intentar recuperar el filtro guardado en la memoria local (localStorage)
+                const filtroGuardado = localStorage.getItem('filtroDepartamento');
+                if (filtroGuardado) {
+                    filtroDepto.value = filtroGuardado;
+                    // Si por algún cambio en la base de datos el ID guardado ya no existe en el select, regresamos a 'todos'
+                    if (!filtroDepto.value) filtroDepto.value = 'todos';
+                }
+
+                // 2. Ejecutar el filtrado inicial al renderizar la vista
+                aplicarFiltrado(filtroDepto.value);
+
+                // 3. Modificar la memoria cada vez que el usuario altere el select de forma manual
+                filtroDepto.addEventListener('change', function() {
+                    localStorage.setItem('filtroDepartamento', this.value);
+                    aplicarFiltrado(this.value);
                 });
             }
 
@@ -629,7 +646,6 @@
                 const btnDel = e.target.closest('.btn-eliminar-trigger');
                 if (btnDel) {
                     const form = document.getElementById('formEliminar');
-                    // Modificado: El formulario dinámico de eliminación captura e inyecta la memoria de páginas activas en el query string del POST
                     form.action = `<?= base_url('gestion-departamento/eliminar-') ?>${btnDel.dataset.tipo}/${btnDel.dataset.id}?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>`;
                     modalEliminar.show();
                     return;
