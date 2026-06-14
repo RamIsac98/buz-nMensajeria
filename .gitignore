@@ -9,3 +9,5 @@ env
 .idea/
 Thumbs.db
 .DS_Store
+
+public/uploads/pdfs/
