@@ -24,7 +24,16 @@ class UsuarioModel extends Model
 
     public function findById($id)
     {
-        $sql = "SELECT * FROM usuarios WHERE id = ? LIMIT 1";
+        $sql = "SELECT u.*, 
+                    l.nombre AS nombre_laboratorio, 
+                    d.nombre AS departamento,
+                    d.id AS departamento_id
+                FROM usuarios u
+                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                LEFT JOIN departamentos d ON l.departamento_id = d.id
+                WHERE u.id = ? 
+                LIMIT 1";
+
         return $this->db->query($sql, [$id])->getRowArray();
     }
 

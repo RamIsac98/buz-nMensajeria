@@ -50,4 +50,8 @@ $routes->get('usuarios/obtener_laboratorios_por_depto/(:num)', 'Usuarios::obtene
 
 $routes->get('gestion-departamento/generar-pdf-general', 'GestionController::generarPdfGeneral');
 
-
+$routes->get('desechos/formulario', 'DesechosController::crear');
+$routes->post('desechos/registrar', 'DesechosController::registrar');
+// Agrégala junto a las otras rutas de desechos
+$routes->get('desechos/registroSolicitudes', 'DesechosController::registroSolicitudes');
+$routes->get('desechos/verPdf/(:segment)', 'DesechosController::verPdf/$1');

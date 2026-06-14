@@ -366,4 +366,29 @@ class Usuarios extends BaseController
 
         return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
     }
+
+
+    public function solicitudDesechos()
+    {
+        // Verifica si el usuario está logueado antes de mostrar la vista
+        if (!$this->estaLogueado()) {
+            return redirect()->to(base_url('login'));
+        }
+
+        // Carga la vista especificada: app/Views/Usuarios/SolicitudDesechos.php
+        return view('Usuarios/SolicitudDesechos');
+    }
+
+    // Procesa los datos enviados por el formulario
+    public function procesarSolicitud()
+    {
+        if (!$this->estaLogueado()) {
+            return redirect()->to(base_url('login'));
+        }
+
+        // Aquí va la lógica de validación y persistencia en la base de datos
+        // ...
+        
+        return redirect()->back()->with('success', 'Solicitud registrada correctamente.');
+    }
 }
