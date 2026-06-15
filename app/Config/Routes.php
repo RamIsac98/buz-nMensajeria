@@ -3,6 +3,7 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
+//login - interfaz inicial
 $routes->get('/', 'Home::index');
 $routes->get('prueba/probarconexion', 'Prueba::probarConexion');
 $routes->get('login', 'Login::index');
@@ -10,32 +11,32 @@ $routes->post('login/autenticar', 'Login::autenticar');
 $routes->get('login/salir', 'Login::salir');
 $routes->get('interfazinicial/menuusuario', 'MenuUsuario::index');
 
-//interfaz de gestion de usuarios
+// gestion de usuarios
 $routes->get('usuarios', 'Usuarios::index');
 $routes->get('usuarios/crear', 'Usuarios::crear');
 $routes->post('usuarios/guardar', 'Usuarios::guardar');
 $routes->get('usuarios/editar/(:num)', 'Usuarios::editar/$1');
 $routes->post('usuarios/actualizar/(:num)', 'Usuarios::actualizar/$1');
 $routes->get('usuarios/deshabilitar/(:num)', 'Usuarios::deshabilitar/$1');
-$routes->get('usuarios/eliminar/(:num)', 'Usuarios::eliminar/$1'); // Nueva Ruta
+$routes->get('usuarios/eliminar/(:num)', 'Usuarios::eliminar/$1'); 
 $routes->post('usuarios/cambiar_password_post', 'Usuarios::cambiar_password_post');
 
-//ruta de pregunta de seguridad
+// pregunta de seguridad
 $routes->get('usuarios/configurar_pregunta', 'Usuarios::configurar_pregunta');
 $routes->post('usuarios/guardar_pregunta', 'Usuarios::guardar_pregunta');
 
-// Rutas para el flujo de recuperación de contraseña
+// recuperación de contraseña
 $routes->get('login/olvide_contrasena', 'Login::olvideContrasena');
 $routes->post('login/validar_usuario', 'Login::validarCedula');
 $routes->post('login/guardar_nueva_clave', 'Login::nuevaClave');
 
-// Rutas para el flujo de bitacora
+// bitacora
 $routes->get('usuarios/Bitacora/bitacora', 'Usuarios::bitacora');
 $routes->get('usuarios/bitacora', 'Usuarios::bitacora');
 $routes->get('usuarios/generarPdfBitacora', 'Usuarios::generarPdfBitacora');
 $routes->get('usuarios/generarPdfUsuarios', 'Usuarios::generarPdfUsuarios');
 
-// Interfaz principal (Nueva URL adaptada al módulo)
+// Gestion de Centro/Departamento
 $routes->get('gestion-departamento', 'GestionController::index');
 
 // Procesamiento de formularios
@@ -47,16 +48,19 @@ $routes->post('gestion-departamento/eliminar-departamento/(:num)', 'GestionContr
 $routes->post('gestion-departamento/eliminar-laboratorio/(:num)', 'GestionController::eliminarLaboratorio/$1');
 $routes->get('gestion-departamento/generar-pdf', 'GestionController::generarPdfLaboratorios');
 $routes->get('usuarios/obtener_laboratorios_por_depto/(:num)', 'Usuarios::obtener_laboratorios_por_depto/$1');
-
 $routes->get('gestion-departamento/generar-pdf-general', 'GestionController::generarPdfGeneral');
 
+//solicitud de Desechos
 $routes->get('desechos/formulario', 'DesechosController::crear');
 $routes->post('desechos/registrar', 'DesechosController::registrar');
-// Agrégala junto a las otras rutas de desechos
 $routes->get('desechos/registroSolicitudes', 'DesechosController::registroSolicitudes');
 $routes->get('desechos/verPdf/(:segment)', 'DesechosController::verPdf/$1');
 
+//solicitud de Bioseguridad
 $routes->get('solicitud_bioseguridad', 'BioseguridadController::crear');
 $routes->post('bioseguridad/registrar', 'BioseguridadController::registrar');
 $routes->get('bioseguridad/verPdf/(:any)', 'BioseguridadController::verPdf/$1');
 $routes->get('bioseguridad/formulario', 'BioseguridadController::crear');
+
+$routes->get('desechos/gestionSolicitudes', 'DesechosController::gestionSolicitudes');
+$routes->post('desechos/actualizarEstado', 'DesechosController::actualizarEstado');

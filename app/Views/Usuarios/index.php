@@ -299,64 +299,7 @@
     <div class="container-fluid">
         
         <header class="mb-4">
-            <nav class="custom-navbar rounded-1">
-                <div class="nav-brand-container">
-                        <div class="logo-placeholder"> 
-                            <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
-                        </div>
-                        
-                        <?php 
-                            $current_path = service('request')->getUri()->getPath();
-                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
-                        ?>
-
-                        <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
-                            Inicio
-                        </a>
-
-                        <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom">Solicitud Desechos</a>
-                        <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
-                        <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
-                        
-                        <div class="d-flex align-items-center h-100 dropdown">
-                            <a href="#" class="nav-link-custom active dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                                Configuración
-                            </a>
-                            <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
-                                <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
-                                <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
-                                <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="d-flex align-items-center h-100 user-section">
-                        <a href="<?= base_url('usuarios/crear') ?>" class="nav-link-custom me-2">
-                            Crear Nuevo Usuario
-                        </a>
-
-                        <div class="dropdown">
-                            <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
-                                <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
-                                <li>
-                                    <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
-                                        Cambiar contraseña
-                                    </button>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?= base_url('login/salir') ?>">
-                                        Cerrar sesión
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <?= view('layouts/_navbar') ?>
         </header>
 
         <section class="system-messages">

@@ -123,4 +123,10 @@ class SolicitudDesechosModel extends Model
                 ORDER BY s.id DESC";
         return $this->db->query($sql)->getResultArray();
     }
+
+    public function actualizarEstado($id, $nuevoEstado)
+    {
+        $sql = "UPDATE solicitudes_desechos SET estado_solicitud = ? WHERE id = ?";
+        return $this->db->query($sql, [$nuevoEstado, $id]);
+    }
 }

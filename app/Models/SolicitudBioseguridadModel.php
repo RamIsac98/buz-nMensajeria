@@ -83,9 +83,22 @@ class SolicitudBioseguridadModel extends Model
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
-        $sql = "SELECT * FROM {$this->table} WHERE $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
+        $sql = "SELECT s.*, u.username, l.nombre AS nombre_laboratorio, d.nombre AS nombre_departamento
+                FROM solicitudes_bioseguridad s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                LEFT JOIN departamentos d ON l.departamento_id = d.id
+                WHERE $whereSql
+                ORDER BY s.id DESC
+                LIMIT ? OFFSET ?";
         $values[] = (int)$limit;
         $values[] = (int)$offset;
         return $this->db->query($sql, $values)->getResultArray();
+    }
+
+    public function actualizarEstado($id, $nuevoEstado)
+    {
+        $sql = "UPDATE solicitudes_bioseguridad SET estado_solicitud = ? WHERE id = ?";
+        return $this->db->query($sql, [$nuevoEstado, $id]);
     }
 }

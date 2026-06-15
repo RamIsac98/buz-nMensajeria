@@ -193,7 +193,6 @@
     <div class="container-fluid my-5 px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="main-title">Historial de Solicitudes Procesadas</h2>
-            <a href="<?= base_url('desechos/crear') ?>" class="btn text-white px-4" style="background-color: var(--azul-claro);">+ Nueva Solicitud</a>
         </div>
 
         <?php if (session()->getFlashdata('success')) : ?>
@@ -274,14 +273,14 @@
                                         <td class="fw-bold"><?= esc($sol['tipo_solicitud']) ?></td>
                                         <td>
                                             <?php if (!empty($sol['ruta_pdf'])): ?>
-                                            <?php 
-                                                $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
-                                                    ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
-                                                    : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
-                                            ?>
-                                            <a href="<?= $pdfUrl ?>" target="_blank" class="btn btn-sm btn-danger">
-                                                📄 PDF
-                                            </a>
+                                                <?php 
+                                                    $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
+                                                        ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
+                                                        : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
+                                                ?>
+                                                <a href="<?= $pdfUrl ?>" target="_blank" title="Ver PDF">
+                                                    <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
+                                                </a>
                                             <?php else: ?>
                                                 <span class="text-muted small">Sin PDF</span>
                                             <?php endif; ?>

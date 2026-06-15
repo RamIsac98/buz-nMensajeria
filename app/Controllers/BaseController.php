@@ -17,13 +17,13 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
     }
 
-    // Verificación si hay sesión activa
+    // Verificación sesión activa
     protected function estaLogueado(): bool
     {
         return (bool) session()->get('logged_in');
     }
 
-    // REUTILIZABLE: Registra movimientos de auditoría en Base de Datos (SQL Nativo Interno)
+    //Registra movimientos Bitacora
     protected function registrarBitacora(string $accion, string $tipo_solicitud = 'Ninguna', string $registro = ''): void
     {
         $bitacoraModel = new BitacoraModel();

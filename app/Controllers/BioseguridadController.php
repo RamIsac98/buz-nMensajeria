@@ -9,6 +9,7 @@ use Dompdf\Options;
 
 class BioseguridadController extends BaseController
 {
+    //crear Solicitud
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -30,13 +31,13 @@ class BioseguridadController extends BaseController
         return view('bioseguridad/formulario', $data);
     }
 
+    //formulario en la BD
     public function registrar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $solicitudModel = new SolicitudBioseguridadModel();
 
-        // Validación de cantidad máxima de contenedores (3)
         $contenedores = (int)$this->request->getPost('contenedores_pulso_cantidad');
         if ($contenedores > 3) {
             return redirect()->back()->with('error', 'La cantidad de Contenedores Pulso Cortante no puede superar 3.');
@@ -57,7 +58,6 @@ class BioseguridadController extends BaseController
         
         if (empty($codigo)) {
             $codigo = $solicitudModel->generarCodigoUnico();
-        // Opcional: Log para depuración
             log_message('warning', 'Código de solicitud vacío, se generó uno nuevo: ' . $codigo);
         }
         $insertData = [

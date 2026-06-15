@@ -18,6 +18,7 @@ $baseItems = [
 $configItems = [];
 if ($rolUsuario === 'administrador') {
     $configItems = [
+        'gestion' => ['url' => 'desechos/gestionSolicitudes', 'label' => 'Gestión Solicitudes'],        
         'config' => [
             'label' => 'Configuración',
             'submenu' => [

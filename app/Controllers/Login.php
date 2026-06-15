@@ -19,7 +19,6 @@ class Login extends BaseController
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
 
-        // Búsqueda delegada al Modelo
         $usuario = $usuarioModel->findByUsername($username);
 
         if ($usuario && password_verify($password, $usuario['password'])) 
@@ -41,7 +40,6 @@ class Login extends BaseController
                 return redirect()->to(base_url('usuarios/configurar_pregunta'))->with('info', 'Por ser tu primer ingreso, debes configurar una pregunta de seguridad.');
             }
 
-            // Cambia esta línea:
             return redirect()->to(base_url('interfazinicial/menuusuario'));
         }
 

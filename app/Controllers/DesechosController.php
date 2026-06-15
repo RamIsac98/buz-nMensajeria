@@ -11,6 +11,7 @@ use Dompdf\Options;
 
 class DesechosController extends BaseController
 {
+    //solicitud desechos
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -33,6 +34,7 @@ class DesechosController extends BaseController
         return view('desechos/formulario', $data);
     }
 
+    //registro en la BD
     public function registrar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -61,19 +63,16 @@ class DesechosController extends BaseController
             'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
         ];
 
-
-            // 1. Obtener datos adicionales del usuario para el PDF
+        //datos extra para el reporte
         $usuarioModel = new \App\Models\UsuarioModel();
         $usuario = $usuarioModel->findById(session()->get('usuario_id'));
         
-        // 2. datos con información extra
         $pdfData = $insertData;
         $pdfData['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
         $pdfData['departamento']   = $usuario['departamento'] ?? 'No asignado';
         $pdfData['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
         $pdfData['fecha_registro'] = date('d/m/Y H:i:s');
 
-        // 3. Generar PDF pasando estos nuevos datos
         $nombrePdf = 'solicitud_' . $insertData['codigo_solicitud'] . '.pdf';
         $rutaRelativa = 'uploads/pdfs/' . $nombrePdf;   // Ruta pública
         $pdfData['ruta_pdf'] = $rutaRelativa;
@@ -111,39 +110,37 @@ class DesechosController extends BaseController
 
     public function verPdf($nombreArchivo)
     {
-        // 1. Verificación de seguridad: ¿Está logueado?
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        // 2. Ruta absoluta al archivo (asegúrate de que esta ruta sea la real donde se guardan)
         $ruta = FCPATH . 'uploads/pdfs/' . $nombreArchivo;
 
-        // 3. Verificación de existencia real
         if (file_exists($ruta)) {
-            // 4. Limpiamos cualquier salida previa (evita archivos corruptos)
             if (ob_get_length()) ob_end_clean();
 
-            // 5. Servimos el archivo usando la respuesta de CodeIgniter
             return $this->response
                 ->setHeader('Content-Type', 'application/pdf')
                 ->setHeader('Content-Disposition', 'inline; filename="' . $nombreArchivo . '"')
                 ->setHeader('Content-Length', filesize($ruta))
                 ->setBody(file_get_contents($ruta));
         } else {
-            // Esto te dirá exactamente dónde está buscando si falla
             return "El archivo no existe en: " . $ruta;
         }
     }
 
-
+    //configuracion del filtros SolicitudesRegistro
     public function registroSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        // Instanciar los modelos correctamente
+
+        // Solo administradores pueden gestionar estados
+        if (session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tiene permisos para gestionar solicitudes.');
+        }
         $desechosModel = new \App\Models\SolicitudDesechosModel();
         $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
 
-        // Filtros comunes
+        // Filtros
         $filtros = [
             'buscar'            => $this->request->getGet('buscar'),
             'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
@@ -155,7 +152,6 @@ class DesechosController extends BaseController
         $solicitudes = [];
         $total = 0;
 
-        // Si el filtro es desechos o todos
         if (empty($filtros['tipo_solicitud']) || $filtros['tipo_solicitud'] == 'Desechos Biológicos') {
             $desechos = $desechosModel->getSolicitudesFiltradas($filtros, 999999, 0);
             foreach ($desechos as &$d) {
@@ -174,7 +170,6 @@ class DesechosController extends BaseController
             $total += $bioseguridadModel->countSolicitudesFiltradas($filtros);
         }
 
-        // Ordenar por fecha descendente
         usort($solicitudes, function($a, $b) {
             return strtotime($b['fecha_registro']) - strtotime($a['fecha_registro']);
         });
@@ -214,5 +209,120 @@ class DesechosController extends BaseController
         return view('desechos/registroSolicitudes', $data);
     }
 
+    public function gestionSolicitudes()
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        
+        // Solo administradores pueden gestionar estados
+        if (session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tiene permisos para gestionar solicitudes.');
+        }
 
+        $desechosModel = new \App\Models\SolicitudDesechosModel();
+        $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
+
+        $filtros = [
+            'buscar'            => $this->request->getGet('buscar'),
+            'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
+            'estado_solicitud'  => $this->request->getGet('estado_solicitud'),
+            'fecha_desde'       => $this->request->getGet('fecha_desde'),
+            'fecha_hasta'       => $this->request->getGet('fecha_hasta')
+        ];
+
+        $solicitudes = [];
+        $total = 0;
+
+        if (empty($filtros['tipo_solicitud']) || $filtros['tipo_solicitud'] == 'Desechos Biológicos') {
+            $desechos = $desechosModel->getSolicitudesFiltradas($filtros, 999999, 0);
+            foreach ($desechos as &$d) {
+                $d['tipo_solicitud'] = 'Desechos Biológicos';
+                $d['tabla_origen'] = 'desechos';
+            }
+            $solicitudes = array_merge($solicitudes, $desechos);
+            $total += $desechosModel->countSolicitudesFiltradas($filtros);
+        }
+
+        if (empty($filtros['tipo_solicitud']) || $filtros['tipo_solicitud'] == 'Bioseguridad') {
+            $bioseg = $bioseguridadModel->getSolicitudesFiltradas($filtros, 999999, 0);
+            foreach ($bioseg as &$b) {
+                $b['tipo_solicitud'] = 'Bioseguridad';
+                $b['tabla_origen'] = 'bioseguridad';
+            }
+            $solicitudes = array_merge($solicitudes, $bioseg);
+            $total += $bioseguridadModel->countSolicitudesFiltradas($filtros);
+        }
+
+        usort($solicitudes, function($a, $b) {
+            return strtotime($b['fecha_registro']) - strtotime($a['fecha_registro']);
+        });
+
+        $porPagina = 10;
+        $pagina = (int)($this->request->getGet('page') ?? 1);
+        $offset = ($pagina - 1) * $porPagina;
+        $solicitudesPag = array_slice($solicitudes, $offset, $porPagina);
+        $totalPages = ceil($total / $porPagina);
+
+        $currentGet = $_GET;
+        unset($currentGet['page']);
+        $urlParams = !empty($currentGet) ? '&' . http_build_query($currentGet) : '';
+
+        $startPage = max(1, $pagina - 1);
+        $endPage = min($totalPages, $pagina + 1);
+        if ($pagina == 1) $endPage = min($totalPages, 3);
+        if ($pagina == $totalPages) $startPage = max(1, $totalPages - 2);
+
+        $data = [
+            'solicitudes'        => $solicitudesPag,
+            'total'              => $total,
+            'porPagina'          => $porPagina,
+            'paginaActual'       => $pagina,
+            'totalPages'         => $totalPages,
+            'startPage'          => $startPage,
+            'endPage'            => $endPage,
+            'urlParams'          => $urlParams,
+            'filtros'            => $filtros,
+            'tiposSolicitud'     => ['Desechos Biológicos', 'Bioseguridad'],
+            'estadosSolicitud'   => ['Pendiente', 'Entregado', 'Cancelado']
+        ];
+
+        return view('desechos/gestion_solicitudes', $data);
+    }
+    public function actualizarEstado()
+    {
+        if (!$this->estaLogueado()) {
+            return $this->response->setJSON(['error' => 'No autorizado']);
+        }
+        if (session()->get('rol') !== 'administrador') {
+            return $this->response->setJSON(['error' => 'Permisos insuficientes']);
+        }
+
+        $id = $this->request->getPost('id');
+        $tipo = $this->request->getPost('tipo');
+        $nuevoEstado = $this->request->getPost('estado');
+
+        if (!in_array($nuevoEstado, ['Pendiente', 'Entregado', 'Cancelado'])) {
+            return $this->response->setJSON(['error' => 'Estado no válido']);
+        }
+
+        try {
+            if ($tipo == 'desechos') {
+                $model = new \App\Models\SolicitudDesechosModel();
+                $actualizado = $model->actualizarEstado($id, $nuevoEstado);
+            } elseif ($tipo == 'bioseguridad') {
+                $model = new \App\Models\SolicitudBioseguridadModel();
+                $actualizado = $model->actualizarEstado($id, $nuevoEstado);
+            } else {
+                return $this->response->setJSON(['error' => 'Tipo de solicitud inválido']);
+            }
+
+            if ($actualizado) {
+                $this->registrarBitacora('Cambio de estado', 'Gestión de Solicitudes', "Se cambió la solicitud ID $id a estado $nuevoEstado");
+                return $this->response->setJSON(['success' => true]);
+            } else {
+                return $this->response->setJSON(['error' => 'No se pudo actualizar el estado']);
+            }
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['error' => 'Error: ' . $e->getMessage()]);
+        }
+    }
 }

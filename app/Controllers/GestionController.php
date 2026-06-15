@@ -7,29 +7,19 @@ use App\Models\LaboratorioModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use Exception;
 
-/**
- * Clase GestionController
- * Implementa la gestión de flujos con retención avanzada de estado de paginación.
- * * @package App\Controllers
- */
+//Gestion Centro / Laboratorio
 class GestionController extends BaseController
 {
     private DepartamentoModel $deptModel;
     private LaboratorioModel $labModel;
 
-    /**
-     * Constructor del controlador.
-     */
     public function __construct()
     {
         $this->deptModel = new DepartamentoModel();
         $this->labModel  = new LaboratorioModel();
     }
 
-    /**
-     * Renderiza el panel de control manteniendo el estado cruzado de ambas listas.
-     * * @return string|RedirectResponse
-     */
+
     public function index()
     {
         if (!$this->estaLogueado()) {
@@ -39,7 +29,6 @@ class GestionController extends BaseController
         try {
             $perPage = 8;
             
-            // Captura segura y normalización de parámetros concurrentes de paginación
             $pageDept = (int)($this->request->getGet('page_dept') ?? 1);
             $pageLab  = (int)($this->request->getGet('page_lab') ?? 1);
 
@@ -71,6 +60,7 @@ class GestionController extends BaseController
         }
     }
 
+    //CRUD CENTRO/LABORATORIO
     public function guardarDepartamento(): RedirectResponse
     {
         return $this->procesarGuardado(null, 'departamento');
@@ -93,9 +83,6 @@ class GestionController extends BaseController
         return $this->procesarGuardado(($id !== null) ? (int)$id : null, 'laboratorio');
     }
 
-    /**
-     * Centralizador transaccional de guardado/edición con redirección determinista de memoria de página.
-     */
     private function procesarGuardado(?int $id, string $tipo): RedirectResponse
     {
         if (!$this->estaLogueado()) {
@@ -104,7 +91,6 @@ class GestionController extends BaseController
 
         $esEdicion = ($id !== null);
         
-        // Extracción explícita de la memoria de paginación desde el Query String de la petición POST
         $pageDept = (int)($this->request->getGet('page_dept') ?? 1);
         $pageLab  = (int)($this->request->getGet('page_lab') ?? 1);
         
@@ -197,9 +183,6 @@ class GestionController extends BaseController
         return $this->procesarEliminacion((int)$id, 'laboratorio');
     }
 
-    /**
-     * Centralizador de eliminación con redirección absoluta a la página origen exacta.
-     */
     private function procesarEliminacion(int $id, string $tipo): RedirectResponse
     {
         if (!$this->estaLogueado()) {
