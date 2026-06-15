@@ -6,119 +6,139 @@
     <title>Login - Sistema de Gestión de Desechos Biológicos</title>
     <link href="<?= base_url('bootstrap5/css/bootstrap.min.css') ?>" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="<?= base_url('img/logo.svg') ?>">
-
     <style>
         /* Variables de Identidad Corporativa */
         :root {
-            --color-ivic-claro: #2073AF;
-            --color-ivic-oscuro: rgba(28, 70, 110, 0.9);
-            --color-accent: #ffc107;
+            --azul-claro: #2073AF;
+            --azul-oscuro: rgba(28, 70, 110, 0.9);
+            --amarillo: #ffc107;
         }
 
         body {
-            background-color: var(--color-ivic-claro);
+            background: linear-gradient(135deg, var(--azul-claro) 0%, #145a8a 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
-        /* Contenedor de Login Modernizado */
+        /* Tarjeta de login moderna */
         .login-card {
             max-width: 460px;
-            border-radius: 1.5rem !important;
+            width: 100%;
+            border-radius: 1.5rem;
+            background: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1.5rem 3rem rgba(0,0,0,0.2) !important;
         }
 
-        .text-ivic { color: var(--color-ivic-claro); }
+        .text-ivic { color: var(--azul-claro); }
 
-        /* Campos de Entrada Personalizados */
+        /* Campos de entrada */
         .form-control {
-            border: 2px solid var(--color-ivic-oscuro);
-            border-radius: 0.5rem;
-            padding: 0.6rem 1rem;
-            color: var(--color-ivic-oscuro);
+            border: 2px solid #e0e0e0;
+            border-radius: 0.75rem;
+            padding: 0.7rem 1rem;
+            transition: all 0.2s;
         }
-
-        /* Estado de Enfoque (Focus) con destello Amarillo */
         .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
-            border-color: var(--color-accent);
+            border-color: var(--azul-claro);
+            box-shadow: 0 0 0 0.25rem rgba(32, 115, 175, 0.25);
             outline: none;
         }
 
-        /* Botón de Iniciar Sesión */
+        /* Botón de inicio de sesión */
         .btn-login {
-            background-color: var(--color-ivic-oscuro);
-            color: #ffffff;
+            background-color: var(--azul-oscuro);
+            color: white;
+            border: none;
+            border-radius: 2rem;
+            padding: 0.7rem;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
-
         .btn-login:hover {
-            color: var(--color-accent);
+            background-color: var(--azul-claro);
             transform: translateY(-2px);
-            background-color: var(--color-ivic-oscuro);
-
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            color: var(--amarillo);
         }
 
         /* Enlace de recuperación */
         .forgot-password {
-            color: var(--color-ivic-claro);
+            color: var(--azul-claro);
             font-size: 0.85rem;
             font-weight: 500;
-            transition: color 0.3s ease;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .forgot-password:hover {
+            color: var(--amarillo);
+            text-decoration: underline;
         }
 
-        .forgot-password:hover {
-            color: var(--color-accent);
+        /* Pie de página opcional */
+        .footer-note {
+            font-size: 0.75rem;
+            color: #6c757d;
         }
     </style>
 </head>
-<body class="vh-100 d-flex align-items-center justify-content-center p-3">
+<body>
 
-    <div class="card login-card w-100 border-0 shadow-lg p-4 p-sm-5">
-        
+    <div class="card login-card border-0 shadow-lg p-4 p-sm-5">
         <div class="text-center mb-4">
-            <img src="<?= base_url('img/logo.svg') ?>" alt="Logo de la Empresa" class="mb-3" style="width: 70px; height: auto;">
+            <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" class="mb-3" style="width: 80px; height: auto;">
             <h2 class="h5 fw-bold text-ivic m-0 lh-base">
-                Sistemas de Gestión de Desechos<br>Biológicos
+                Sistema de Gestión de Desechos<br>Biológicos
             </h2>
+            <p class="text-muted small mt-2">Acceso seguro al sistema</p>
         </div>
         
         <?php if (session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger text-center py-2 mb-4 small fw-semibold border-0 text-danger bg-danger bg-opacity-10" role="alert">
+            <div class="alert alert-danger text-center py-2 mb-4 small fw-semibold border-0 rounded-pill" role="alert">
                 <?= session()->getFlashdata('error') ?>
             </div>
         <?php endif; ?>
 
         <form action="<?= base_url('login/autenticar') ?>" method="POST" autocomplete="off">
-            
+            <?= csrf_field() ?>
             <div class="mb-3">
                 <label for="username" class="form-label fw-semibold text-ivic small">Usuario</label>
-                <input type="text" name="username" id="username" class="form-control" required>
+                <input type="text" name="username" id="username" class="form-control" placeholder="Ingresa tu usuario" required>
             </div>
             
             <div class="mb-4">
                 <label for="password" class="form-label fw-semibold text-ivic small">Contraseña</label>
-                <input type="password" name="password" id="password" class="form-control" required>
+                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
             </div>
             
-            <button type="submit" class="btn btn-login rounded-pill w-100 py-2 fw-semibold shadow-sm">
+            <button type="submit" class="btn btn-login w-100 fw-semibold shadow-sm">
                 Iniciar Sesión
             </button>
-
         </form>
 
         <div class="text-center mt-4">
-            <a href="<?= base_url('login/olvide_contrasena') ?>" class="forgot-password text-decoration-none">
+            <a href="<?= base_url('login/olvide_contrasena') ?>" class="forgot-password">
                 ¿Olvidaste tu contraseña?
             </a>
         </div>
 
+        <div class="text-center mt-4 footer-note">
+            <span>© <?= date('Y') ?> - Sistema de Mensajería</span>
+        </div>
     </div>
-    
+
     <script>
-        // Restablece el formulario si el usuario regresa con los botones de navegación del navegador
-        window.addEventListener('pageshow', function (event) {
-            const loginForm = document.querySelector('form'); 
-            if (loginForm) {
-                loginForm.reset();
-            }
+        // Restablece el formulario al cargar la página (evita autocompletado persistente)
+        window.addEventListener('pageshow', function () {
+            const form = document.querySelector('form');
+            if (form) form.reset();
         });
     </script>
     <script src="<?= base_url('bootstrap5/js/bootstrap.bundle.min.js') ?>"></script>

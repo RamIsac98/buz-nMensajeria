@@ -1,141 +1,126 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestión de Solicitudes</title>
-    <link rel="stylesheet" href="<?= base_url('bootstrap5/css/bootstrap.min.css') ?>">
-    <link rel="icon" type="image/x-icon" href="<?= base_url('img/logo.svg') ?>">
-    <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <style>
-        :root {
-            --azul-claro: #2073AF;
-            --azul-oscuro: rgba(28, 70, 110, 0.9);
-            --amarillo: #ffc107;
-        }
-        body {
-            background-color: #ffffff;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        .custom-navbar {
-            background-color: var(--azul-claro);
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 65px;
-        }
-        .nav-brand-container {
-            display: flex;
-            align-items: center;
-            padding-left: 20px;
-        }
-        .logo-placeholder {
-            width: 40px;
-            height: 40px;
-            margin-right: 15px;
-        }
-        .logo-placeholder img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .nav-link-custom {
-            display: flex;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            padding: 0 25px;
-            height: 65px;
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-        .nav-link-custom:hover {
-            background-color: rgba(0,0,0,0.1);
-            color: white;
-        }
-        .nav-link-custom.active {
-            background-color: var(--azul-oscuro);
-            color: var(--amarillo) !important;
-            font-weight: 500;
-        }
-        .user-section {
-            padding-right: 25px;
-        }
-        .user-dropdown-toggle {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .filter-bar {
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 8px 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .filter-label {
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: var(--azul-oscuro);
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-        .filter-input {
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .input-search-width { width: 180px; }
-        .input-select-width { width: 140px; }
-        .input-date-width { width: 130px; }
-        .main-title {
-            color: var(--azul-oscuro);
-            font-weight: bold;
-            margin-top: 35px;
-            margin-bottom: 25px;
-            font-size: 1.75rem;
-        }
-        .custom-pagination .page-item .page-link {
-            background-color: var(--azul-claro);
-            color: white;
-            border: none;
-            border-radius: 8px !important;
-            margin-right: 8px;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .custom-pagination .page-item.active .page-link { background-color: var(--azul-oscuro); }
-        .footer-text { color: var(--azul-claro); font-weight: bold; }
-        .thead-custom { background-color: var(--azul-oscuro); color: white; }
-        .btn-custom-sm {
-            background-color: var(--azul-claro);
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        .btn-custom-sm:hover { background-color: var(--azul-oscuro); }
-    </style>
-</head>
-<body>
+<?= $this->extend('layouts/base') ?>
 
-<header class="mb-4">
-    <?= view('layouts/_navbar') ?>
-</header>
+<?= $this->section('title') ?>Gestión de Solicitudes<?= $this->endSection() ?>
 
+<?= $this->section('styles') ?>
+<meta name="csrf-token" content="<?= csrf_hash() ?>">
+<style>
+    /* Estilos específicos de esta página */
+    .main-title {
+        color: var(--azul-oscuro);
+        font-weight: bold;
+        margin-top: 35px;
+        margin-bottom: 25px;
+        font-size: 1.75rem;
+    }
+    .filter-bar {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 8px 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .filter-label {
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: var(--azul-oscuro);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .filter-input {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 0.9rem;
+        outline: none;
+    }
+    .filter-input:focus {
+        border-color: var(--azul-claro);
+    }
+    .input-search-width { width: 180px; }
+    .input-select-width { width: 140px; }
+    .input-date-width { width: 130px; }
+    .custom-pagination .page-item .page-link {
+        background-color: var(--azul-claro);
+        color: white;
+        border: none;
+        border-radius: 8px !important;
+        margin-right: 8px;
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .custom-pagination .page-item.active .page-link { background-color: var(--azul-oscuro); }
+    .footer-text { color: var(--azul-claro); font-weight: bold; }
+    .thead-custom { background-color: var(--azul-oscuro); color: white; }
+    .btn-actualizar {
+        background-color: var(--azul-claro);
+        color: white;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .btn-actualizar:hover {
+        background-color: var(--azul-oscuro);
+    }
+    .estado-select {
+        width: 110px;
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+    .badge-pendiente { background-color: #ffc107; color: #212529; }
+    .badge-entregado { background-color: #28a745; color: white; }
+    .badge-cancelado { background-color: #dc3545; color: white; }
+    .estado-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 0.25rem;
+        text-align: center;
+        min-width: 85px;
+    }
+    /* Ajustes de tabla para evitar desbordamiento */
+    .table {
+        min-width: 800px;
+    }
+    .table td, .table th {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .table td:first-child, .table th:first-child {
+        padding-left: 1rem;
+    }
+    .table td:last-child, .table th:last-child {
+        padding-right: 1rem;
+    }
+    @media (max-width: 768px) {
+        .table {
+            min-width: 100%;
+        }
+        .estado-select {
+            width: 85px;
+        }
+        .btn-actualizar {
+            padding: 2px 8px;
+            font-size: 0.7rem;
+        }
+    }
+</style>
+<?= $this->endSection() ?>
+
+<?= $this->section('content') ?>
 <div class="container-fluid my-5 px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="main-title">Gestión de Solicitudes (Cambio de Estado)</h2>
@@ -195,7 +180,7 @@
         </form>
     </div>
 
-    <!-- Tabla con columna de acciones -->
+    <!-- Tabla -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -216,16 +201,16 @@
                         <?php if (!empty($solicitudes)) : ?>
                             <?php foreach ($solicitudes as $sol) : ?>
                                 <tr id="fila-<?= $sol['id'] ?>">
-                                    <td><?= esc($sol['tipo_solicitud']) ?></td>
+                                    <td class="fw-bold"><?= esc($sol['tipo_solicitud']) ?></td>
                                     <td><?= esc($sol['username'] ?? 'N/D') ?></td>
                                     <td><?= esc($sol['nombre_departamento'] ?? 'N/D') ?></td>
                                     <td><?= esc($sol['nombre_laboratorio'] ?? 'N/D') ?></td>
                                     <td><?= date('d/m/Y', strtotime($sol['fecha_registro'])) ?></td>
-                                    <td>
-                                        <span class="badge 
-                                            <?= $sol['estado_solicitud'] == 'Pendiente' ? 'bg-warning' : '' ?>
-                                            <?= $sol['estado_solicitud'] == 'Entregado' ? 'bg-success' : '' ?>
-                                            <?= $sol['estado_solicitud'] == 'Cancelado' ? 'bg-danger' : '' ?>">
+                                    <td class="estado-cell">
+                                        <span class="estado-badge 
+                                            <?= $sol['estado_solicitud'] == 'Pendiente' ? 'badge-pendiente' : '' ?>
+                                            <?= $sol['estado_solicitud'] == 'Entregado' ? 'badge-entregado' : '' ?>
+                                            <?= $sol['estado_solicitud'] == 'Cancelado' ? 'badge-cancelado' : '' ?>">
                                             <?= esc($sol['estado_solicitud']) ?>
                                         </span>
                                     </td>
@@ -240,23 +225,25 @@
                                                 <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
                                             </a>
                                         <?php else: ?>
-                                            <span class="text-muted">Sin PDF</span>
+                                            <span class="text-muted small">Sin PDF</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 align-items-center">
-                                            <select class="form-select form-select-sm estado-select" style="width: 130px;" data-id="<?= $sol['id'] ?>" data-tipo="<?= $sol['tabla_origen'] ?>">
+                                            <select class="form-select form-select-sm estado-select" data-id="<?= $sol['id'] ?>" data-tipo="<?= $sol['tabla_origen'] ?>">
                                                 <option value="Pendiente" <?= $sol['estado_solicitud'] == 'Pendiente' ? 'selected' : '' ?>>Pendiente</option>
                                                 <option value="Entregado" <?= $sol['estado_solicitud'] == 'Entregado' ? 'selected' : '' ?>>Entregado</option>
                                                 <option value="Cancelado" <?= $sol['estado_solicitud'] == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
                                             </select>
-                                            <button class="btn btn-custom-sm btn-actualizar" data-id="<?= $sol['id'] ?>" data-tipo="<?= $sol['tabla_origen'] ?>">Actualizar</button>
+                                            <button class="btn btn-actualizar btn-actualizar-estado" data-id="<?= $sol['id'] ?>" data-tipo="<?= $sol['tabla_origen'] ?>">Actualizar</button>
                                         </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else : ?>
-                            <tr><td colspan="8" class="text-center py-5">No hay solicitudes con los filtros aplicados.</td></tr>
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">No hay solicitudes con los filtros aplicados.</td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -294,16 +281,15 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
 
-<script src="<?= base_url('bootstrap5/js/bootstrap.bundle.min.js') ?>"></script>
+<?= $this->section('scripts') ?>
 <script>
-// Función para obtener el token CSRF
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 
-// Actualizar estado mediante AJAX
-document.querySelectorAll('.btn-actualizar').forEach(btn => {
+document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
     btn.addEventListener('click', function() {
         const row = this.closest('tr');
         const select = row.querySelector('.estado-select');
@@ -311,11 +297,22 @@ document.querySelectorAll('.btn-actualizar').forEach(btn => {
         const tipo = select.getAttribute('data-tipo');
         const nuevoEstado = select.value;
         const boton = this;
-        const spanEstado = row.querySelector('td:nth-child(5) span');
+        const spanEstado = row.querySelector('.estado-badge');
 
-        // Deshabilitar botón durante la petición
+        if (!spanEstado) {
+            console.error('No se encontró el badge de estado en la fila');
+            alert('Error interno: no se pudo localizar el elemento de estado.');
+            return;
+        }
+
         boton.disabled = true;
         boton.textContent = 'Guardando...';
+
+        const formData = new URLSearchParams();
+        formData.append('id', id);
+        formData.append('tipo', tipo);
+        formData.append('estado', nuevoEstado);
+        formData.append('<?= csrf_token() ?>', getCsrfToken());
 
         fetch('<?= base_url('desechos/actualizarEstado') ?>', {
             method: 'POST',
@@ -323,37 +320,31 @@ document.querySelectorAll('.btn-actualizar').forEach(btn => {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: new URLSearchParams({
-                'id': id,
-                'tipo': tipo,
-                'estado': nuevoEstado,
-                '<?= csrf_token() ?>': getCsrfToken()
-            })
+            body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                // Actualizar badge de estado
-                let badgeClass = '';
-                if (nuevoEstado === 'Pendiente') badgeClass = 'bg-warning';
-                else if (nuevoEstado === 'Entregado') badgeClass = 'bg-success';
-                else if (nuevoEstado === 'Cancelado') badgeClass = 'bg-danger';
-                spanEstado.className = 'badge ' + badgeClass;
+                spanEstado.className = 'estado-badge ' + (nuevoEstado === 'Pendiente' ? 'badge-pendiente' : (nuevoEstado === 'Entregado' ? 'badge-entregado' : 'badge-cancelado'));
                 spanEstado.textContent = nuevoEstado;
-                // Mostrar mensaje temporal
-                const alerta = document.createElement('div');
-                alerta.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
-                alerta.style.zIndex = '9999';
-                alerta.innerHTML = 'Estado actualizado correctamente. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                document.body.appendChild(alerta);
-                setTimeout(() => alerta.remove(), 3000);
+                select.value = nuevoEstado;
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.innerHTML = 'Estado actualizado correctamente. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                document.body.appendChild(alertDiv);
+                setTimeout(() => alertDiv.remove(), 3000);
             } else {
-                alert('Error: ' + data.error);
+                console.error('Error en respuesta:', data.error);
+                alert('Error: ' + (data.error || 'No se pudo actualizar el estado.'));
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión. Intente nuevamente.');
+            console.error('Error de red o servidor:', error);
+            alert('Error de conexión. Intente nuevamente. Detalle: ' + error.message);
         })
         .finally(() => {
             boton.disabled = false;
@@ -362,5 +353,4 @@ document.querySelectorAll('.btn-actualizar').forEach(btn => {
     });
 });
 </script>
-</body>
-</html>
+<?= $this->endSection() ?>

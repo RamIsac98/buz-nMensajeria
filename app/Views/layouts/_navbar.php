@@ -5,8 +5,8 @@ $username = session()->get('username') ?? 'Sistema';
 // Opciones base visibles para todos
 $baseItems = [
     'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
-    'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud Desechos'],
-    'bioseguridad' => ['url' => 'solicitud_bioseguridad', 'label' => 'Solicitud Bioseguridad'],
+    'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos'],
+    'bioseguridad' => ['url' => 'solicitud_bioseguridad', 'label' => 'Solicitud de Materiales de Bioseguridad'],
     'registro'     => ['url' => 'desechos/registroSolicitudes', 'label' => 'Registro']
 ];
 
@@ -37,119 +37,135 @@ $currentPath = service('request')->getUri()->getPath();
 ?>
 
 <style>
-/* ===== ESTILOS MEJORADOS PARA EL NAVBAR ===== */
-.custom-navbar {
-    background: linear-gradient(135deg, #2073AF 0%, #155d8a 100%);
-    padding: 0.25rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-bottom: none;
-    transition: all 0.3s ease;
-}
-
-.custom-navbar .navbar-brand {
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: white;
-    transition: transform 0.2s;
-}
-.custom-navbar .navbar-brand:hover {
-    transform: scale(1.02);
-    color: var(--amarillo);
-}
-
-.custom-navbar .navbar-nav .nav-link {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-    padding: 0.6rem 1.2rem;
-    margin: 0 0.2rem;
-    border-radius: 40px;
-    transition: all 0.25s ease;
-    position: relative;
-}
-
-.custom-navbar .navbar-nav .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.custom-navbar .navbar-nav .nav-link.active {
-    background-color: var(--azul-oscuro);
-    color: var(--amarillo) !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-/* Dropdown menu mejorado */
-.custom-navbar .dropdown-menu {
-    border: none;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-    margin-top: 0.5rem;
-    padding: 0.5rem 0;
-    overflow: hidden;
-    animation: fadeInUp 0.2s ease;
-}
-
-.custom-navbar .dropdown-item {
-    padding: 0.6rem 1.8rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #2c3e50;
-    transition: all 0.2s;
-}
-
-.custom-navbar .dropdown-item:hover {
-    background-color: #eef5ff;
-    color: #2073AF;
-    padding-left: 2rem;
-}
-
-/* Botón toggler para móviles */
-.navbar-toggler {
-    border: 1px solid rgba(255,255,255,0.5);
-    background: transparent;
-}
-.navbar-toggler-icon {
-    filter: invert(1);
-}
-
-/* Dropdown de usuario */
-.user-dropdown-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 40px;
-    padding: 0.4rem 1rem !important;
-}
-.user-dropdown-toggle img {
-    border: 1px solid white;
-}
-
-/* Animación */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+    /* ===== ESTILOS MEJORADOS PARA EL NAVBAR ===== */
+    .custom-navbar {
+        background: linear-gradient(135deg, #2073AF 0%, #155d8a 100%);
+        padding: 0.25rem 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-bottom: none;
+        transition: all 0.3s ease;
+        min-height: 70px;
+        display: flex;
+        align-items: center;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-/* Responsive */
-@media (max-width: 992px) {
+    .custom-navbar .navbar-brand {
+        display: inline-flex;
+        align-items: center;
+        height: 50px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: white;
+        transition: transform 0.2s;
+    }
+    .custom-navbar .navbar-brand:hover {
+        transform: scale(1.02);
+        color: var(--amarillo);
+    }
+
     .custom-navbar .navbar-nav .nav-link {
-        margin: 0.2rem 0;
-        text-align: center;
-    }
-    .user-dropdown-toggle {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
+        height: 42px;
+        padding: 0 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        margin: 0 0.2rem;
+        border-radius: 40px;
+        transition: all 0.25s ease;
+        position: relative;
+        line-height: 1.2;
     }
-}
+
+    .custom-navbar .navbar-nav .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .custom-navbar .navbar-nav .nav-link.active {
+        background-color: var(--azul-oscuro);
+        color: var(--amarillo) !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    /* Dropdown menu mejorado */
+    .custom-navbar .dropdown-menu {
+        border: none;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        margin-top: 0.5rem;
+        padding: 0.5rem 0;
+        overflow: hidden;
+        animation: fadeInUp 0.2s ease;
+    }
+
+    .custom-navbar .dropdown-item {
+        padding: 0.6rem 1.8rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #2c3e50;
+        transition: all 0.2s;
+    }
+
+    .custom-navbar .dropdown-item:hover {
+        background-color: #eef5ff;
+        color: #2073AF;
+        padding-left: 2rem;
+    }
+
+    /* Botón toggler para móviles */
+    .navbar-toggler {
+        border: 1px solid rgba(255,255,255,0.5);
+        background: transparent;
+    }
+    .navbar-toggler-icon {
+        filter: invert(1);
+    }
+
+    /* Dropdown de usuario */
+    .user-dropdown-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 42px;
+        gap: 8px;
+        padding: 0 1rem !important;
+        background: rgba(255,255,255,0.1);
+        border-radius: 40px;
+    }
+    .user-dropdown-toggle img {
+        border: 1px solid white;
+    }
+
+    /* Animación */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .custom-navbar .navbar-nav .nav-link {
+            height: auto;
+            justify-content: flex-start;
+            margin: 0.2rem 0;
+            text-align: center;
+        }
+        .user-dropdown-toggle {
+            justify-content: center !important;
+            width: 100%;
+        }
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg custom-navbar shadow-sm">
@@ -157,7 +173,6 @@ $currentPath = service('request')->getUri()->getPath();
         <!-- Logo y marca -->
         <a class="navbar-brand d-flex align-items-center" href="<?= base_url('interfazinicial/menuusuario') ?>">
             <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2">
-            <span class="fw-bold text-white">Sistema de Mensajería</span>
         </a>
 
         <!-- Botón toggler para móviles -->

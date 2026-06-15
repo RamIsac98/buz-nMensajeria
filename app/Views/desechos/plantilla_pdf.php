@@ -25,10 +25,19 @@
         <tr><th>Tipo de Desecho</th><td><?= esc($tipos_desecho) ?></td></tr>
         <tr><th>Variantes</th><td><?= esc($variantes_desecho) ?></td></tr>
         <tr><th>Estado Físico</th><td><?= esc($estado) ?></td></tr>
-        <tr><th>Peso (Kg) / Volumen (L)</th><td><?= esc($peso_kg) ?> Kg / <?= esc($peso_l) ?> L</td></tr>
-        <tr><th>Esterilizado</th><td><?= $esterilizado == 1 ? 'Sí' : 'No' ?></td></tr>
-        <tr><th>Tipo de Empaque</th><td><?= esc($tipo_empaque) ?> <?= esc($empaque_otro_descripcion) ?></td></tr>
-        <tr><th>Motivo</th><td><?= esc($motivo) ?></td></tr>
+        <tr><th>Peso (Kg) / Volumen (L)</th><td><?= esc($peso_kg) ?> Kg / <?= esc($peso_l) ?> L</td>
+        <tr><th>Esterilizado</th><td><?= $esterilizado == 1 ? 'Sí' : 'No' ?></td>
+        <tr><th>Tipo de Empaque</th>
+            <td>
+                <?php
+                    // Reemplazar 'F' por 'CPC' en la lista de empaques
+                    $empaqueMostrado = str_replace('F', 'CPC', $tipo_empaque);
+                    // Si hay 'CPC' y además 'O', se muestra normal
+                    echo esc($empaqueMostrado) . (isset($empaque_otro_descripcion) && !empty($empaque_otro_descripcion) ? ' - ' . esc($empaque_otro_descripcion) : '');
+                ?>
+            </td>
+        </tr>
+        <tr><th>Motivo</th><td><?= esc($motivo) ?></td>
     </table>
 
     <div class="info-usuario">
