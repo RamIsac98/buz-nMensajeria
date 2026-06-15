@@ -148,64 +148,7 @@
 <body>
 
     <header class="mb-4">
-                <nav class="custom-navbar rounded-1">
-                    <div class="nav-brand-container">
-                        <div class="logo-placeholder"> 
-                            <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
-                        </div>
-                        
-                        <?php 
-                            $current_path = service('request')->getUri()->getPath();
-                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
-                            
-                            // Obtenemos los datos de la sesión para validarlos
-                            $rolUsuario = session()->get('rol');
-                            $cedulaUsuario = session()->get('cedula');
-                        ?>
-
-                        <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
-                            Inicio
-                        </a>
-
-                        <a href="<?= base_url('desechos/formulario') ?>" class="nav-link-custom">Solicitud Desechos</a>
-                        <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
-                        <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
-                        
-                        <?php if ($rolUsuario === 'administrador'): ?>
-                            <div class="d-flex align-items-center h-100 dropdown">
-                                <a href="#" class="nav-link-custom dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                                    Configuración
-                                </a>
-                                <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
-                                    <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
-                                <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
-                                    <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
-                                </ul>
-                            </div>
-                        <?php endif; ?>
-                    
-                    <div class="d-flex align-items-center h-100 user-section">
-                        <div class="dropdown">
-                            <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
-                                <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
-                                <li>
-                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
-                                        Cambiar contraseña
-                                    </button>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="<?= base_url('login/salir') ?>">
-                                        Cerrar sesión
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
+        <?= view('layouts/_navbar') ?>
     </header>
 
     <div class="page-title">Solicitud de Bioseguridad - Servicio de Desechos</div>
