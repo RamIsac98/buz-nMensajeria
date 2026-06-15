@@ -132,11 +132,6 @@ class DesechosController extends BaseController
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-
-        // Solo administradores pueden gestionar estados
-        if (session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tiene permisos para gestionar solicitudes.');
-        }
         $desechosModel = new \App\Models\SolicitudDesechosModel();
         $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
 
