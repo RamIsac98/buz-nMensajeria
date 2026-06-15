@@ -20,10 +20,9 @@ class SolicitudDesechosModel extends Model
 
     public function insertarSolicitud(array $data): bool
     {
-        // AÑADIDO: 'ruta_pdf' a la consulta SQL
         $sql = "INSERT INTO solicitudes_desechos 
-            (codigo_solicitud, usuario_id, ext_telefono, tipos_desecho, variantes_desecho, esterilizado, motivo, estado, peso_kg, peso_l, tipo_empaque, empaque_otro_descripcion, ruta_pdf) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (codigo_solicitud, usuario_id, ext_telefono, tipos_desecho, variantes_desecho, esterilizado, motivo, estado, peso_kg, peso_l, tipo_empaque, empaque_otro_descripcion, ruta_pdf, estado_solicitud) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
         return $this->db->query($sql, [
             $data['codigo_solicitud'],
@@ -38,8 +37,78 @@ class SolicitudDesechosModel extends Model
             $data['peso_l'] ?? 0.00,
             $data['tipo_empaque'],
             $data['empaque_otro_descripcion'] ?? null,
-            $data['ruta_pdf'] ?? null // ESTO ES VITAL
+            $data['ruta_pdf'] ?? null,
+            $data['estado_solicitud'] ?? 'Pendiente'
         ]);
+    }
+
+    private function armarCondicionesFiltro($filtros, &$values)
+    {
+        $where = ["1=1"];
+
+        if (!empty($filtros['buscar'])) {
+            $where[] = "(s.codigo_solicitud LIKE ? OR u.username LIKE ?)";
+            $values[] = '%' . $filtros['buscar'] . '%';
+            $values[] = '%' . $filtros['buscar'] . '%';
+        }
+
+        if (!empty($filtros['tipo_desecho'])) {
+            $where[] = "s.tipos_desecho LIKE ?";
+            $values[] = '%' . $filtros['tipo_desecho'] . '%';
+        }
+
+        if (!empty($filtros['estado_solicitud'])) {
+            $where[] = "s.estado_solicitud = ?";
+            $values[] = $filtros['estado_solicitud'];
+        }
+
+        if (!empty($filtros['fecha_desde'])) {
+            $where[] = "DATE(s.fecha_registro) >= ?";
+            $values[] = $filtros['fecha_desde'];
+        }
+
+        if (!empty($filtros['fecha_hasta'])) {
+            $where[] = "DATE(s.fecha_registro) <= ?";
+            $values[] = $filtros['fecha_hasta'];
+        }
+
+        return implode(" AND ", $where);
+    }
+
+    public function countSolicitudesFiltradas($filtros)
+    {
+        $values = [];
+        $whereSql = $this->armarCondicionesFiltro($filtros, $values);
+        
+        $sql = "SELECT COUNT(s.id) as total 
+                FROM solicitudes_desechos s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                WHERE $whereSql";
+                
+        $resultado = $this->db->query($sql, $values)->getRowArray();
+        return $resultado['total'];
+    }
+
+    public function getSolicitudesFiltradas($filtros, $limit, $offset)
+    {
+        $values = [];
+        $whereSql = $this->armarCondicionesFiltro($filtros, $values);
+        
+        $sql = "SELECT s.*, s.ruta_pdf, u.username, u.cedula,
+                       d.nombre AS nombre_departamento, 
+                       l.nombre AS nombre_laboratorio
+                FROM solicitudes_desechos s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                LEFT JOIN departamentos d ON l.departamento_id = d.id
+                WHERE $whereSql
+                ORDER BY s.id DESC
+                LIMIT ? OFFSET ?";
+        
+        $values[] = (int)$limit;
+        $values[] = (int)$offset;
+        
+        return $this->db->query($sql, $values)->getResultArray();
     }
 
     public function getSolicitudes()

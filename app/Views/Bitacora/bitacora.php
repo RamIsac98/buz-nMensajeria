@@ -261,7 +261,7 @@
 
                         <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom">Solicitud Desechos</a>
                         <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
-                        <a href="<?= base_url('registro') ?>" class="nav-link-custom">Registro</a>
+                        <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
                         
                         <div class="d-flex align-items-center h-100 dropdown">
                             <a href="#" class="nav-link-custom active dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">

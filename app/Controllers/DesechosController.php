@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\SolicitudDesechosModel;
 use App\Models\UsuarioModel;
+use App\Models\SolicitudBioseguridadModel;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -137,10 +138,81 @@ class DesechosController extends BaseController
     public function registroSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        // Instanciar los modelos correctamente
+        $desechosModel = new \App\Models\SolicitudDesechosModel();
+        $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
+
+        // Filtros comunes
+        $filtros = [
+            'buscar'            => $this->request->getGet('buscar'),
+            'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
+            'estado_solicitud'  => $this->request->getGet('estado_solicitud'),
+            'fecha_desde'       => $this->request->getGet('fecha_desde'),
+            'fecha_hasta'       => $this->request->getGet('fecha_hasta')
+        ];
+
+        $solicitudes = [];
+        $total = 0;
+
+        // Si el filtro es desechos o todos
+        if (empty($filtros['tipo_solicitud']) || $filtros['tipo_solicitud'] == 'Desechos Biológicos') {
+            $desechos = $desechosModel->getSolicitudesFiltradas($filtros, 999999, 0);
+            foreach ($desechos as &$d) {
+                $d['tipo_solicitud'] = 'Desechos Biológicos';
+            }
+            $solicitudes = array_merge($solicitudes, $desechos);
+            $total += $desechosModel->countSolicitudesFiltradas($filtros);
+        }
         
-        $solicitudModel = new SolicitudDesechosModel();
-        // Pasamos el array exactamente como lo espera el foreach de la vista
-        $data['solicitudes_desechos'] = $solicitudModel->getSolicitudes();
+        if (empty($filtros['tipo_solicitud']) || $filtros['tipo_solicitud'] == 'Bioseguridad') {
+            $bioseg = $bioseguridadModel->getSolicitudesFiltradas($filtros, 999999, 0);
+            foreach ($bioseg as &$b) {
+                $b['tipo_solicitud'] = 'Bioseguridad';
+            }
+            $solicitudes = array_merge($solicitudes, $bioseg);
+            $total += $bioseguridadModel->countSolicitudesFiltradas($filtros);
+        }
+
+        // Ordenar por fecha descendente
+        usort($solicitudes, function($a, $b) {
+            return strtotime($b['fecha_registro']) - strtotime($a['fecha_registro']);
+        });
+
+        // Paginación manual
+        $porPagina = 10;
+        $pagina = (int)($this->request->getGet('page') ?? 1);
+        $offset = ($pagina - 1) * $porPagina;
+        $solicitudesPag = array_slice($solicitudes, $offset, $porPagina);
+        $totalPages = ceil($total / $porPagina);
+
+        // Mantener filtros en URL
+        $currentGet = $_GET;
+        unset($currentGet['page']);
+        $urlParams = !empty($currentGet) ? '&' . http_build_query($currentGet) : '';
+
+        // Rango de páginas
+        $startPage = max(1, $pagina - 1);
+        $endPage = min($totalPages, $pagina + 1);
+        if ($pagina == 1) $endPage = min($totalPages, 3);
+        if ($pagina == $totalPages) $startPage = max(1, $totalPages - 2);
+
+        $data = [
+            'solicitudes'        => $solicitudesPag,
+            'total'              => $total,
+            'porPagina'          => $porPagina,
+            'paginaActual'       => $pagina,
+            'totalPages'         => $totalPages,
+            'startPage'          => $startPage,
+            'endPage'            => $endPage,
+            'urlParams'          => $urlParams,
+            'filtros'            => $filtros,
+            'tiposSolicitud'     => ['Desechos Biológicos', 'Bioseguridad'],
+            'estadosSolicitud'   => ['Pendiente', 'Entregado', 'Cancelado']
+        ];
+
         return view('desechos/registroSolicitudes', $data);
     }
+
+
 }

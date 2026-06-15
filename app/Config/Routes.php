@@ -55,3 +55,8 @@ $routes->post('desechos/registrar', 'DesechosController::registrar');
 // Agrégala junto a las otras rutas de desechos
 $routes->get('desechos/registroSolicitudes', 'DesechosController::registroSolicitudes');
 $routes->get('desechos/verPdf/(:segment)', 'DesechosController::verPdf/$1');
+
+$routes->get('solicitud_bioseguridad', 'BioseguridadController::crear');
+$routes->post('bioseguridad/registrar', 'BioseguridadController::registrar');
+$routes->get('bioseguridad/verPdf/(:any)', 'BioseguridadController::verPdf/$1');
+$routes->get('bioseguridad/formulario', 'BioseguridadController::crear');
