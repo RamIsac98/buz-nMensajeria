@@ -104,14 +104,14 @@ class GestionController extends BaseController
                 'nombre' => [
                     'rules'  => "required|min_length[3]|max_length[100]|$reglaUnique",
                     'errors' => [
-                        'required'   => 'El nombre del departamento es obligatorio.',
+                        'required'   => 'El nombre del Centro es obligatorio.',
                         'min_length' => 'El nombre debe poseer al menos 3 caracteres.',
                         'max_length' => 'El nombre no puede exceder los 100 caracteres.',
-                        'is_unique'  => '¡Advertencia! Ya se encuentra un departamento registrado con ese nombre.'
+                        'is_unique'  => '¡Advertencia! Ya se encuentra un Centro registrado con ese nombre.'
                     ]
                 ]
             ];
-            $msgSuccess = $esEdicion ? 'Departamento actualizado de forma exitosa.' : 'Departamento guardado exitosamente.';
+            $msgSuccess = $esEdicion ? 'Centro actualizado de forma exitosa.' : 'Centro guardado exitosamente.';
         } else {
             $nombre = trim((string)$this->request->getPost('nombre_laboratorio'));
             $deptoId = (int)$this->request->getPost('departamento_id');
@@ -130,8 +130,8 @@ class GestionController extends BaseController
                 'departamento_id' => [
                     'rules'  => 'required|is_not_unique[departamentos.id]',
                     'errors' => [
-                        'required'       => 'Debe seleccionar un departamento válido.',
-                        'is_not_unique'  => 'El departamento seleccionado no existe en los registros maestros.'
+                        'required'       => 'Debe seleccionar un centro válido.',
+                        'is_not_unique'  => 'El centro seleccionado no existe en los registros maestros.'
                     ]
                 ]
             ];
