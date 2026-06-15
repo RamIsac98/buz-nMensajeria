@@ -231,11 +231,11 @@ $currentPath = service('request')->getUri()->getPath();
     </div>
 </nav>
 
-<!-- Modal cambio de contraseña (puede ir aquí o en layout base) -->
+<!-- Modal cambio de contraseña con colores corporativos -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
                 <h5 class="modal-title">Cambiar Contraseña</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -257,7 +257,7 @@ $currentPath = service('request')->getUri()->getPath();
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar Clave</button>
+                    <button type="submit" class="btn" style="background-color: var(--azul-claro); color: white;">Actualizar Clave</button>
                 </div>
             </form>
         </div>
