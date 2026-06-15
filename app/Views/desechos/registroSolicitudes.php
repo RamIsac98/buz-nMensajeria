@@ -196,14 +196,14 @@
                         
                         <?php 
                             $current_path = service('request')->getUri()->getPath();
-                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfaz_usuario_inicial'));
+                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
                             
                             // Obtenemos los datos de la sesión para validarlos
                             $rolUsuario = session()->get('rol');
                             $cedulaUsuario = session()->get('cedula');
                         ?>
 
-                        <a href="<?= base_url('interfaz_usuario_inicial') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
+                        <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
                             Inicio
                         </a>
 

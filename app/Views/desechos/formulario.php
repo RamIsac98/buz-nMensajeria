@@ -10,9 +10,7 @@
             --azul-claro: #2073AF;
             --azul-oscuro: rgba(28, 70, 110, 0.9);
             --amarillo: #ffc107;
-            --bg-nav: #4fa1c9;
             --bg-tab-active: #173f5f;
-            --text-yellow: #f4b13e;
             --bg-body: #ffffff;
             --bg-form: #f7f7f7;
             --text-blue: #173f5f;
@@ -139,8 +137,8 @@
         .variants-box { border: 1px dashed var(--text-blue); padding: 15px; border-radius: 4px; background: transparent; min-height: 100px; display: none; }
         .variants-box .form-check-label { font-size: 0.85rem; color: #666; }
 
-        .btn-submit { background-color: #2b78a9; color: var(--text-yellow); font-weight: bold; border: none; padding: 12px 0; width: 100%; border-radius: 4px; font-size: 1rem; transition: 0.3s; }
-        .btn-submit:hover { background-color: var(--bg-tab-active); }
+        .btn-submit { background-color: #2b78a9; color: var(--amarillo); font-weight: bold; border: none; padding: 12px 0; width: 100%; border-radius: 4px; font-size: 1rem; transition: 0.3s; }
+        .btn-submit:hover { background-color: var(--azul-oscuro); }
         
         /* ALINEACIONES ESPECÍFICAS DEL MOCKUP */
         .inline-inputs { display: flex; align-items: center; gap: 10px; }
@@ -158,14 +156,14 @@
                         
                         <?php 
                             $current_path = service('request')->getUri()->getPath();
-                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfaz_usuario_inicial'));
+                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
                             
                             // Obtenemos los datos de la sesión para validarlos
                             $rolUsuario = session()->get('rol');
                             $cedulaUsuario = session()->get('cedula');
                         ?>
 
-                        <a href="<?= base_url('interfaz_usuario_inicial') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
+                        <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
                             Inicio
                         </a>
 
