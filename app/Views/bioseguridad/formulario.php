@@ -25,49 +25,95 @@
             justify-content: space-between;
             min-height: 65px;
         }
+
         .nav-brand-container {
             display: flex;
             align-items: center;
             padding-left: 20px;
         }
+
         .logo-placeholder {
             width: 40px;
             height: 40px;
             margin-right: 15px;
+            display: inline-block;
+            overflow: hidden;
+            background-color: transparent;
         }
+
         .logo-placeholder img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         .nav-link-custom {
             display: flex;
             align-items: center;
             color: white;
             text-decoration: none;
-            padding: 0 25px;
+            padding: 0 30px;
             height: 65px;
-            font-size: 1rem;
-            transition: 0.2s;
+            font-size: 1.1rem;
+            transition: background-color 0.2s ease;
         }
+
         .nav-link-custom:hover {
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(0, 0, 0, 0.1);
             color: white;
         }
+
         .nav-link-custom.active {
             background-color: var(--azul-oscuro);
             color: var(--amarillo) !important;
             font-weight: 500;
         }
+
+        /* --- SECCIÓN DE PERFIL DE USUARIO --- */
         .user-section {
             padding-right: 25px;
         }
+
         .user-dropdown-toggle {
             color: white;
             text-decoration: none;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .user-dropdown-toggle:hover, .user-dropdown-toggle:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--amarillo);
+        }
+
+        .user-icon-img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .custom-dropdown-menu {
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .custom-dropdown-menu .dropdown-item {
+            font-size: 0.9rem;
+            color: #444;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .custom-dropdown-menu .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--azul-claro);
         }
         .container-form {
             max-width: 1200px;
@@ -153,45 +199,66 @@
 <body>
 
     <!-- Barra de navegación (igual que antes) -->
-    <header>
-        <nav class="custom-navbar">
-            <div class="nav-brand-container">
-                <div class="logo-placeholder">
-                    <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
-                </div>
-                <?php 
-                    $current_path = service('request')->getUri()->getPath();
-                    $is_desechos = str_contains($current_path, 'solicitud_desechos');
-                    $is_bioseguridad = str_contains($current_path, 'solicitud_bioseguridad');
-                ?>
-                <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom">Inicio</a>
-                <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom <?= $is_desechos ? 'active' : '' ?>">Servicio Desechos</a>
-                <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom <?= $is_bioseguridad ? 'active' : '' ?>">Solicitud Bioseguridad</a>
-                <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Estado Solicitud</a>
-                <div class="dropdown">
-                    <a href="#" class="nav-link-custom dropdown-toggle" data-bs-toggle="dropdown">Configuración</a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
-                        <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
-                        <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="user-section">
-                <div class="dropdown">
-                    <a href="#" class="user-dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown">
-                        <img src="<?= base_url('img/user.svg') ?>" width="20" alt="User">
-                        <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">Cambiar contraseña</button></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="<?= base_url('login/salir') ?>">Cerrar sesión</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
+        <header class="mb-4">
+                <nav class="custom-navbar rounded-1">
+                    <div class="nav-brand-container">
+                        <div class="logo-placeholder"> 
+                            <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
+                        </div>
+                        
+                        <?php 
+                            $current_path = service('request')->getUri()->getPath();
+                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfaz_usuario_inicial'));
+                            
+                            // Obtenemos los datos de la sesión para validarlos
+                            $rolUsuario = session()->get('rol');
+                            $cedulaUsuario = session()->get('cedula');
+                        ?>
+
+                        <a href="<?= base_url('interfaz_usuario_inicial') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
+                            Inicio
+                        </a>
+
+                        <a href="<?= base_url('desechos/formulario') ?>" class="nav-link-custom">Solicitud Desechos</a>
+                        <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
+                        <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
+                        
+                        <?php if ($rolUsuario === 'administrador'): ?>
+                            <div class="d-flex align-items-center h-100 dropdown">
+                                <a href="#" class="nav-link-custom dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                                    Configuración
+                                </a>
+                                <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
+                                <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+                    
+                    <div class="d-flex align-items-center h-100 user-section">
+                        <div class="dropdown">
+                            <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
+                                <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
+                                <li>
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
+                                        Cambiar contraseña
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="<?= base_url('login/salir') ?>">
+                                        Cerrar sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+        </header>
 
     <div class="container-form">
         <div class="form-header">

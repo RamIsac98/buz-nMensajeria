@@ -187,43 +187,44 @@
     </style>
 </head>
 <body>
-    <header class="mb-4">
-            <nav class="custom-navbar rounded-1">
-                <div class="nav-brand-container">
+        <header class="mb-4">
+                <nav class="custom-navbar rounded-1">
+                    <div class="nav-brand-container">
                         <div class="logo-placeholder"> 
                             <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
                         </div>
                         
                         <?php 
                             $current_path = service('request')->getUri()->getPath();
-                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfazinicial/menuusuario'));
+                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfaz_usuario_inicial'));
+                            
+                            // Obtenemos los datos de la sesión para validarlos
+                            $rolUsuario = session()->get('rol');
+                            $cedulaUsuario = session()->get('cedula');
                         ?>
 
-                        <a href="<?= base_url('interfazinicial/menuusuario') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
+                        <a href="<?= base_url('interfaz_usuario_inicial') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
                             Inicio
                         </a>
 
-                        <a href="<?= base_url('solicitud_desechos') ?>" class="nav-link-custom">Solicitud Desechos</a>
+                        <a href="<?= base_url('desechos/formulario') ?>" class="nav-link-custom">Solicitud Desechos</a>
                         <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
                         <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
                         
-                        <div class="d-flex align-items-center h-100 dropdown">
-                            <a href="#" class="nav-link-custom active dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                                Configuración
-                            </a>
-                            <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
-                                <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
+                        <?php if ($rolUsuario === 'administrador'): ?>
+                            <div class="d-flex align-items-center h-100 dropdown">
+                                <a href="#" class="nav-link-custom dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                                    Configuración
+                                </a>
+                                <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
                                 <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
-                                <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+                    
                     <div class="d-flex align-items-center h-100 user-section">
-                        <a href="<?= base_url('usuarios/crear') ?>" class="nav-link-custom me-2">
-                            Crear Nuevo Usuario
-                        </a>
-
                         <div class="dropdown">
                             <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
@@ -231,22 +232,21 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
                                 <li>
-                                    <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
                                         Cambiar contraseña
                                     </button>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?= base_url('login/salir') ?>">
+                                    <a class="dropdown-item text-danger" href="<?= base_url('login/salir') ?>">
                                         Cerrar sesión
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                </div>
-            </nav>
-    </header>
+                </nav>
+        </header>
     <div class="container-fluid my-5 px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="main-title">Historial de Solicitudes Procesadas</h2>
@@ -263,12 +263,6 @@
         <!-- BARRA DE FILTROS (igual que en index.php) -->
         <div class="filter-bar mb-4 mt-3">
             <form method="GET" action="<?= base_url('desechos/registroSolicitudes') ?>" class="row g-2 align-items-center justify-content-between">
-                
-                <div class="col-auto filter-group">
-                    <span class="filter-label">Buscar</span>
-                    <input type="text" name="buscar" class="filter-input input-search-width" placeholder="Código o Usuario..." value="<?= esc($filtros['buscar'] ?? '') ?>">
-                </div>
-
                 <div class="col-auto filter-group">
                     <span class="filter-label">Tipo SOLICITUD</span>
                     <select name="tipo_solicitud" class="filter-input input-select-width">
@@ -337,14 +331,14 @@
                                         <td class="fw-bold"><?= esc($sol['tipo_solicitud']) ?></td>
                                         <td>
                                             <?php if (!empty($sol['ruta_pdf'])): ?>
-                                                <?php 
-                                                    $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
-                                                        ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
-                                                        : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
-                                                ?>
-                                                <a href="<?= $pdfUrl ?>" target="_blank" class="btn btn-sm btn-danger">
-                                                    📄 PDF
-                                                </a>
+                                            <?php 
+                                                $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
+                                                    ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
+                                                    : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
+                                            ?>
+                                            <a href="<?= $pdfUrl ?>" target="_blank" class="btn btn-sm btn-danger">
+                                                📄 PDF
+                                            </a>
                                             <?php else: ?>
                                                 <span class="text-muted small">Sin PDF</span>
                                             <?php endif; ?>

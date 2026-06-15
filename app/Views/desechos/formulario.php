@@ -7,6 +7,9 @@
     <link rel="icon" type="image/x-icon" href="<?= base_url('img/logo.svg') ?>">
     <style>
         :root {
+            --azul-claro: #2073AF;
+            --azul-oscuro: rgba(28, 70, 110, 0.9);
+            --amarillo: #ffc107;
             --bg-nav: #4fa1c9;
             --bg-tab-active: #173f5f;
             --text-yellow: #f4b13e;
@@ -19,22 +22,104 @@
         body { font-family: Arial, sans-serif; background-color: var(--bg-body); margin: 0; }
 
         /* HEADER & NAVBAR IDÉNTICO AL DISEÑO */
-        .top-navbar {
-            background-color: var(--bg-nav);
-            display: flex; justify-content: space-between; align-items: stretch;
-            height: 70px; padding: 0;
+        .custom-navbar {
+            background-color: var(--azul-claro);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 65px;
         }
-        .logo-box { background-color: #fff; padding: 10px 20px; display: flex; align-items: center; }
-        .logo-box img { width: 40px; }
-        
-        .nav-tabs-custom { display: flex; flex-grow: 1; margin-left: 20px; }
-        .nav-tab {
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 30px; color: white; text-decoration: none;
-            font-size: 1.1rem; text-align: center; line-height: 1.2;
+
+        .nav-brand-container {
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
         }
-        .nav-tab.active { background-color: var(--bg-tab-active); color: var(--text-yellow); font-weight: bold; }
-        .nav-user { display: flex; align-items: center; padding: 0 30px; color: white; font-size: 1.1rem; }
+
+        .logo-placeholder {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            display: inline-block;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        .logo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 0 30px;
+            height: 65px;
+            font-size: 1.1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-link-custom:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        .nav-link-custom.active {
+            background-color: var(--azul-oscuro);
+            color: var(--amarillo) !important;
+            font-weight: 500;
+        }
+
+        /* --- SECCIÓN DE PERFIL DE USUARIO --- */
+        .user-section {
+            padding-right: 25px;
+        }
+
+        .user-dropdown-toggle {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .user-dropdown-toggle:hover, .user-dropdown-toggle:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--amarillo);
+        }
+
+        .user-icon-img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .custom-dropdown-menu {
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .custom-dropdown-menu .dropdown-item {
+            font-size: 0.9rem;
+            color: #444;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .custom-dropdown-menu .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--azul-claro);
+        }
 
         /* FORMULARIO ESTÉTICA GRIS */
         .page-title { color: var(--text-blue); font-weight: bold; margin: 25px 0 15px 40px; font-size: 1.4rem; }
@@ -64,21 +149,66 @@
 </head>
 <body>
 
-    <div class="top-navbar">
-        <div class="d-flex">
-            <div class="logo-box">
-                <img src="<?= base_url('img/logo.svg') ?>" alt="Logo">
-            </div>
-            <div class="nav-tabs-custom">
-                <a href="#" class="nav-tab active">Servicio<br>Desechos</a>
-                <a href="#" class="nav-tab">Solicitud<br>Bioseguridad</a>
-                <a href="#" class="nav-tab">Estado<br>Solicitud</a>
-            </div>
-        </div>
-        <div class="nav-user">
-            Usuario <img src="<?= base_url('img/user.svg') ?>" alt="User" class="ms-2" width="28">
-        </div>
-    </div>
+    <header class="mb-4">
+                <nav class="custom-navbar rounded-1">
+                    <div class="nav-brand-container">
+                        <div class="logo-placeholder"> 
+                            <img src="<?= base_url('img/logo.svg') ?>" alt="logo">
+                        </div>
+                        
+                        <?php 
+                            $current_path = service('request')->getUri()->getPath();
+                            $is_home = ($current_path === '' || $current_path === '/' || str_contains($current_path, 'interfaz_usuario_inicial'));
+                            
+                            // Obtenemos los datos de la sesión para validarlos
+                            $rolUsuario = session()->get('rol');
+                            $cedulaUsuario = session()->get('cedula');
+                        ?>
+
+                        <a href="<?= base_url('interfaz_usuario_inicial') ?>" class="nav-link-custom <?= $is_home ? 'active' : '' ?>">
+                            Inicio
+                        </a>
+
+                        <a href="<?= base_url('desechos/formulario') ?>" class="nav-link-custom">Solicitud Desechos</a>
+                        <a href="<?= base_url('solicitud_bioseguridad') ?>" class="nav-link-custom">Solicitud Bioseguridad</a>
+                        <a href="<?= base_url('desechos/registroSolicitudes') ?>" class="nav-link-custom">Registro</a>
+                        
+                        <?php if ($rolUsuario === 'administrador'): ?>
+                            <div class="d-flex align-items-center h-100 dropdown">
+                                <a href="#" class="nav-link-custom dropdown-toggle" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                                    Configuración
+                                </a>
+                                <ul class="dropdown-menu custom-dropdown-menu border-0 shadow mt-0" aria-labelledby="configMenu">
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios') ?>">Gestión Usuarios</a></li>
+                                <li><a class="dropdown-item" href="<?= base_url('gestion-departamento') ?>">Gestión Departamentos</a></li>
+                                    <li><a class="dropdown-item" href="<?= base_url('usuarios/bitacora') ?>">Bitácora</a></li>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+                    
+                    <div class="d-flex align-items-center h-100 user-section">
+                        <div class="dropdown">
+                            <a href="#" class="user-dropdown-toggle dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="<?= base_url('img/user.svg') ?>" class="user-icon-img" alt="User Icon">
+                                <span>Usuario <strong><?= esc(session()->get('username') ?? 'Sistema') ?></strong></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
+                                <li>
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
+                                        Cambiar contraseña
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="<?= base_url('login/salir') ?>">
+                                        Cerrar sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+    </header>
 
     <div class="page-title">Solicitud de Bioseguridad - Servicio de Desechos</div>
 
