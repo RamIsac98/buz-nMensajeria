@@ -21,8 +21,8 @@ class SolicitudDesechosModel extends Model
     public function insertarSolicitud(array $data): bool
     {
         $sql = "INSERT INTO solicitudes_desechos 
-            (codigo_solicitud, usuario_id, ext_telefono, tipos_desecho, variantes_desecho, esterilizado, motivo, estado, peso_kg, peso_l, tipo_empaque, empaque_otro_descripcion, ruta_pdf, estado_solicitud) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (codigo_solicitud, usuario_id, ext_telefono, tipos_desecho, variantes_desecho, esterilizado, motivo, estado, peso_kg, peso_l, tipo_empaque, empaque_otro_descripcion, estado_solicitud) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
         return $this->db->query($sql, [
             $data['codigo_solicitud'],
@@ -37,7 +37,6 @@ class SolicitudDesechosModel extends Model
             $data['peso_l'] ?? 0.00,
             $data['tipo_empaque'],
             $data['empaque_otro_descripcion'] ?? null,
-            $data['ruta_pdf'] ?? null,
             $data['estado_solicitud'] ?? 'Pendiente'
         ]);
     }
@@ -89,12 +88,13 @@ class SolicitudDesechosModel extends Model
         return $resultado['total'];
     }
 
+    // ✅ ELIMINADO: s.ruta_pdf
     public function getSolicitudesFiltradas($filtros, $limit, $offset)
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
         
-        $sql = "SELECT s.*, s.ruta_pdf, u.username, u.cedula,
+        $sql = "SELECT s.*, u.username, u.cedula,
                        d.nombre AS nombre_departamento, 
                        l.nombre AS nombre_laboratorio
                 FROM solicitudes_desechos s
@@ -113,7 +113,7 @@ class SolicitudDesechosModel extends Model
 
     public function getSolicitudes()
     {
-        $sql = "SELECT s.*, s.ruta_pdf, u.username, u.cedula,
+        $sql = "SELECT s.*, u.username, u.cedula,
                     d.nombre AS nombre_departamento, 
                     l.nombre AS nombre_laboratorio
                 FROM solicitudes_desechos s

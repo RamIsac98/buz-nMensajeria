@@ -137,7 +137,7 @@
         </form>
     </div>
 
-    <!-- Tabla -->
+    <!-- Tabla con columna USUARIO agregada -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -145,6 +145,7 @@
                     <thead class="thead-custom">
                         <tr>
                             <th>TIPO SOLICITUD</th>
+                            <th>USUARIO</th> <!-- Nueva columna -->
                             <th>INFORME</th>
                             <th>ESTADO SOLICITUD</th>
                             <th>FECHA SOLICITADA</th>
@@ -155,19 +156,11 @@
                             <?php foreach ($solicitudes as $sol) : ?>
                                 <tr>
                                     <td class="fw-bold"><?= esc($sol['tipo_solicitud']) ?></td>
+                                    <td><?= esc($sol['username'] ?? 'N/D') ?></td> <!-- Nueva celda -->
                                     <td>
-                                        <?php if (!empty($sol['ruta_pdf'])): ?>
-                                            <?php 
-                                                $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
-                                                    ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
-                                                    : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
-                                            ?>
-                                            <a href="<?= $pdfUrl ?>" target="_blank" title="Ver PDF">
-                                                <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-muted small">Sin PDF</span>
-                                        <?php endif; ?>
+                                        <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank">
+                                            <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
+                                        </a>
                                     </td>
                                     <td>
                                         <?php
@@ -183,7 +176,7 @@
                             <?php endforeach; ?>
                         <?php else : ?>
                             <tr>
-                                <td colspan="4" class="text-muted py-5 text-center">No existen registros con los filtros aplicados.</td>
+                                <td colspan="5" class="text-muted py-5 text-center">No existen registros con los filtros aplicados.</td> <!-- colspan actualizado -->
                             </tr>
                         <?php endif; ?>
                     </tbody>

@@ -215,18 +215,9 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (!empty($sol['ruta_pdf'])): ?>
-                                            <?php 
-                                                $pdfUrl = ($sol['tipo_solicitud'] == 'Desechos Biológicos') 
-                                                    ? base_url('desechos/verPdf/' . urlencode(basename($sol['ruta_pdf'])))
-                                                    : base_url('bioseguridad/verPdf/' . urlencode(basename($sol['ruta_pdf'])));
-                                            ?>
-                                            <a href="<?= $pdfUrl ?>" target="_blank" title="Ver PDF">
-                                                <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-muted small">Sin PDF</span>
-                                        <?php endif; ?>
+                                        <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank">
+                                            <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
+                                        </a>
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 align-items-center">

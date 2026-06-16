@@ -54,13 +54,14 @@ $routes->get('gestion-departamento/generar-pdf-general', 'GestionController::gen
 $routes->get('desechos/formulario', 'DesechosController::crear');
 $routes->post('desechos/registrar', 'DesechosController::registrar');
 $routes->get('desechos/registroSolicitudes', 'DesechosController::registroSolicitudes');
-$routes->get('desechos/verPdf/(:segment)', 'DesechosController::verPdf/$1');
 
 //solicitud de Bioseguridad
 $routes->get('solicitud_bioseguridad', 'BioseguridadController::crear');
 $routes->post('bioseguridad/registrar', 'BioseguridadController::registrar');
-$routes->get('bioseguridad/verPdf/(:any)', 'BioseguridadController::verPdf/$1');
 $routes->get('bioseguridad/formulario', 'BioseguridadController::crear');
 
 $routes->get('desechos/gestionSolicitudes', 'DesechosController::gestionSolicitudes');
 $routes->post('desechos/actualizarEstado', 'DesechosController::actualizarEstado');
+
+$routes->get('desechos/generarPdf/(:num)', 'DesechosController::generarPdf/$1');
+$routes->get('bioseguridad/generarPdf/(:num)', 'BioseguridadController::generarPdf/$1');

@@ -156,7 +156,7 @@
         </div>
 
         <div class="mb-4">
-            <label class="form-label">Bolsas Rojas (total máximo 10 unidades)</label>
+            <label class="form-label">Bolsas Rojas (máximo 10 unidades por cada tamaño)</label>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label small">Pequeña</label>
@@ -171,7 +171,8 @@
                     <input type="number" name="bolsas_rojas_grande" id="bolsaGra" class="form-control" min="0" max="10" value="0">
                 </div>
             </div>
-            <div id="bolsasWarning" class="text-danger small mt-2" style="display:none;">El total de bolsas no puede superar 10.</div>
+            <!-- Advertencia por límite individual -->
+            <div id="bolsasWarning" class="text-danger small mt-2" style="display:none;">⚠️ Cada tamaño de bolsa tiene un límite máximo de 10 unidades.</div>
             <!-- Advertencia de material faltante -->
             <div id="materialWarning" class="warning-material">⚠️ Debes seleccionar al menos un material (contenedor o bolsa roja).</div>
         </div>
@@ -239,22 +240,29 @@
     radioOtro.addEventListener('change', toggleNombreOtra);
     toggleNombreOtra();
 
-    // Validación total bolsas
+    // Validación de bolsas rojas (cada tamaño máximo 10)
     const bolsaPeq = document.getElementById('bolsaPeq');
     const bolsaMed = document.getElementById('bolsaMed');
     const bolsaGra = document.getElementById('bolsaGra');
     const warningBolsas = document.getElementById('bolsasWarning');
     const materialWarning = document.getElementById('materialWarning');
 
-    function validarTotalBolsas() {
-        let total = (parseInt(bolsaPeq.value)||0) + (parseInt(bolsaMed.value)||0) + (parseInt(bolsaGra.value)||0);
-        if (total > 10) {
+    function validarBolsasIndividuales() {
+        let peq = parseInt(bolsaPeq.value) || 0;
+        let med = parseInt(bolsaMed.value) || 0;
+        let gra = parseInt(bolsaGra.value) || 0;
+        let error = false;
+
+        if (peq > 10) { bolsaPeq.value = 10; peq = 10; error = true; }
+        if (med > 10) { bolsaMed.value = 10; med = 10; error = true; }
+        if (gra > 10) { bolsaGra.value = 10; gra = 10; error = true; }
+
+        if (error) {
             warningBolsas.style.display = 'block';
-            return false;
         } else {
             warningBolsas.style.display = 'none';
-            return true;
         }
+        return !error;
     }
 
     // Validar que al menos un material esté solicitado (contenedor >0 o alguna bolsa >0)
@@ -273,19 +281,19 @@
         }
     }
 
-    bolsaPeq.addEventListener('input', validarTotalBolsas);
-    bolsaMed.addEventListener('input', validarTotalBolsas);
-    bolsaGra.addEventListener('input', validarTotalBolsas);
+    // Asignar eventos a los inputs de bolsas
+    bolsaPeq.addEventListener('input', validarBolsasIndividuales);
+    bolsaMed.addEventListener('input', validarBolsasIndividuales);
+    bolsaGra.addEventListener('input', validarBolsasIndividuales);
 
-    // Validación contenedores
+    // Validación contenedores (máximo 3)
     const pulsoInput = document.getElementById('pulsoCantidad');
     pulsoInput.addEventListener('change', function() {
         if (this.value > 3) this.value = 3;
         if (this.value < 0) this.value = 0;
-        // Ocultar advertencia si se escribe algo
         if (this.value > 0) materialWarning.style.display = 'none';
     });
-    // También ocultar advertencia si se cambian bolsas
+    // Ocultar advertencia si se cambian bolsas
     [bolsaPeq, bolsaMed, bolsaGra].forEach(input => {
         input.addEventListener('input', function() {
             if (parseInt(this.value) > 0) materialWarning.style.display = 'none';
@@ -301,8 +309,8 @@
             form.reportValidity();
             return;
         }
-        // Validar total bolsas
-        if (!validarTotalBolsas()) {
+        // Validar bolsas individuales
+        if (!validarBolsasIndividuales()) {
             warningBolsas.scrollIntoView({ behavior: 'smooth' });
             return;
         }

@@ -46,20 +46,19 @@ class BioseguridadController extends BaseController
         $peq = (int)$this->request->getPost('bolsas_rojas_pequena');
         $med = (int)$this->request->getPost('bolsas_rojas_mediana');
         $gra = (int)$this->request->getPost('bolsas_rojas_grande');
-        $totalBolsas = $peq + $med + $gra;
-        if ($totalBolsas > 10) {
-            return redirect()->back()->with('error', 'El total de Bolsas Rojas no puede superar 10 unidades.');
+
+        if ($peq > 10 || $med > 10 || $gra > 10) {
+            return redirect()->back()->with('error', 'Cada tamaño de bolsa roja tiene un límite máximo de 10 unidades.');
         }
 
         $quienRetira = $this->request->getPost('quien_retira');
         $nombreOtra = ($quienRetira === 'otra_persona') ? $this->request->getPost('nombre_otra_persona') : null;
 
         $codigo = $this->request->getPost('codigo_solicitud');
-        
         if (empty($codigo)) {
             $codigo = $solicitudModel->generarCodigoUnico();
-            log_message('warning', 'Código de solicitud vacío, se generó uno nuevo: ' . $codigo);
         }
+
         $insertData = [
             'codigo_solicitud'            => $codigo,
             'usuario_id'                  => session()->get('usuario_id'),
@@ -70,43 +69,52 @@ class BioseguridadController extends BaseController
             'bolsas_rojas_grande'         => $gra,
             'quien_retira'                => $quienRetira,
             'nombre_otra_persona'         => $nombreOtra,
+            // No se guarda ruta_pdf
         ];
 
-        // Datos para PDF
-        $usuarioModel = new UsuarioModel();
-        $usuario = $usuarioModel->findById(session()->get('usuario_id'));
-        $pdfData = $insertData;
-        $pdfData['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
-        $pdfData['departamento']   = $usuario['departamento'] ?? 'No asignado';
-        $pdfData['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
-        $pdfData['fecha_registro'] = date('d/m/Y H:i:s');
-
-        $nombrePdf = 'bioseguridad_' . $codigo . '.pdf';
-        $rutaRelativa = 'uploads/pdfs/' . $nombrePdf;
-        $pdfData['ruta_pdf'] = $rutaRelativa;
-        $insertData['ruta_pdf'] = $rutaRelativa;
-
         if ($solicitudModel->insertarSolicitud($insertData)) {
-            $this->generarPDF($pdfData, $nombrePdf);
             $this->registrarBitacora('Registro de Solicitud', 'Servicio Bioseguridad', "Se generó la solicitud: " . $codigo);
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud de Bioseguridad y PDF registrados correctamente.');
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud de Bioseguridad registrada correctamente.');
         } else {
             return redirect()->back()->with('error', 'Error al guardar en la base de datos.');
         }
     }
 
-    private function generarPDF($data, $nombrePdf)
+    public function generarPdf($id)
     {
-        $options = new Options();
-        $options->set('isRemoteEnabled', true);
-        $dompdf = new Dompdf($options);
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudBioseguridadModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->back()->with('error', 'Solicitud no encontrada.');
+        }
+
+        // Obtener datos del usuario
+        $usuarioModel = new \App\Models\UsuarioModel();
+        $usuario = $usuarioModel->findById($solicitud['usuario_id']);
+
+        // Preparar datos para la plantilla PDF
+        $data = $solicitud;
+        $data['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
+        $data['departamento']   = $usuario['departamento'] ?? 'No asignado';
+        $data['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
+        $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
+
+        // Usar la plantilla PDF de bioseguridad
         $html = view('bioseguridad/plantilla_pdf', $data);
+
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
-        $directorio = FCPATH . 'uploads/pdfs/';
-        if (!is_dir($directorio)) mkdir($directorio, 0777, true);
-        file_put_contents($directorio . $nombrePdf, $dompdf->output());
+
+        // Enviar al navegador sin guardar en disco
+        $dompdf->stream('bioseguridad_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
+        exit;
     }
 
     public function verPdf($nombreArchivo)

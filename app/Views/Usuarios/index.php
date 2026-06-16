@@ -277,8 +277,8 @@
                     <tr>
                         <td><?= $user['id'] ?></td>
                         <td><?= esc($user['nombre']) ?> <?= esc($user['apellido']) ?></td>
-                        <td><?= esc($user['cedula']) ?></td>
                         <td><strong><?= esc($user['username']) ?></strong></td>
+                        <td><?= esc($user['cedula']) ?></td>
                         <td><span class="badge bg-light text-dark border"><?= esc($user['rol']) ?></span></td>
                         <td><?= !empty($user['pregunta_seguridad']) ? esc($user['pregunta_seguridad']) : '<em class="text-muted">No configurada</em>' ?></td>
                         <td>

@@ -164,7 +164,9 @@ class UsuarioModel extends Model
         $sql = "SELECT 
                     d.nombre AS nombre_departamento,
                     l.nombre AS nombre_laboratorio,
-                    u.username AS nombre_usuario,
+                    u.nombre AS nombre_usuario,
+                    u.apellido AS apellido_usuario,
+                    u.username AS username_usuario,
                     u.cedula AS cedula_usuario,
                     u.rol AS rol_usuario,
                     u.status AS estado_usuario

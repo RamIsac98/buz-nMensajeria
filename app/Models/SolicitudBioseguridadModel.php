@@ -18,13 +18,14 @@ class SolicitudBioseguridadModel extends Model
         return $prefix . "-" . $secuencia;
     }
 
+    // ✅ ELIMINADO: ruta_pdf
     public function insertarSolicitud(array $data): bool
     {
         $sql = "INSERT INTO solicitudes_bioseguridad 
             (codigo_solicitud, usuario_id, ext_telefono, contenedores_pulso_cantidad, 
              bolsas_rojas_pequena, bolsas_rojas_mediana, bolsas_rojas_grande, 
-             quien_retira, nombre_otra_persona, estado_solicitud, ruta_pdf) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+             quien_retira, nombre_otra_persona, estado_solicitud) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
         return $this->db->query($sql, [
             $data['codigo_solicitud'],
@@ -36,34 +37,32 @@ class SolicitudBioseguridadModel extends Model
             $data['bolsas_rojas_grande'] ?? 0,
             $data['quien_retira'] ?? 'mi_persona',
             $data['nombre_otra_persona'] ?? null,
-            $data['estado_solicitud'] ?? 'Pendiente',
-            $data['ruta_pdf'] ?? null
+            $data['estado_solicitud'] ?? 'Pendiente'
         ]);
     }
 
-    // Filtros y paginación (similar a SolicitudDesechosModel)
     private function armarCondicionesFiltro($filtros, &$values)
     {
         $where = ["1=1"];
 
         if (!empty($filtros['buscar'])) {
-            $where[] = "(codigo_solicitud LIKE ? OR usuario_id IN (SELECT id FROM usuarios WHERE username LIKE ?))";
+            $where[] = "(s.codigo_solicitud LIKE ? OR u.username LIKE ?)";
             $values[] = '%' . $filtros['buscar'] . '%';
             $values[] = '%' . $filtros['buscar'] . '%';
         }
 
         if (!empty($filtros['estado_solicitud'])) {
-            $where[] = "estado_solicitud = ?";
+            $where[] = "s.estado_solicitud = ?";
             $values[] = $filtros['estado_solicitud'];
         }
 
         if (!empty($filtros['fecha_desde'])) {
-            $where[] = "DATE(fecha_registro) >= ?";
+            $where[] = "DATE(s.fecha_registro) >= ?";
             $values[] = $filtros['fecha_desde'];
         }
 
         if (!empty($filtros['fecha_hasta'])) {
-            $where[] = "DATE(fecha_registro) <= ?";
+            $where[] = "DATE(s.fecha_registro) <= ?";
             $values[] = $filtros['fecha_hasta'];
         }
 
@@ -74,11 +73,15 @@ class SolicitudBioseguridadModel extends Model
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
-        $sql = "SELECT COUNT(id) as total FROM {$this->table} WHERE $whereSql";
+        $sql = "SELECT COUNT(s.id) as total 
+                FROM solicitudes_bioseguridad s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                WHERE $whereSql";
         $resultado = $this->db->query($sql, $values)->getRowArray();
         return $resultado['total'];
     }
 
+    // ✅ CORREGIDO: se agregó JOIN y se eliminó ruta_pdf
     public function getSolicitudesFiltradas($filtros, $limit, $offset)
     {
         $values = [];

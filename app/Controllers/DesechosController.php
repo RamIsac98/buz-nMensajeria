@@ -47,6 +47,9 @@ class DesechosController extends BaseController
         $postEmpaque   = $this->request->getPost('tipo_empaque') ?? [];
         
         $codigoSolicitud = $this->request->getPost('codigo_solicitud');
+        if (empty($codigoSolicitud)) {
+            $codigoSolicitud = $solicitudModel->generarCodigoUnico();
+        }
 
         $insertData = [
             'codigo_solicitud'         => $codigoSolicitud,
@@ -61,51 +64,48 @@ class DesechosController extends BaseController
             'peso_l'                   => $this->request->getPost('peso_l') ?: null,
             'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
             'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
+            // No se guarda ruta_pdf
         ];
 
-        //datos extra para el reporte
-        $usuarioModel = new \App\Models\UsuarioModel();
-        $usuario = $usuarioModel->findById(session()->get('usuario_id'));
-        
-        $pdfData = $insertData;
-        $pdfData['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
-        $pdfData['departamento']   = $usuario['departamento'] ?? 'No asignado';
-        $pdfData['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
-        $pdfData['fecha_registro'] = date('d/m/Y H:i:s');
-
-        $nombrePdf = 'solicitud_' . $insertData['codigo_solicitud'] . '.pdf';
-        $rutaRelativa = 'uploads/pdfs/' . $nombrePdf;   // Ruta pública
-        $pdfData['ruta_pdf'] = $rutaRelativa;
-
-        $insertData['ruta_pdf'] = $rutaRelativa;
-        
         if ($solicitudModel->insertarSolicitud($insertData)) {
-            $this->generarPDF($pdfData, $nombrePdf);
             $this->registrarBitacora('Registro de Solicitud', 'Servicio Desechos', "Se generó la solicitud: " . $insertData['codigo_solicitud']);
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud y PDF registrados correctamente.');
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud registrada correctamente.');
         } else {
             return redirect()->back()->with('error', 'Ocurrió un error en la base de datos al guardar.');
         }
     }
 
-    private function generarPDF($data, $nombrePdf)
+    public function generarPdf($id)
     {
-        $options = new Options();
-        $options->set('isRemoteEnabled', true);
-        $dompdf = new Dompdf($options);
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudDesechosModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->back()->with('error', 'Solicitud no encontrada.');
+        }
+
+        $usuarioModel = new \App\Models\UsuarioModel();
+        $usuario = $usuarioModel->findById($solicitud['usuario_id']);
+
+        $data = $solicitud;
+        $data['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
+        $data['departamento']   = $usuario['departamento'] ?? 'No asignado';
+        $data['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
+        $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
 
         $html = view('desechos/plantilla_pdf', $data);
 
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $directorio = FCPATH . 'uploads/pdfs/';
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0777, true);
-        }
-
-        file_put_contents($directorio . $nombrePdf, $dompdf->output());
+        $dompdf->stream('solicitud_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
+        exit;
     }
 
     public function verPdf($nombreArchivo)
