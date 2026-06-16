@@ -69,6 +69,8 @@
         border-radius: 4px;
         background: transparent;
         min-height: 100px;
+        max-height: 300px;
+        overflow-y: auto;
         display: none;
     }
     .variants-box .form-check-label {
@@ -261,11 +263,39 @@
 
 <?= $this->section('scripts') ?>
 <script>
-    // Diccionario de variantes por tipo
+    // Diccionario de variantes por tipo (actualizado según clasificación)
     const dicVariantes = {
-        'B': ['[Tipo B] - Placas de Petri y guantes contaminados', '[Tipo B] - Muestras de sangre'],
-        'C': ['[Tipo C] - Solventes orgánicos y reactivos usados', '[Tipo C] - Cepas bacterianas'],
-        'D': ['[Tipo D] - Agujas e inyectadoras', '[Tipo D] - Vidrio roto de laboratorio']
+        'B': [
+            'Lencería',
+            'Guantes',
+            'Batas',
+            'Gasas',
+            'Plásticos',
+            'Tubos plásticos',
+            'Algodón',
+            'Papel',
+            'Cartón',
+            'Geles de agarosa',
+            'Geles acrilamidas',
+            'Cultivos celulares',
+            'Pipetas',
+            'Tubos de ensayo'
+        ],
+        'C': [
+            'Bisturís',
+            'Agujas',
+            'puntas',
+            'vidrios rotos de laboratorio'
+        ],
+        'D': [
+            'Animales de experimentación (Ratones, Conejos, Chivos, Ovejas, Ranas, Especies Oceánicas, Otros)',
+            'Vísceras',
+            'Miembros',
+            'Restos de Tejidos',
+            'Fluidos corporales',
+            'Órganos',
+            'Restos biológicos humanos'
+        ]
     };
 
     const checksTipo = document.querySelectorAll('.chk-tipo');

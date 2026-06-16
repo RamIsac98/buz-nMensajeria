@@ -75,9 +75,8 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid my-5 px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="main-title">Historial de Solicitudes Procesadas</h2>
-    </div>
+    <h2 class="main-title">Historial de Solicitudes</h2>
+    
 
     <?php if (session()->getFlashdata('success')) : ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
