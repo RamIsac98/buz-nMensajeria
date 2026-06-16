@@ -66,6 +66,16 @@
             <form id="formCrearUsuario" action="<?= base_url('usuarios/guardar') ?>" method="POST">
                 <?= csrf_field() ?> 
                 
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej. Juan" value="<?= old('nombre') ?>" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Apellido</label>
+                    <input type="text" name="apellido" class="form-control" placeholder="Ej. Pérez" value="<?= old('apellido') ?>" required>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label">Nombre de Usuario (Username)</label>
                     <input type="text" name="username" class="form-control" placeholder="Ej. juan.perez" value="<?= old('username') ?>" required>

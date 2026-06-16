@@ -264,8 +264,9 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
                         <th>Usuario (Username)</th>
+                        <th>Cédula</th>
                         <th>Rol / Permiso</th>
                         <th>Pregunta de Seguridad</th>
                         <th>Acciones</th>
@@ -275,6 +276,7 @@
                     <?php foreach($usuarios as $user): ?>
                     <tr>
                         <td><?= $user['id'] ?></td>
+                        <td><?= esc($user['nombre']) ?> <?= esc($user['apellido']) ?></td>
                         <td><?= esc($user['cedula']) ?></td>
                         <td><strong><?= esc($user['username']) ?></strong></td>
                         <td><span class="badge bg-light text-dark border"><?= esc($user['rol']) ?></span></td>

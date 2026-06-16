@@ -72,6 +72,15 @@
                 <?= csrf_field() ?> 
                 
                 <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" value="<?= esc($usuario['nombre']) ?>" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Apellido</label>
+                    <input type="text" name="apellido" class="form-control" value="<?= esc($usuario['apellido']) ?>" required>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Nombre de Usuario (Username)</label>
                     <input type="text" name="username" class="form-control" value="<?= esc($usuario['username']) ?>" required>
                 </div>

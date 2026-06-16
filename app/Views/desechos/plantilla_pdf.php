@@ -23,7 +23,7 @@
         <tr><th>Departamento / Laboratorio</th><td><?= esc($departamento) ?> / <?= esc($laboratorio) ?></td></tr>
         <tr><th>Extensión / Teléfono</th><td><?= esc($ext_telefono) ?></td></tr>
         <tr><th>Tipo de Desecho</th><td><?= esc($tipos_desecho) ?></td></tr>
-        <tr><th>Variantes</th><td><?= esc($variantes_desecho) ?></td></tr>
+        <tr><th>Especificaciones de Desechos</th><td><?= esc($variantes_desecho) ?></td></tr>
         <tr><th>Estado Físico</th><td><?= esc($estado) ?></td></tr>
         <tr><th>Peso (Kg) / Volumen (L)</th><td><?= esc($peso_kg) ?> Kg / <?= esc($peso_l) ?> L</td>
         <tr><th>Esterilizado</th><td><?= $esterilizado == 1 ? 'Sí' : 'No' ?></td>

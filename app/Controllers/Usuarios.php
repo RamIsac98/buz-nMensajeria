@@ -89,7 +89,6 @@ class Usuarios extends BaseController
         $data['id_departamento_actual'] = null;
 
         if (!empty($data['usuario']['laboratorio_id'])) {
-            // Removido método mágico ->find(), usamos la consulta clásica por ID
             $labActual = $labModel->findLaboratorio((int)$data['usuario']['laboratorio_id']);
             if ($labActual) {
                 $data['id_departamento_actual'] = $labActual['departamento_id'];
@@ -118,13 +117,15 @@ class Usuarios extends BaseController
 
         $username       = trim($this->request->getPost('username'));
         $cedula         = trim($this->request->getPost('cedula'));
+        $nombre         = trim($this->request->getPost('nombre'));
+        $apellido       = trim($this->request->getPost('apellido'));
         $rol            = $this->request->getPost('rol');
         $nuevaClave     = $this->request->getPost('password');
         $eliminarPregunta = $this->request->getPost('eliminar_pregunta');
         $id_laboratorio = $this->request->getPost('id_laboratorio') ?? null;
 
-        if (empty($username) || empty($cedula) || empty($rol) || empty($id_laboratorio)) {
-            return redirect()->back()->with('error', 'Los campos Nombre, Cédula, Rol y Laboratorio son estrictamente requeridos.');
+        if (empty($username) || empty($cedula) || empty($nombre) || empty($apellido) || empty($rol) || empty($id_laboratorio)) {
+            return redirect()->back()->with('error', 'Todos los campos (Username, Cédula, Nombre, Apellido, Rol y Laboratorio) son obligatorios.');
         }
 
         if ($usuarioModel->existeCedulaExcluyendoId($cedula, $id)) {
@@ -134,6 +135,8 @@ class Usuarios extends BaseController
         $datosUpdate = [
             'username'       => $username,
             'cedula'         => $cedula,
+            'nombre'         => $nombre,
+            'apellido'       => $apellido,
             'rol'            => $rol,
             'laboratorio_id' => (int)$id_laboratorio 
         ];
@@ -149,7 +152,6 @@ class Usuarios extends BaseController
             $logPregunta = " y se eliminaron sus credenciales de seguridad";
         }
 
-        // Ejecuta consulta clásica interna en el modelo
         $usuarioModel->updateUsuario($id, $datosUpdate);
 
         $this->registrarBitacora(
@@ -234,26 +236,33 @@ class Usuarios extends BaseController
 
         $username       = trim($this->request->getPost('username') ?? '');
         $cedula         = trim($this->request->getPost('cedula') ?? '');
+        $nombre         = trim($this->request->getPost('nombre') ?? '');
+        $apellido       = trim($this->request->getPost('apellido') ?? '');
         $rol            = $this->request->getPost('rol') ?? '';
         $password       = $this->request->getPost('password') ?? '';
         $id_laboratorio = $this->request->getPost('id_laboratorio') ?? '';
 
+        // Validaciones
         if (empty($username)) return redirect()->back()->with('error', 'Falta el campo: Nombre de Usuario (username)')->withInput();
         if (empty($cedula)) return redirect()->back()->with('error', 'Falta el campo: Cédula de Identidad (cedula)')->withInput();
+        if (empty($nombre)) return redirect()->back()->with('error', 'Falta el campo: Nombre')->withInput();
+        if (empty($apellido)) return redirect()->back()->with('error', 'Falta el campo: Apellido')->withInput();
         if (empty($rol)) return redirect()->back()->with('error', 'Falta el campo: Rol / Permiso (rol)')->withInput();
         if (empty($password)) return redirect()->back()->with('error', 'Falta el campo: Contraseña (password)')->withInput();
         if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Falta el campo: Laboratorio (id_laboratorio)')->withInput();
 
         if ($usuarioModel->existeCedula($cedula)) {
-            return redirect()->back()->with('error', "Error: La cédula '{$cedula}' ya se encuentra registrada.") ->withInput();
+            return redirect()->back()->with('error', "Error: La cédula '{$cedula}' ya se encuentra registrada.")->withInput();
         }
 
         $datosNuevo = [
             'username'       => $username,
             'cedula'         => $cedula,
+            'nombre'         => $nombre,
+            'apellido'       => $apellido,
             'rol'            => $rol,
             'password'       => password_hash($password, PASSWORD_DEFAULT),
-            'laboratorio_id' => (int)$id_laboratorio, 
+            'laboratorio_id' => (int)$id_laboratorio,
             'status'         => 1
         ];
 
@@ -367,28 +376,19 @@ class Usuarios extends BaseController
         return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
     }
 
-
     public function solicitudDesechos()
     {
-        // Verifica si el usuario está logueado antes de mostrar la vista
         if (!$this->estaLogueado()) {
             return redirect()->to(base_url('login'));
         }
-
-        // Carga la vista especificada: app/Views/Usuarios/SolicitudDesechos.php
         return view('Usuarios/SolicitudDesechos');
     }
 
-    // Procesa los datos enviados por el formulario
     public function procesarSolicitud()
     {
         if (!$this->estaLogueado()) {
             return redirect()->to(base_url('login'));
         }
-
-        // Aquí va la lógica de validación y persistencia en la base de datos
-        // ...
-        
         return redirect()->back()->with('success', 'Solicitud registrada correctamente.');
     }
 }

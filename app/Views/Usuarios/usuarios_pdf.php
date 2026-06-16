@@ -25,6 +25,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Nombre Completo</th>
                 <th>Usuario</th>
                 <th>Cédula</th>
                 <th>Rol</th>
@@ -35,6 +36,7 @@
             <?php foreach ($usuarios as $usuario): ?>
             <tr>
                 <td><?= $usuario['id'] ?></td>
+                <td><?= esc($usuario['nombre']) ?> <?= esc($usuario['apellido']) ?></td>
                 <td><?= esc($usuario['username']) ?></td>
                 <td><?= esc($usuario['cedula']) ?></td>
                 <td><?= esc($usuario['rol']) ?></td>

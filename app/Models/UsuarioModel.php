@@ -67,17 +67,17 @@ class UsuarioModel extends Model
 
     public function insertUsuario($datos)
     {
-        // SQL corregido eliminando id_departamento
-        $sql = "INSERT INTO usuarios (username, password, rol, cedula, laboratorio_id, status) VALUES (?, ?, ?, ?, ?, ?)";
-        $this->db->query($sql, [
+        $sql = "INSERT INTO usuarios (username, password, rol, cedula, nombre, apellido, laboratorio_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        return $this->db->query($sql, [
             $datos['username'], 
             $datos['password'], 
             $datos['rol'], 
             $datos['cedula'], 
+            $datos['nombre'] ?? null,
+            $datos['apellido'] ?? null,
             $datos['laboratorio_id'] ?? null,
             $datos['status'] ?? 1
         ]);
-        return $this->db->insertID();
     }
 
     public function updateUsuario($id, $datos)
@@ -90,10 +90,19 @@ class UsuarioModel extends Model
             $setClause[] = "$columna = ?";
             $values[] = $valor;
         }
-        $values[] = $id; // ID para el WHERE
+        $values[] = $id;
 
         $sql = "UPDATE usuarios SET " . implode(', ', $setClause) . " WHERE id = ?";
         return $this->db->query($sql, $values);
+    }
+
+    public function getNombreCompleto($id)
+    {
+        $user = $this->findById($id);
+        if ($user) {
+            return trim($user['nombre'] . ' ' . $user['apellido']);
+        }
+        return 'Usuario';
     }
 
     public function deleteUsuario($id)
