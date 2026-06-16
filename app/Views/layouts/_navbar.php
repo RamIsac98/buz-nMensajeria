@@ -5,7 +5,7 @@ $username = session()->get('username') ?? 'Sistema';
 // Opciones base visibles para todos
 $baseItems = [
     'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
-    'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos'],
+    'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos Biológicos'],
     'bioseguridad' => ['url' => 'solicitud_bioseguridad', 'label' => 'Solicitud de Materiales de Bioseguridad'],
     'registro'     => ['url' => 'desechos/registroSolicitudes', 'label' => 'Registro']
 ];

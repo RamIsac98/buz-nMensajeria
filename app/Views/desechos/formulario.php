@@ -249,8 +249,7 @@
             </div>
             <div class="modal-body text-center p-4">
                 <p class="fs-6">Ha seleccionado el tipo de empaque <strong>B (Bolsas)</strong>.</p>
-                <p class="text-danger fw-bold">Es obligatorio identificar el nombre del laboratorio de donde vienen las bolsas.</p>
-                <p class="text-muted small">Asegúrese de identificar la bolsa.</p>
+                <p class="text-danger fw-bold">Es obligatorio identificar las bolsas, cajas y Contenedores Pulso Conrtantes con el nombre del Laboratorio y la fecha.</p>
             </div>
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background-color: var(--azul-claro);">Entendido</button>
