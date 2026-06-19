@@ -18,7 +18,7 @@
     </div>
     <table class="table">
         <tr><th>Usuario</th><td><?= esc($usuario_nombre) ?></td></tr>
-        <tr><th>Departamento/Laboratorio</th><td><?= esc($departamento) ?> / <?= esc($laboratorio) ?></td></tr>
+        <tr><th>Centro / Laboratorio</th><td><?= esc($departamento) ?> / <?= esc($laboratorio) ?></td></tr>
         <tr><th>Extensión</th><td><?= esc($ext_telefono) ?></td></tr>
         <tr><th>Contenedores Pulso Cortante</th><td><?= $contenedores_pulso_cantidad ?></td></tr>
         <tr><th>Bolsas Rojas (P/M/G)</th><td><?= $bolsas_rojas_pequena ?> / <?= $bolsas_rojas_mediana ?> / <?= $bolsas_rojas_grande ?></td></tr>

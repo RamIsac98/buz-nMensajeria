@@ -20,7 +20,7 @@
 
     <table class="table">
         <tr><th>Nombre del Usuario</th><td><?= esc($usuario_nombre) ?></td></tr>
-        <tr><th>Departamento / Laboratorio</th><td><?= esc($departamento) ?> / <?= esc($laboratorio) ?></td></tr>
+        <tr><th>Centro / Laboratorio</th><td><?= esc($departamento) ?> / <?= esc($laboratorio) ?></td></tr>
         <tr><th>Extensión / Teléfono</th><td><?= esc($ext_telefono) ?></td></tr>
         <tr><th>Tipo de Desecho</th><td><?= esc($tipos_desecho) ?></td></tr>
         <tr><th>Especificaciones de Desechos</th><td><?= esc($variantes_desecho) ?></td></tr>

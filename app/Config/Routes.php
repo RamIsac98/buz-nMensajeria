@@ -65,3 +65,10 @@ $routes->post('desechos/actualizarEstado', 'DesechosController::actualizarEstado
 
 $routes->get('desechos/generarPdf/(:num)', 'DesechosController::generarPdf/$1');
 $routes->get('bioseguridad/generarPdf/(:num)', 'BioseguridadController::generarPdf/$1');
+
+
+$routes->get('desechos/editar/(:num)', 'DesechosController::editar/$1');
+$routes->get('bioseguridad/editar/(:num)', 'BioseguridadController::editar/$1');
+$routes->match(['post', 'put'], 'desechos/actualizar/(:num)', 'DesechosController::actualizar/$1');
+$routes->match(['post', 'put'], 'bioseguridad/actualizar/(:num)', 'BioseguridadController::actualizar/$1');
+

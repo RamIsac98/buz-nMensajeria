@@ -70,13 +70,33 @@
         color: var(--azul-claro);
         font-weight: bold;
     }
+    .btn-editar {
+        background: none;
+        border: none;
+        padding: 0;
+        transition: opacity 0.2s;
+    }
+    .btn-editar:hover {
+        opacity: 0.7;
+    }
+    .btn-editar:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    .badge-editado {
+        background-color: #17a2b8;
+        color: white;
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 4px;
+    }
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <div class="container-fluid my-5 px-4">
     <h2 class="main-title">Historial de Solicitudes</h2>
-    
 
     <?php if (session()->getFlashdata('success')) : ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -136,7 +156,7 @@
         </form>
     </div>
 
-    <!-- Tabla con columna USUARIO agregada -->
+    <!-- Tabla -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -144,10 +164,11 @@
                     <thead class="thead-custom">
                         <tr>
                             <th>TIPO SOLICITUD</th>
-                            <th>USUARIO</th> <!-- Nueva columna -->
+                            <th>USUARIO</th>
                             <th>INFORME</th>
                             <th>ESTADO SOLICITUD</th>
                             <th>FECHA SOLICITADA</th>
+                            <th>ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -155,7 +176,7 @@
                             <?php foreach ($solicitudes as $sol) : ?>
                                 <tr>
                                     <td class="fw-bold"><?= esc($sol['tipo_solicitud']) ?></td>
-                                    <td><?= esc($sol['username'] ?? 'N/D') ?></td> <!-- Nueva celda -->
+                                    <td><?= esc($sol['username'] ?? 'N/D') ?></td>
                                     <td>
                                         <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank">
                                             <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
@@ -171,11 +192,34 @@
                                         <span class="badge bg-<?= $badgeClass ?>"><?= esc($sol['estado_solicitud']) ?></span>
                                     </td>
                                     <td><?= date('d/m/Y', strtotime($sol['fecha_registro'])) ?></td>
+                                    <td>
+                                        <?php
+                                        $usuario_actual = session()->get('usuario_id');
+                                        $es_creador = ($usuario_actual == $sol['usuario_id']);
+                                        $es_admin = (session()->get('rol') === 'administrador');
+                                        $editado = $sol['editado'] ?? 0;
+                                        $editable = ($es_creador || $es_admin) && $editado == 0;
+                                        
+                                        if ($editable):
+                                        ?>
+                                            <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/editar/' . $sol['id']) ?>" 
+                                               class="btn-editar" title="Editar solicitud">
+                                                <img src="<?= base_url('img/pensil.png') ?>" alt="Editar" width="20" height="20">
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="btn-editar" style="opacity:0.4; cursor:not-allowed;" title="No editable">
+                                                <img src="<?= base_url('img/pensil.png') ?>" alt="No editable" width="20" height="20">
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($editado == 1): ?>
+                                            <span class="badge-editado">Editada</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else : ?>
                             <tr>
-                                <td colspan="5" class="text-muted py-5 text-center">No existen registros con los filtros aplicados.</td> <!-- colspan actualizado -->
+                                <td colspan="6" class="text-muted py-5 text-center">No existen registros con los filtros aplicados.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

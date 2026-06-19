@@ -9,6 +9,21 @@ class SolicitudDesechosModel extends Model
     protected $table      = 'solicitudes_desechos';
     protected $primaryKey = 'id';
 
+    protected $allowedFields = [
+        'ext_telefono',
+        'tipos_desecho',
+        'variantes_desecho',
+        'esterilizado',
+        'motivo',
+        'estado',
+        'peso_kg',
+        'peso_l',
+        'tipo_empaque',
+        'empaque_otro_descripcion',
+        'estado_solicitud',
+        'editado'
+    ];
+
     public function generarCodigoUnico(): string
     {
         $prefix = "SOL-" . date('Y');
@@ -88,15 +103,14 @@ class SolicitudDesechosModel extends Model
         return $resultado['total'];
     }
 
-    // ✅ ELIMINADO: s.ruta_pdf
     public function getSolicitudesFiltradas($filtros, $limit, $offset)
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
         
-        $sql = "SELECT s.*, u.username, u.cedula,
-                       d.nombre AS nombre_departamento, 
-                       l.nombre AS nombre_laboratorio
+        $sql = "SELECT s.*, s.usuario_id, u.username, u.cedula,
+                    d.nombre AS nombre_departamento, 
+                    l.nombre AS nombre_laboratorio
                 FROM solicitudes_desechos s
                 LEFT JOIN usuarios u ON s.usuario_id = u.id
                 LEFT JOIN laboratorios l ON u.laboratorio_id = l.id

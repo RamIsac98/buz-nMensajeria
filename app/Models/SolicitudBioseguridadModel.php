@@ -9,6 +9,18 @@ class SolicitudBioseguridadModel extends Model
     protected $table      = 'solicitudes_bioseguridad';
     protected $primaryKey = 'id';
 
+    protected $allowedFields = [
+    'ext_telefono',
+    'contenedores_pulso_cantidad',
+    'bolsas_rojas_pequena',
+    'bolsas_rojas_mediana',
+    'bolsas_rojas_grande',
+    'quien_retira',
+    'nombre_otra_persona',
+    'estado_solicitud',
+    'editado'
+    ];
+
     public function generarCodigoUnico(): string
     {
         $prefix = "BIO-" . date('Y');

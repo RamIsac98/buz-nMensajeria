@@ -25,7 +25,7 @@ if ($rolUsuario === 'administrador') {
             'label' => 'Configuración',
             'submenu' => [
                 ['url' => 'usuarios', 'label' => 'Gestión Usuarios'],
-                ['url' => 'gestion-departamento', 'label' => 'Gestión Departamentos'],
+                ['url' => 'gestion-departamento', 'label' => 'Gestión Centros y Laboratorios'],
                 ['url' => 'usuarios/bitacora', 'label' => 'Bitácora']
             ]
         ]

@@ -132,4 +132,101 @@ class BioseguridadController extends BaseController
             return "El archivo no existe en: " . $ruta;
         }
     }
+
+    public function editar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudBioseguridadModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
+        }
+
+        if ($solicitud['editado'] == 1) {
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente. No se permite volver a editar.');
+        }
+
+        // Verificar permisos (creador o administrador)
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuario = $usuarioModel->findById($solicitud['usuario_id']);
+
+        $data = [
+            'usuario_data'      => $usuario,
+            'solicitud'         => $solicitud,
+            'codigo_automatico' => $solicitud['codigo_solicitud'],
+            'fecha_automatica'  => date('d/m/Y', strtotime($solicitud['fecha_registro'])),
+            'modo_edicion'      => true,
+            'id_solicitud'      => $id
+        ];
+
+        return view('bioseguridad/editar', $data);
+    }
+
+    public function actualizar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudBioseguridadModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
+        }
+
+        if ($solicitud['editado'] == 1) {
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
+        }
+
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        $contenedores = (int)$this->request->getPost('contenedores_pulso_cantidad');
+        if ($contenedores > 3) {
+            return redirect()->back()->with('error', 'La cantidad de Contenedores Pulso Cortante no puede superar 3.');
+        }
+
+        $peq = (int)$this->request->getPost('bolsas_rojas_pequena');
+        $med = (int)$this->request->getPost('bolsas_rojas_mediana');
+        $gra = (int)$this->request->getPost('bolsas_rojas_grande');
+
+        if ($peq > 10 || $med > 10 || $gra > 10) {
+            return redirect()->back()->with('error', 'Cada tamaño de bolsa roja tiene un límite máximo de 10 unidades.');
+        }
+
+        $quienRetira = $this->request->getPost('quien_retira');
+        $nombreOtra = ($quienRetira === 'otra_persona') ? $this->request->getPost('nombre_otra_persona') : null;
+
+        $updateData = [
+            'ext_telefono'                => $this->request->getPost('ext_telefono'),
+            'contenedores_pulso_cantidad' => $contenedores,
+            'bolsas_rojas_pequena'        => $peq,
+            'bolsas_rojas_mediana'        => $med,
+            'bolsas_rojas_grande'         => $gra,
+            'quien_retira'                => $quienRetira,
+            'nombre_otra_persona'         => $nombreOtra,
+            'editado' => 1,
+        ];
+
+        $solicitudModel->update($id, $updateData);
+
+        $this->registrarBitacora('Edición de Solicitud', 'Servicio Bioseguridad', "Se editó la solicitud: " . $solicitud['codigo_solicitud']);
+
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
+    }
 }

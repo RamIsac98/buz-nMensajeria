@@ -320,4 +320,96 @@ class DesechosController extends BaseController
             return $this->response->setJSON(['error' => 'Error: ' . $e->getMessage()]);
         }
     }
+
+    public function editar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudDesechosModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
+        }
+
+        if ($solicitud['editado'] == 1) {
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente. No se permite volver a editar.');
+        }
+
+        // Verificar permisos (creador o administrador)
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        // Verificar que el usuario sea el creador O administrador
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        $usuarioModel = new UsuarioModel();
+        $usuario = $usuarioModel->findById($solicitud['usuario_id']);
+
+        $data = [
+            'usuario_data'      => $usuario,
+            'solicitud'         => $solicitud,
+            'codigo_automatico' => $solicitud['codigo_solicitud'],
+            'fecha_automatica'  => date('d/m/Y', strtotime($solicitud['fecha_registro'])),
+            'modo_edicion'      => true,
+            'id_solicitud'      => $id
+        ];
+
+        return view('desechos/editar', $data);
+    }
+
+    public function actualizar($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
+        $solicitudModel = new SolicitudDesechosModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
+        }
+
+        if ($solicitud['editado'] == 1) {
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
+        }
+
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        // Permiso: solo creador o administrador
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
+
+        // Recoger datos del POST (igual que en registrar)
+        $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
+        $postVariantes = $this->request->getPost('variante_desecho') ?? [];
+        $postEstado    = $this->request->getPost('estado_fisico') ?? [];
+        $postEmpaque   = $this->request->getPost('tipo_empaque') ?? [];
+
+        $updateData = [
+            'ext_telefono'             => $this->request->getPost('ext_telefono'),
+            'tipos_desecho'            => is_array($postTipos) ? implode(', ', $postTipos) : '',
+            'variantes_desecho'        => is_array($postVariantes) ? implode(', ', $postVariantes) : '',
+            'esterilizado'             => $this->request->getPost('esterilizado') == 'Sí' ? 1 : 0,
+            'motivo'                   => $this->request->getPost('motivo'),
+            'estado'                   => is_array($postEstado) ? implode(', ', $postEstado) : '',
+            'peso_kg'                  => $this->request->getPost('peso_kg') ?: null,
+            'peso_l'                   => $this->request->getPost('peso_l') ?: null,
+            'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
+            'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
+            'editado' => 1,
+        ];
+
+        $solicitudModel->update($id, $updateData);
+
+        $this->registrarBitacora('Edición de Solicitud', 'Servicio Desechos', "Se editó la solicitud: " . $solicitud['codigo_solicitud']);
+
+        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
+    }
+
 }
