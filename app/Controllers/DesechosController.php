@@ -89,8 +89,14 @@ class DesechosController extends BaseController
         $usuarioModel = new \App\Models\UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
 
+        // ✅ Nombre completo
+        $nombreCompleto = trim(($usuario['nombre'] ?? '') . ' ' . ($usuario['apellido'] ?? ''));
+        if (empty($nombreCompleto)) {
+            $nombreCompleto = $usuario['username'] ?? 'Usuario';
+        }
+
         $data = $solicitud;
-        $data['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
+        $data['usuario_nombre'] = $nombreCompleto;  // ← Aquí se usa el nombre completo
         $data['departamento']   = $usuario['departamento'] ?? 'No asignado';
         $data['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
         $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
@@ -412,4 +418,60 @@ class DesechosController extends BaseController
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
     }
 
+    public function obtenerPeso($id)
+    {
+        if (!$this->estaLogueado()) return $this->response->setJSON(['error' => 'No autorizado']);
+        if (session()->get('rol') !== 'administrador') {
+            return $this->response->setJSON(['error' => 'Sin permisos']);
+        }
+
+        $solicitudModel = new SolicitudDesechosModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return $this->response->setJSON(['error' => 'Solicitud no encontrada']);
+        }
+
+        return $this->response->setJSON([
+            'id'         => $solicitud['id'],
+            'codigo'     => $solicitud['codigo_solicitud'],
+            'peso_kg'    => $solicitud['peso_kg'],
+            'peso_l'     => $solicitud['peso_l']
+        ]);
+    }
+
+    /**
+     * Actualiza el peso de una solicitud
+     */
+    public function actualizarPeso($id)
+    {
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes permisos.');
+        }
+
+        $solicitudModel = new SolicitudDesechosModel();
+        $solicitud = $solicitudModel->find($id);
+
+        if (!$solicitud) {
+            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Solicitud no encontrada.');
+        }
+
+        $peso_kg = $this->request->getPost('peso_kg') ?: null;
+        $peso_l  = $this->request->getPost('peso_l') ?: null;
+
+        // Validar que sean números y no negativos
+        if (!is_numeric($peso_kg) || !is_numeric($peso_l) || $peso_kg < 0 || $peso_l < 0) {
+            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores deben ser numéricos y positivos.');
+        }
+
+        $solicitudModel->update($id, [
+            'peso_kg' => $peso_kg,
+            'peso_l'  => $peso_l
+        ]);
+
+        $this->registrarBitacora('Edición de Peso', 'Servicio Desechos', "Se actualizó el peso de la solicitud ID $id a Kg: $peso_kg, L: $peso_l");
+
+        return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('success', 'Peso actualizado correctamente.');
+    }
 }

@@ -91,18 +91,21 @@ class BioseguridadController extends BaseController
             return redirect()->back()->with('error', 'Solicitud no encontrada.');
         }
 
-        // Obtener datos del usuario
         $usuarioModel = new \App\Models\UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
 
-        // Preparar datos para la plantilla PDF
+        // ✅ Nombre completo
+        $nombreCompleto = trim(($usuario['nombre'] ?? '') . ' ' . ($usuario['apellido'] ?? ''));
+        if (empty($nombreCompleto)) {
+            $nombreCompleto = $usuario['username'] ?? 'Usuario';
+        }
+
         $data = $solicitud;
-        $data['usuario_nombre'] = $usuario['username'] ?? 'Usuario';
+        $data['usuario_nombre'] = $nombreCompleto;
         $data['departamento']   = $usuario['departamento'] ?? 'No asignado';
         $data['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
         $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
 
-        // Usar la plantilla PDF de bioseguridad
         $html = view('bioseguridad/plantilla_pdf', $data);
 
         $options = new \Dompdf\Options();
@@ -112,7 +115,6 @@ class BioseguridadController extends BaseController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        // Enviar al navegador sin guardar en disco
         $dompdf->stream('bioseguridad_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
         exit;
     }

@@ -72,3 +72,7 @@ $routes->get('bioseguridad/editar/(:num)', 'BioseguridadController::editar/$1');
 $routes->match(['post', 'put'], 'desechos/actualizar/(:num)', 'DesechosController::actualizar/$1');
 $routes->match(['post', 'put'], 'bioseguridad/actualizar/(:num)', 'BioseguridadController::actualizar/$1');
 
+// Ruta para obtener datos en JSON (GET)
+$routes->get('desechos/obtenerPeso/(:num)', 'DesechosController::obtenerPeso/$1');
+// Ruta para actualizar peso (POST)
+$routes->post('desechos/actualizarPeso/(:num)', 'DesechosController::actualizarPeso/$1');

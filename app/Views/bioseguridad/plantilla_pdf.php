@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>Comprobante de Solicitud de Bioseguridad</h2>
+        <h2>Solicitud de materiales Bioseguridad</h2>
         <p><strong>Código:</strong> <?= esc($codigo_solicitud) ?></p>
     </div>
     <table class="table">

@@ -91,6 +91,20 @@
         text-align: center;
         min-width: 85px;
     }
+    /* Estilo para el botón de lápiz (editar peso) */
+    .btn-editar {
+        background: none;
+        border: none;
+        padding: 0;
+        transition: opacity 0.2s;
+    }
+    .btn-editar:hover {
+        opacity: 0.7;
+    }
+    .btn-editar:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
     /* Ajustes de tabla para evitar desbordamiento */
     .table {
         min-width: 800px;
@@ -122,8 +136,7 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid my-5 px-4">
-            <h2 class="main-title">Gestión de Solicitudes</h2>
-
+    <h2 class="main-title">Gestión de Solicitudes</h2>
 
     <?php if (session()->getFlashdata('success')) : ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -214,9 +227,20 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank">
-                                            <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
-                                        </a>
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank" title="Ver PDF">
+                                                <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
+                                            </a>
+                                            <?php if (session()->get('rol') === 'administrador' && $sol['tipo_solicitud'] == 'Desechos Biológicos'): ?>
+                                                <button type="button" class="btn-editar" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#modalEditarPeso"
+                                                        data-id="<?= $sol['id'] ?>"
+                                                        title="Editar peso de la solicitud">
+                                                    <img src="<?= base_url('img/pensil.png') ?>" alt="Editar peso" width="20" height="20">
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 align-items-center">
@@ -271,6 +295,42 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para editar peso (fijo) -->
+<div class="modal fade" id="modalEditarPeso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
+                <h5 class="modal-title">Editar Peso</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarPeso" action="" method="POST">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" id="peso_id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Código de Solicitud</label>
+                        <input type="text" id="peso_codigo" class="form-control" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Peso (Kg)</label>
+                            <input type="number" step="0.01" name="peso_kg" id="peso_kg" class="form-control" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Volumen (L)</label>
+                            <input type="number" step="0.01" name="peso_l" id="peso_l" class="form-control" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top p-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn" style="background-color: var(--azul-claro); color: white;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -279,6 +339,7 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 
+// ===== CAMBIO DE ESTADO =====
 document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
     btn.addEventListener('click', function() {
         const row = this.closest('tr');
@@ -341,6 +402,46 @@ document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
             boton.textContent = 'Actualizar';
         });
     });
+});
+
+// ===== EDITAR PESO =====
+document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#modalEditarPeso"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        if (!id) {
+            alert('Error: No se pudo obtener el ID de la solicitud.');
+            return;
+        }
+        const url = '<?= base_url('desechos/obtenerPeso/') ?>' + id;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                document.getElementById('peso_id').value = data.id;
+                document.getElementById('peso_codigo').value = data.codigo;
+                document.getElementById('peso_kg').value = data.peso_kg || 0;
+                document.getElementById('peso_l').value = data.peso_l || 0;
+                document.getElementById('formEditarPeso').action = '<?= base_url('desechos/actualizarPeso/') ?>' + data.id;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al cargar los datos.');
+            });
+    });
+});
+
+// Validación extra al enviar el formulario
+document.getElementById('formEditarPeso').addEventListener('submit', function(e) {
+    const kg = parseFloat(document.getElementById('peso_kg').value);
+    const l = parseFloat(document.getElementById('peso_l').value);
+    if (isNaN(kg) || isNaN(l) || kg < 0 || l < 0) {
+        e.preventDefault();
+        alert('Por favor, ingresa valores numéricos positivos.');
+    }
 });
 </script>
 <?= $this->endSection() ?>

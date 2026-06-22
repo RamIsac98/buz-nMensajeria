@@ -27,9 +27,19 @@ class SolicitudDesechosModel extends Model
     public function generarCodigoUnico(): string
     {
         $prefix = "SOL-" . date('Y');
-        $sql = "SELECT COUNT(id) as total FROM solicitudes_desechos WHERE codigo_solicitud LIKE ?";
+        // Obtener el último código generado con ese prefijo
+        $sql = "SELECT codigo_solicitud FROM solicitudes_desechos WHERE codigo_solicitud LIKE ? ORDER BY id DESC LIMIT 1";
         $row = $this->db->query($sql, [$prefix . '%'])->getRowArray();
-        $secuencia = str_pad(($row['total'] + 1), 4, '0', STR_PAD_LEFT);
+        
+        if ($row) {
+            // Extraer el número de secuencia del último código
+            $parts = explode('-', $row['codigo_solicitud']);
+            $lastSeq = (int)end($parts);
+            $secuencia = str_pad($lastSeq + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $secuencia = '0001';
+        }
+        
         return $prefix . "-" . $secuencia;
     }
 

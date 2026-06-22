@@ -105,7 +105,7 @@
         </div>
     <?php endif; ?>
 
-    <h2 class="main-title mb-4 mt-3">Panel de Gestión de Centros / Laboratorio</h2>
+    <h2 class="main-title mb-4 mt-3">Gestión de Centros / Laboratorio</h2>
 
     <!-- Barra de filtros y botones -->
     <div class="filter-bar mb-4 mt-3 d-flex justify-content-between align-items-center flex-wrap gap-3">

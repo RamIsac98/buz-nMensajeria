@@ -127,7 +127,7 @@
 
     <form id="formBioseguridad" action="<?= base_url('bioseguridad/actualizar/' . $id_solicitud) ?>" method="POST">
         <?= csrf_field() ?>
-        <input type="hidden" value="PUT">
+        <input type="hidden" name="_method" value="PUT">
         <input type="hidden" name="id" value="<?= $id_solicitud ?>">
 
         <!-- Datos del Solicitante (sin rol) -->
@@ -183,8 +183,8 @@
                     <input type="number" name="bolsas_rojas_grande" id="bolsaGra" class="form-control" min="0" max="10" value="<?= esc($solicitud['bolsas_rojas_grande']) ?>">
                 </div>
             </div>
-            <div id="bolsasWarning" class="text-danger small mt-2" style="display:none;">⚠️ Cada tamaño de bolsa tiene un límite máximo de 10 unidades.</div>
-            <div id="materialWarning" class="warning-material">⚠️ Debes seleccionar al menos un material (contenedor o bolsa roja).</div>
+            <div id="bolsasWarning" class="text-danger small mt-2" style="display:none;">Cada tamaño de bolsa tiene un límite máximo de 10 unidades.</div>
+            <div id="materialWarning" class="warning-material">Debes seleccionar al menos un material (contenedor o bolsa roja).</div>
         </div>
 
         <div class="section-title">¿Quién retira el material?</div>
@@ -220,6 +220,7 @@
             </div>
             <div class="modal-body">
                 <p>¿Está seguro de que desea actualizar esta solicitud?</p>
+                <p class="text-danger fw-bold">Solo podrá editar esta solicitud una vez. Después de guardar, no podrá volver a modificarla.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -228,10 +229,36 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de advertencia única (se muestra al cargar la página) -->
+<div class="modal fade" id="modalAdvertenciaUnica" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
+                <h5 class="modal-title">Importante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p class="fs-6 fw-bold">Esta solicitud solo se puede modificar <strong class="text-danger">UNA VEZ</strong>.</p>
+                <p class="text-muted">Después de guardar los cambios, no podrá volver a editarla. Revise bien los datos antes de confirmar.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background-color: var(--azul-claro);">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
+    // Al cargar la página, mostrar el modal de advertencia única
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalAdvertencia = new bootstrap.Modal(document.getElementById('modalAdvertenciaUnica'));
+        modalAdvertencia.show();
+    });
+
     // Mostrar/ocultar campo "otra persona"
     const radioMi = document.getElementById('miPersona');
     const radioOtro = document.getElementById('otraPersona');
@@ -276,7 +303,6 @@
         return !error;
     }
 
-    // Validar que al menos un material esté solicitado (contenedor >0 o alguna bolsa >0)
     function validarMaterialRequerido() {
         const contenedores = parseInt(document.getElementById('pulsoCantidad').value) || 0;
         const bolsaP = parseInt(bolsaPeq.value) || 0;
@@ -292,40 +318,33 @@
         }
     }
 
-    // Asignar eventos a los inputs de bolsas
     bolsaPeq.addEventListener('input', validarBolsasIndividuales);
     bolsaMed.addEventListener('input', validarBolsasIndividuales);
     bolsaGra.addEventListener('input', validarBolsasIndividuales);
 
-    // Validación contenedores (máximo 3)
     const pulsoInput = document.getElementById('pulsoCantidad');
     pulsoInput.addEventListener('change', function() {
         if (this.value > 3) this.value = 3;
         if (this.value < 0) this.value = 0;
         if (this.value > 0) materialWarning.style.display = 'none';
     });
-    // Ocultar advertencia si se cambian bolsas
     [bolsaPeq, bolsaMed, bolsaGra].forEach(input => {
         input.addEventListener('input', function() {
             if (parseInt(this.value) > 0) materialWarning.style.display = 'none';
         });
     });
 
-    // Modal de confirmación con validación adicional
     const modal = new bootstrap.Modal(document.getElementById('modalConfirm'));
     const form = document.getElementById('formBioseguridad');
     document.getElementById('btnFakeSubmit').addEventListener('click', function(e) {
-        // Validar campos obligatorios del formulario
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
-        // Validar bolsas individuales
         if (!validarBolsasIndividuales()) {
             warningBolsas.scrollIntoView({ behavior: 'smooth' });
             return;
         }
-        // Validar que haya al menos un material
         if (!validarMaterialRequerido()) {
             materialWarning.scrollIntoView({ behavior: 'smooth' });
             return;

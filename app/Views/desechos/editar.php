@@ -120,7 +120,7 @@
 <div class="form-container">
     <form id="formSolicitud" action="<?= base_url('desechos/actualizar/' . $id_solicitud) ?>" method="POST">
         <?= csrf_field() ?>
-        <input type="hidden" value="PUT">
+        <input type="hidden" name="_method" value="PUT">
         <input type="hidden" name="id" value="<?= $id_solicitud ?>">
         
         <div class="watermark-container">
@@ -254,6 +254,7 @@
             </div>
             <div class="modal-body text-center p-4">
                 <p class="fs-5">¿Está seguro de que desea actualizar esta solicitud?</p>
+                <p class="text-danger fw-bold">Solo podrá editar esta solicitud una vez. Después de guardar, no podrá volver a modificarla.</p>
             </div>
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Regresar y Verificar</button>
@@ -268,7 +269,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header text-white" style="background-color: var(--azul-oscuro, rgba(28,70,110,0.9));">
-                <h5 class="modal-title">⚠️ Atención</h5>
+                <h5 class="modal-title">Atención</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center p-4">
@@ -282,10 +283,35 @@
     </div>
 </div>
 
+<!-- Modal de advertencia única (se muestra al cargar la página) -->
+<div class="modal fade" id="modalAdvertenciaUnica" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
+                <h5 class="modal-title">Importante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p class="fs-6 fw-bold">Esta solicitud solo se puede modificar <strong class="text-danger">UNA VEZ</strong>.</p>
+                <p class="text-muted">Después de guardar los cambios, no podrá volver a editarla. Revise bien los datos antes de confirmar.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background-color: var(--azul-claro);">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
+    // Al cargar la página, mostrar el modal de advertencia única
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalAdvertencia = new bootstrap.Modal(document.getElementById('modalAdvertenciaUnica'));
+        modalAdvertencia.show();
+    });
+
     // Diccionario de variantes por tipo (actualizado según clasificación)
     const dicVariantes = {
         'B': [
@@ -327,7 +353,6 @@
     const checksTipo = document.querySelectorAll('.chk-tipo');
     const cajaVar = document.getElementById('cajaVariantes');
 
-    // Función para recolectar las variantes marcadas actualmente
     function gatherSelectedVariants() {
         const checkboxes = cajaVar.querySelectorAll('input[type="checkbox"][name="variante_desecho[]"]');
         const selected = [];
@@ -337,11 +362,8 @@
         return selected;
     }
 
-    // Función para regenerar las variantes según los tipos marcados
     function rebuildVariants() {
-        // Guardar selecciones actuales antes de regenerar
         const currentSelected = gatherSelectedVariants();
-
         let html = '';
         let anySelected = false;
         checksTipo.forEach(cb => {
@@ -350,7 +372,6 @@
                 const tipo = cb.value;
                 if (dicVariantes[tipo]) {
                     dicVariantes[tipo].forEach(v => {
-                        // Si la variante está en las guardadas O en las seleccionadas actuales, marcarla
                         const isChecked = variantesGuardadas.includes(v) || currentSelected.includes(v);
                         html += `<div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" name="variante_desecho[]" value="${v}" ${isChecked ? 'checked' : ''}>
@@ -364,47 +385,35 @@
         cajaVar.style.display = anySelected ? 'block' : 'none';
     }
 
-    // Asignar evento a cada checkbox de tipo
     checksTipo.forEach(chk => {
-        chk.addEventListener('change', function() {
-            // Al cambiar, actualizar la lista de variantes guardadas con las actuales seleccionadas
-            // pero conservamos las variantesGuardadas originales para mantener las selecciones previas.
-            // Simplemente regeneramos.
-            rebuildVariants();
-        });
+        chk.addEventListener('change', rebuildVariants);
     });
 
-    // Inicializar la vista al cargar la página
     rebuildVariants();
 
-    // Activar Pesos (si se cambia estado, habilitar/deshabilitar campos de peso)
     document.getElementById('estLiq').addEventListener('change', function(e) {
         document.getElementById('inputL').disabled = !e.target.checked;
     });
     document.getElementById('estSol').addEventListener('change', function(e) {
         document.getElementById('inputKg').disabled = !e.target.checked;
     });
-    // Estado inicial: habilitar según los checkboxes actuales
     if (document.getElementById('estLiq').checked) document.getElementById('inputL').disabled = false;
     else document.getElementById('inputL').disabled = true;
     if (document.getElementById('estSol').checked) document.getElementById('inputKg').disabled = false;
     else document.getElementById('inputKg').disabled = true;
 
-    // Activar Otros Empaques
     document.getElementById('eO').addEventListener('change', function(e) {
         const txt = document.getElementById('txtOtros');
         txt.disabled = !e.target.checked;
         if(e.target.checked) txt.setAttribute('required', 'required');
         else txt.removeAttribute('required');
     });
-    // Estado inicial para 'Otros'
     const eOCheck = document.getElementById('eO');
     if (eOCheck.checked) {
         document.getElementById('txtOtros').disabled = false;
         document.getElementById('txtOtros').setAttribute('required', 'required');
     }
 
-    // Modal de advertencia al seleccionar "Bolsas" (tipo de empaque B)
     const bolsaCheckbox = document.getElementById('eB');
     const modalBolsas = new bootstrap.Modal(document.getElementById('modalBolsasWarning'));
     if (bolsaCheckbox) {
@@ -415,7 +424,6 @@
         });
     }
 
-    // Modal de confirmación principal
     const modalInstance = new bootstrap.Modal(document.getElementById('modalAlert'));
     document.getElementById('btnFakeSubmit').addEventListener('click', () => {
         if(document.getElementById('formSolicitud').reportValidity()) modalInstance.show();

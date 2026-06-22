@@ -14,7 +14,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>Comprobante de Solicitud de Desechos</h2>
+        <h2>Solicitud de Desechos Biológicos</h2>
         <p><strong>Código:</strong> <?= esc($codigo_solicitud) ?></p>
     </div>
 
@@ -30,9 +30,7 @@
         <tr><th>Tipo de Empaque</th>
             <td>
                 <?php
-                    // Reemplazar 'F' por 'CPC' en la lista de empaques
                     $empaqueMostrado = str_replace('F', 'CPC', $tipo_empaque);
-                    // Si hay 'CPC' y además 'O', se muestra normal
                     echo esc($empaqueMostrado) . (isset($empaque_otro_descripcion) && !empty($empaque_otro_descripcion) ? ' - ' . esc($empaque_otro_descripcion) : '');
                 ?>
             </td>
