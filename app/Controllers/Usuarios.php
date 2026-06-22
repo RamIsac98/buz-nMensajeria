@@ -8,13 +8,21 @@ use App\Models\LaboratorioModel;
 
 class Usuarios extends BaseController
 {
+    // Método para verificar acceso (administrador o protección integral)
+    private function verificarAccesoGestion(): bool
+    {
+        $rol = session()->get('rol');
+        return ($rol === 'administrador' || $rol === 'proteccion_integral');
+    }
+
     public function index()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        if (session()->get('rol') !== 'administrador') {
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
             return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado: No tienes permisos de Administrador.');
+                             ->with('error', 'Acceso denegado: No tienes permisos.');
         }
 
         $usuarioModel = new UsuarioModel();
@@ -43,6 +51,10 @@ class Usuarios extends BaseController
     public function generarPdfUsuarios()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         $usuarioModel = new UsuarioModel();
 
@@ -74,6 +86,10 @@ class Usuarios extends BaseController
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         $usuarioModel = new UsuarioModel();
         $data['usuario'] = $usuarioModel->findById($id);
@@ -107,6 +123,10 @@ class Usuarios extends BaseController
     public function actualizar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         $usuarioModel = new UsuarioModel();
         $usuarioActual = $usuarioModel->findById($id);
@@ -166,9 +186,13 @@ class Usuarios extends BaseController
     public function deshabilitar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         if ($id == session()->get('usuario_id')) {
-            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta de administrador.');
+            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta.');
         }
 
         $usuarioModel = new UsuarioModel();
@@ -195,6 +219,10 @@ class Usuarios extends BaseController
     public function eliminar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         if ($id == session()->get('usuario_id')) {
             return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes eliminar tu propia cuenta del sistema.');
@@ -221,6 +249,10 @@ class Usuarios extends BaseController
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         $deptModel = new DepartamentoModel();
         $data['departamentos'] = $deptModel->getDepartamentos();
@@ -231,6 +263,10 @@ class Usuarios extends BaseController
     public function guardar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->verificarAccesoGestion()) {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                             ->with('error', 'Acceso denegado.');
+        }
 
         $usuarioModel = new UsuarioModel();
 

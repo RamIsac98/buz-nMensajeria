@@ -98,6 +98,7 @@
                         <option value="TAI" <?= $usuario['rol'] == 'TAI' ? 'selected' : '' ?>>TAI</option>
                         <option value="PAI" <?= $usuario['rol'] == 'PAI' ? 'selected' : '' ?>>PAI</option>
                         <option value="Auxiliar" <?= $usuario['rol'] == 'Auxiliar' ? 'selected' : '' ?>>Auxiliar</option>
+                        <option value="proteccion_integral" <?= $usuario['rol'] == 'proteccion_integral' ? 'selected' : '' ?>>Protección Integral</option>
                     </select>
                 </div>
 

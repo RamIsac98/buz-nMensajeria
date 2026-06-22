@@ -150,7 +150,7 @@
         <form method="GET" action="<?= base_url('desechos/gestionSolicitudes') ?>" class="row g-2 align-items-center justify-content-between">
             <div class="col-auto filter-group">
                 <span class="filter-label">Buscar</span>
-                <input type="text" name="buscar" class="filter-input input-search-width" placeholder="Código o Usuario..." value="<?= esc($filtros['buscar'] ?? '') ?>">
+                <input type="text" name="buscar" class="filter-input input-search-width" placeholder="Usuario" value="<?= esc($filtros['buscar'] ?? '') ?>">
             </div>
             <div class="col-auto filter-group">
                 <span class="filter-label">Tipo Solicitud</span>

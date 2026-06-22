@@ -95,6 +95,7 @@
                         <option value="TAI" <?= old('rol') == 'TAI' ? 'selected' : '' ?>>TAI</option>
                         <option value="PAI" <?= old('rol') == 'PAI' ? 'selected' : '' ?>>PAI</option>
                         <option value="Auxiliar" <?= old('rol') == 'Auxiliar' ? 'selected' : '' ?>>Auxiliar</option>
+                        <option value="proteccion_integral" <?= old('rol') == 'proteccion_integral' ? 'selected' : '' ?>>Protección Integral</option>
                     </select>
                 </div>
 

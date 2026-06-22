@@ -107,7 +107,7 @@
 <?= $this->section('content') ?>
 <div class="container-form">
     <div class="form-header">
-        <div class="page-title">Solicitud de Bioseguridad</div>
+        <div class="page-title">Solicitud de Materiales de Bioseguridad</div>
         <div class="codigo-fecha">
             <div class="badge-fecha">Fecha: <?= $fecha_automatica ?></div>
             <div class="codigo-agua"><?= $codigo_automatico ?></div>

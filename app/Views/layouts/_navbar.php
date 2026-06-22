@@ -2,7 +2,7 @@
 $rolUsuario = session()->get('rol');
 $username = session()->get('username') ?? 'Sistema';
 
-// Opciones base visibles para todos
+// Opciones base para todos los roles (excepto administrador y protección integral)
 $baseItems = [
     'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
     'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos Biológicos'],
@@ -10,7 +10,7 @@ $baseItems = [
     'registro'     => ['url' => 'desechos/registroSolicitudes', 'label' => 'Registro']
 ];
 
-// Opciones extra solo para administrador
+// Items extra para administrador
 $adminItems = [];
 if ($rolUsuario === 'administrador') {
     $adminItems = [
@@ -18,6 +18,7 @@ if ($rolUsuario === 'administrador') {
     ];
 }
 
+// Configuración (solo administrador)
 $configItems = [];
 if ($rolUsuario === 'administrador') {
     $configItems = [
@@ -32,7 +33,27 @@ if ($rolUsuario === 'administrador') {
     ];
 }
 
-$menuItems = $baseItems + $adminItems + $configItems;
+// Items exclusivos para protección integral
+$proteccionItems = [];
+if ($rolUsuario === 'proteccion_integral') {
+    $proteccionItems = [
+        'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
+        'gestion'      => ['url' => 'desechos/gestionSolicitudes', 'label' => 'Gestión Solicitudes'],
+        'usuarios'     => ['url' => 'usuarios', 'label' => 'Gestión Usuarios'],
+        'departamentos'=> ['url' => 'gestion-departamento', 'label' => 'Gestión Centros y Laboratorios']
+    ];
+}
+
+// Construcción final del menú según el rol
+if ($rolUsuario === 'administrador') {
+    $menuItems = $baseItems + $adminItems + $configItems;
+} elseif ($rolUsuario === 'proteccion_integral') {
+    $menuItems = $proteccionItems;
+} else {
+    // PAI, TAI, Jefe_Laboratorio, Auxiliar
+    $menuItems = $baseItems;
+}
+
 $currentPath = service('request')->getUri()->getPath();
 ?>
 
@@ -91,7 +112,6 @@ $currentPath = service('request')->getUri()->getPath();
         box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
-    /* Dropdown menu mejorado */
     .custom-navbar .dropdown-menu {
         border: none;
         background: white;
@@ -117,7 +137,6 @@ $currentPath = service('request')->getUri()->getPath();
         padding-left: 2rem;
     }
 
-    /* Botón toggler para móviles */
     .navbar-toggler {
         border: 1px solid rgba(255,255,255,0.5);
         background: transparent;
@@ -126,7 +145,6 @@ $currentPath = service('request')->getUri()->getPath();
         filter: invert(1);
     }
 
-    /* Dropdown de usuario */
     .user-dropdown-toggle {
         display: inline-flex !important;
         align-items: center !important;
@@ -141,19 +159,11 @@ $currentPath = service('request')->getUri()->getPath();
         border: 1px solid white;
     }
 
-    /* Animación */
     @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Responsive */
     @media (max-width: 992px) {
         .custom-navbar .navbar-nav .nav-link {
             height: auto;
@@ -170,17 +180,14 @@ $currentPath = service('request')->getUri()->getPath();
 
 <nav class="navbar navbar-expand-lg custom-navbar shadow-sm">
     <div class="container-fluid px-4">
-        <!-- Logo y marca -->
         <a class="navbar-brand d-flex align-items-center" href="<?= base_url('interfazinicial/menuusuario') ?>">
             <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2">
         </a>
 
-        <!-- Botón toggler para móviles -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Menú colapsable -->
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <?php foreach ($menuItems as $key => $item): ?>
@@ -205,7 +212,6 @@ $currentPath = service('request')->getUri()->getPath();
                 <?php endforeach; ?>
             </ul>
 
-            <!-- Dropdown de usuario -->
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle user-dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -231,7 +237,7 @@ $currentPath = service('request')->getUri()->getPath();
     </div>
 </nav>
 
-<!-- Modal cambio de contraseña con colores corporativos -->
+<!-- Modal cambio de contraseña -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">

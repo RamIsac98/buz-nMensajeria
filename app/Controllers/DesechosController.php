@@ -64,7 +64,6 @@ class DesechosController extends BaseController
             'peso_l'                   => $this->request->getPost('peso_l') ?: null,
             'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
             'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
-            // No se guarda ruta_pdf
         ];
 
         if ($solicitudModel->insertarSolicitud($insertData)) {
@@ -89,14 +88,13 @@ class DesechosController extends BaseController
         $usuarioModel = new \App\Models\UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
 
-        // ✅ Nombre completo
         $nombreCompleto = trim(($usuario['nombre'] ?? '') . ' ' . ($usuario['apellido'] ?? ''));
         if (empty($nombreCompleto)) {
             $nombreCompleto = $usuario['username'] ?? 'Usuario';
         }
 
         $data = $solicitud;
-        $data['usuario_nombre'] = $nombreCompleto;  // ← Aquí se usa el nombre completo
+        $data['usuario_nombre'] = $nombreCompleto;
         $data['departamento']   = $usuario['departamento'] ?? 'No asignado';
         $data['laboratorio']    = $usuario['nombre_laboratorio'] ?? 'No asignado';
         $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
@@ -133,15 +131,21 @@ class DesechosController extends BaseController
         }
     }
 
-    //configuracion del filtros SolicitudesRegistro
+    // ===== HISTORIAL DE SOLICITUDES =====
     public function registroSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
+        // ✅ Bloquear acceso al rol proteccion_integral
+        $rol = session()->get('rol');
+        if ($rol === 'proteccion_integral') {
+            return redirect()->to(base_url('desechos/gestionSolicitudes'))
+                             ->with('error', 'No tienes acceso al historial de solicitudes.');
+        }
+
         $desechosModel = new \App\Models\SolicitudDesechosModel();
         $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
 
-        // Filtros
         $filtros = [
             'buscar'            => $this->request->getGet('buscar'),
             'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
@@ -175,19 +179,16 @@ class DesechosController extends BaseController
             return strtotime($b['fecha_registro']) - strtotime($a['fecha_registro']);
         });
 
-        // Paginación manual
         $porPagina = 10;
         $pagina = (int)($this->request->getGet('page') ?? 1);
         $offset = ($pagina - 1) * $porPagina;
         $solicitudesPag = array_slice($solicitudes, $offset, $porPagina);
         $totalPages = ceil($total / $porPagina);
 
-        // Mantener filtros en URL
         $currentGet = $_GET;
         unset($currentGet['page']);
         $urlParams = !empty($currentGet) ? '&' . http_build_query($currentGet) : '';
 
-        // Rango de páginas
         $startPage = max(1, $pagina - 1);
         $endPage = min($totalPages, $pagina + 1);
         if ($pagina == 1) $endPage = min($totalPages, 3);
@@ -210,13 +211,16 @@ class DesechosController extends BaseController
         return view('desechos/registroSolicitudes', $data);
     }
 
+    // ===== GESTIÓN DE SOLICITUDES (CAMBIO DE ESTADO) =====
     public function gestionSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        
-        // Solo administradores pueden gestionar estados
-        if (session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tiene permisos para gestionar solicitudes.');
+
+        // ✅ Permitir acceso a administrador y protección integral
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))
+                             ->with('error', 'No tiene permisos para gestionar solicitudes.');
         }
 
         $desechosModel = new \App\Models\SolicitudDesechosModel();
@@ -288,12 +292,17 @@ class DesechosController extends BaseController
 
         return view('desechos/gestion_solicitudes', $data);
     }
+
+    // ===== ACTUALIZAR ESTADO (AJAX) =====
     public function actualizarEstado()
     {
         if (!$this->estaLogueado()) {
             return $this->response->setJSON(['error' => 'No autorizado']);
         }
-        if (session()->get('rol') !== 'administrador') {
+
+        // ✅ Permitir acceso a administrador y protección integral
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
             return $this->response->setJSON(['error' => 'Permisos insuficientes']);
         }
 
@@ -327,6 +336,7 @@ class DesechosController extends BaseController
         }
     }
 
+    // ===== EDITAR SOLICITUD (COMPLETA) =====
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -339,15 +349,9 @@ class DesechosController extends BaseController
         }
 
         if ($solicitud['editado'] == 1) {
-        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente. No se permite volver a editar.');
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
         }
 
-        // Verificar permisos (creador o administrador)
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
-        }
-
-        // Verificar que el usuario sea el creador O administrador
         if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
             return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
         }
@@ -379,19 +383,13 @@ class DesechosController extends BaseController
         }
 
         if ($solicitud['editado'] == 1) {
-        return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
         }
 
         if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
             return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
         }
 
-        // Permiso: solo creador o administrador
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
-        }
-
-        // Recoger datos del POST (igual que en registrar)
         $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
         $postVariantes = $this->request->getPost('variante_desecho') ?? [];
         $postEstado    = $this->request->getPost('estado_fisico') ?? [];
@@ -418,10 +416,14 @@ class DesechosController extends BaseController
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
     }
 
+    // ===== EDITAR PESO (ADMIN / PROTECCIÓN INTEGRAL) =====
     public function obtenerPeso($id)
     {
         if (!$this->estaLogueado()) return $this->response->setJSON(['error' => 'No autorizado']);
-        if (session()->get('rol') !== 'administrador') {
+
+        // ✅ Permitir acceso a administrador y protección integral
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
             return $this->response->setJSON(['error' => 'Sin permisos']);
         }
 
@@ -440,13 +442,13 @@ class DesechosController extends BaseController
         ]);
     }
 
-    /**
-     * Actualiza el peso de una solicitud
-     */
     public function actualizarPeso($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (session()->get('rol') !== 'administrador') {
+
+        // ✅ Permitir acceso a administrador y protección integral
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
             return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes permisos.');
         }
 
@@ -460,7 +462,6 @@ class DesechosController extends BaseController
         $peso_kg = $this->request->getPost('peso_kg') ?: null;
         $peso_l  = $this->request->getPost('peso_l') ?: null;
 
-        // Validar que sean números y no negativos
         if (!is_numeric($peso_kg) || !is_numeric($peso_l) || $peso_kg < 0 || $peso_l < 0) {
             return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores deben ser numéricos y positivos.');
         }

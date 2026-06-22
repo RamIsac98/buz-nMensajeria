@@ -26,6 +26,13 @@ class GestionController extends BaseController
             return redirect()->to('login');
         }
 
+
+        $rol = session()->get('rol');
+        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
+            return redirect()->to(base_url('interfaz_usuario_inicial'))
+                            ->with('error', 'Acceso denegado.');
+        }
+
         try {
             $perPage = 8;
             

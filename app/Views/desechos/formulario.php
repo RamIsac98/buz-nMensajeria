@@ -103,7 +103,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="page-title">Solicitud de Recolección de Desechos</div>
+<div class="page-title">Solicitud de Recolección de Desechos Biológicos</div>
 
 <div class="form-container">
     <form id="formSolicitud" action="<?= base_url('desechos/registrar') ?>" method="POST">
@@ -244,7 +244,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header text-white" style="background-color: var(--azul-oscuro, rgba(28,70,110,0.9));">
-                <h5 class="modal-title">⚠️ Atención</h5>
+                <h5 class="modal-title">Atención</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center p-4">
