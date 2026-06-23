@@ -76,3 +76,5 @@ $routes->match(['post', 'put'], 'bioseguridad/actualizar/(:num)', 'BioseguridadC
 $routes->get('desechos/obtenerPeso/(:num)', 'DesechosController::obtenerPeso/$1');
 // Ruta para actualizar peso (POST)
 $routes->post('desechos/actualizarPeso/(:num)', 'DesechosController::actualizarPeso/$1');
+
+$routes->get('dashboard', 'DashboardController::index');

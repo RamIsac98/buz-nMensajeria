@@ -199,7 +199,7 @@
             </div>
             
             <div class="col-md-4">
-                <label class="form-label-custom text-primary">Especificación obligatoria (Por seleccionar 'Otros'):</label>
+                <label class="form-label-custom text-primary">Especificación obligatoria (Por seleccionar O):</label>
                 <textarea name="empaque_otro_descripcion" id="txtOtros" class="form-control" rows="2" disabled></textarea>
             </div>
 
@@ -215,7 +215,7 @@
         </div>
 
         <div class="mt-5">
-            <button type="button" class="btn-submit" id="btnFakeSubmit">ENVIAR SOLICITUD DE DESECHO</button>
+            <button type="button" class="btn-submit" id="btnFakeSubmit">ENVIAR SOLICITUD DE DESECHOS</button>
         </div>
     </form>
 </div>

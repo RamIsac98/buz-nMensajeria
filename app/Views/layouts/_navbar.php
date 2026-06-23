@@ -38,6 +38,7 @@ $proteccionItems = [];
 if ($rolUsuario === 'proteccion_integral') {
     $proteccionItems = [
         'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
+        'dashboard'    => ['url' => 'dashboard', 'label' => 'Resgistro Peso Desechos'],
         'gestion'      => ['url' => 'desechos/gestionSolicitudes', 'label' => 'Gestión Solicitudes'],
         'usuarios'     => ['url' => 'usuarios', 'label' => 'Gestión Usuarios'],
         'departamentos'=> ['url' => 'gestion-departamento', 'label' => 'Gestión Centros y Laboratorios']
