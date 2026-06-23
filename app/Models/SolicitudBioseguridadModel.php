@@ -9,33 +9,12 @@ class SolicitudBioseguridadModel extends Model
     protected $table      = 'solicitudes_bioseguridad';
     protected $primaryKey = 'id';
 
-    protected $allowedFields = [
-    'ext_telefono',
-    'contenedores_pulso_cantidad',
-    'bolsas_rojas_pequena',
-    'bolsas_rojas_mediana',
-    'bolsas_rojas_grande',
-    'quien_retira',
-    'nombre_otra_persona',
-    'estado_solicitud',
-    'editado'
-    ];
-
     public function generarCodigoUnico(): string
     {
         $prefix = "BIO-" . date('Y');
-        // Obtener el último código generado con ese prefijo
-        $sql = "SELECT codigo_solicitud FROM solicitudes_bioseguridad WHERE codigo_solicitud LIKE ? ORDER BY id DESC LIMIT 1";
+        $sql = "SELECT COUNT(id) as total FROM solicitudes_bioseguridad WHERE codigo_solicitud LIKE ?";
         $row = $this->db->query($sql, [$prefix . '%'])->getRowArray();
-        
-        if ($row) {
-            $parts = explode('-', $row['codigo_solicitud']);
-            $lastSeq = (int)end($parts);
-            $secuencia = str_pad($lastSeq + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $secuencia = '0001';
-        }
-        
+        $secuencia = str_pad(($row['total'] + 1), 4, '0', STR_PAD_LEFT);
         return $prefix . "-" . $secuencia;
     }
 
@@ -66,8 +45,7 @@ class SolicitudBioseguridadModel extends Model
         $where = ["1=1"];
 
         if (!empty($filtros['buscar'])) {
-            $where[] = "(s.codigo_solicitud LIKE ? OR u.username LIKE ?)";
-            $values[] = '%' . $filtros['buscar'] . '%';
+            $where[] = "d.nombre LIKE ?";
             $values[] = '%' . $filtros['buscar'] . '%';
         }
 
@@ -93,19 +71,23 @@ class SolicitudBioseguridadModel extends Model
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
+        
         $sql = "SELECT COUNT(s.id) as total 
                 FROM solicitudes_bioseguridad s
                 LEFT JOIN usuarios u ON s.usuario_id = u.id
+                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                LEFT JOIN departamentos d ON l.departamento_id = d.id
                 WHERE $whereSql";
+                
         $resultado = $this->db->query($sql, $values)->getRowArray();
         return $resultado['total'];
     }
 
-    // ✅ CORREGIDO: se agregó JOIN y se eliminó ruta_pdf
     public function getSolicitudesFiltradas($filtros, $limit, $offset)
     {
         $values = [];
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
+        
         $sql = "SELECT s.*, u.username, l.nombre AS nombre_laboratorio, d.nombre AS nombre_departamento
                 FROM solicitudes_bioseguridad s
                 LEFT JOIN usuarios u ON s.usuario_id = u.id
@@ -114,6 +96,7 @@ class SolicitudBioseguridadModel extends Model
                 WHERE $whereSql
                 ORDER BY s.id DESC
                 LIMIT ? OFFSET ?";
+        
         $values[] = (int)$limit;
         $values[] = (int)$offset;
         return $this->db->query($sql, $values)->getResultArray();

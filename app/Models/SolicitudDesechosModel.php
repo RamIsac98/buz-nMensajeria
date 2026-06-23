@@ -9,37 +9,12 @@ class SolicitudDesechosModel extends Model
     protected $table      = 'solicitudes_desechos';
     protected $primaryKey = 'id';
 
-    protected $allowedFields = [
-        'ext_telefono',
-        'tipos_desecho',
-        'variantes_desecho',
-        'esterilizado',
-        'motivo',
-        'estado',
-        'peso_kg',
-        'peso_l',
-        'tipo_empaque',
-        'empaque_otro_descripcion',
-        'estado_solicitud',
-        'editado'
-    ];
-
     public function generarCodigoUnico(): string
     {
         $prefix = "SOL-" . date('Y');
-        // Obtener el último código generado con ese prefijo
-        $sql = "SELECT codigo_solicitud FROM solicitudes_desechos WHERE codigo_solicitud LIKE ? ORDER BY id DESC LIMIT 1";
+        $sql = "SELECT COUNT(id) as total FROM solicitudes_desechos WHERE codigo_solicitud LIKE ?";
         $row = $this->db->query($sql, [$prefix . '%'])->getRowArray();
-        
-        if ($row) {
-            // Extraer el número de secuencia del último código
-            $parts = explode('-', $row['codigo_solicitud']);
-            $lastSeq = (int)end($parts);
-            $secuencia = str_pad($lastSeq + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $secuencia = '0001';
-        }
-        
+        $secuencia = str_pad(($row['total'] + 1), 4, '0', STR_PAD_LEFT);
         return $prefix . "-" . $secuencia;
     }
 
@@ -71,8 +46,7 @@ class SolicitudDesechosModel extends Model
         $where = ["1=1"];
 
         if (!empty($filtros['buscar'])) {
-            $where[] = "(s.codigo_solicitud LIKE ? OR u.username LIKE ?)";
-            $values[] = '%' . $filtros['buscar'] . '%';
+            $where[] = "d.nombre LIKE ?";
             $values[] = '%' . $filtros['buscar'] . '%';
         }
 
@@ -107,6 +81,8 @@ class SolicitudDesechosModel extends Model
         $sql = "SELECT COUNT(s.id) as total 
                 FROM solicitudes_desechos s
                 LEFT JOIN usuarios u ON s.usuario_id = u.id
+                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                LEFT JOIN departamentos d ON l.departamento_id = d.id
                 WHERE $whereSql";
                 
         $resultado = $this->db->query($sql, $values)->getRowArray();
@@ -119,8 +95,8 @@ class SolicitudDesechosModel extends Model
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
         
         $sql = "SELECT s.*, s.usuario_id, u.username, u.cedula,
-                    d.nombre AS nombre_departamento, 
-                    l.nombre AS nombre_laboratorio
+                       d.nombre AS nombre_departamento, 
+                       l.nombre AS nombre_laboratorio
                 FROM solicitudes_desechos s
                 LEFT JOIN usuarios u ON s.usuario_id = u.id
                 LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
