@@ -41,6 +41,8 @@ class DesechosController extends BaseController
 
         $solicitudModel = new SolicitudDesechosModel();
 
+
+
         $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
         $postVariantes = $this->request->getPost('variante_desecho') ?? [];
         $postEstado    = $this->request->getPost('estado_fisico') ?? [];
@@ -49,6 +51,17 @@ class DesechosController extends BaseController
         $codigoSolicitud = $this->request->getPost('codigo_solicitud');
         if (empty($codigoSolicitud)) {
             $codigoSolicitud = $solicitudModel->generarCodigoUnico();
+        }
+
+        $codigoSolicitud = $this->request->getPost('codigo_solicitud');
+        if (empty($codigoSolicitud)) {
+            $codigoSolicitud = $solicitudModel->generarCodigoUnico();
+        } else {
+            // Validar si el código ya existe en la BD (para evitar duplicados enviados desde el formulario)
+            $existe = $solicitudModel->where('codigo_solicitud', $codigoSolicitud)->first();
+            if ($existe) {
+                $codigoSolicitud = $solicitudModel->generarCodigoUnico();
+            }
         }
 
         $insertData = [
@@ -65,6 +78,8 @@ class DesechosController extends BaseController
             'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
             'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
         ];
+
+
 
         if ($solicitudModel->insertarSolicitud($insertData)) {
             $this->registrarBitacora('Registro de Solicitud', 'Servicio Desechos', "Se generó la solicitud: " . $insertData['codigo_solicitud']);
@@ -300,7 +315,7 @@ class DesechosController extends BaseController
             return $this->response->setJSON(['error' => 'No autorizado']);
         }
 
-        // ✅ Permitir acceso a administrador y protección integral
+        
         $rol = session()->get('rol');
         if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
             return $this->response->setJSON(['error' => 'Permisos insuficientes']);
