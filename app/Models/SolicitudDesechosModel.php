@@ -8,6 +8,20 @@ class SolicitudDesechosModel extends Model
 {
     protected $table      = 'solicitudes_desechos';
     protected $primaryKey = 'id';
+    protected $allowedFields = [
+        'ext_telefono',
+        'tipos_desecho',
+        'variantes_desecho',
+        'esterilizado',
+        'motivo',
+        'estado',
+        'peso_kg',
+        'peso_l',
+        'tipo_empaque',
+        'empaque_otro_descripcion',
+        'estado_solicitud',
+        'editado'
+    ];
 
     public function generarCodigoUnico(): string
     {

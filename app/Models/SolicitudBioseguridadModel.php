@@ -9,6 +9,18 @@ class SolicitudBioseguridadModel extends Model
     protected $table      = 'solicitudes_bioseguridad';
     protected $primaryKey = 'id';
 
+    protected $allowedFields = [
+        'ext_telefono',
+        'contenedores_pulso_cantidad',
+        'bolsas_rojas_pequena',
+        'bolsas_rojas_mediana',
+        'bolsas_rojas_grande',
+        'quien_retira',
+        'nombre_otra_persona',
+        'estado_solicitud',
+        'editado'
+    ];
+
     public function generarCodigoUnico(): string
     {
         $prefix = "BIO-" . date('Y');
@@ -42,30 +54,25 @@ class SolicitudBioseguridadModel extends Model
 
     private function armarCondicionesFiltro($filtros, &$values)
     {
-        $where = ["1=1"];
+        $where = [];
 
-        if (!empty($filtros['buscar'])) {
-            $where[] = "d.nombre LIKE ?";
-            $values[] = '%' . $filtros['buscar'] . '%';
+        $configuracionFiltros = [
+            'buscar'           => ['d.nombre LIKE ?', fn($v) => "%{$v}%"],
+            'estado_solicitud' => ['s.estado_solicitud = ?', fn($v) => $v],
+            'fecha_desde'      => ['s.fecha_registro >= ?', fn($v) => $v . ' 00:00:00'],
+            'fecha_hasta'      => ['s.fecha_registro <= ?', fn($v) => $v . ' 23:59:59'],
+        ];
+
+        foreach ($configuracionFiltros as $campo => [$sql, $transformer]) {
+            if (!empty($filtros[$campo])) {
+                $where[] = $sql;
+                $values[] = $transformer($filtros[$campo]);
+            }
         }
 
-        if (!empty($filtros['estado_solicitud'])) {
-            $where[] = "s.estado_solicitud = ?";
-            $values[] = $filtros['estado_solicitud'];
-        }
-
-        if (!empty($filtros['fecha_desde'])) {
-            $where[] = "DATE(s.fecha_registro) >= ?";
-            $values[] = $filtros['fecha_desde'];
-        }
-
-        if (!empty($filtros['fecha_hasta'])) {
-            $where[] = "DATE(s.fecha_registro) <= ?";
-            $values[] = $filtros['fecha_hasta'];
-        }
-
-        return implode(" AND ", $where);
+        return empty($where) ? "1=1" : implode(" AND ", $where);
     }
+
 
     public function countSolicitudesFiltradas($filtros)
     {
