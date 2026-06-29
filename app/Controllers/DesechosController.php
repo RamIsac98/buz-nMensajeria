@@ -187,21 +187,15 @@ class DesechosController extends BaseController
         return view('desechos/registroSolicitudes', $data);
     }
 
-    // ===== GESTIÓN DE SOLICITUDES (CAMBIO DE ESTADO) =====
+    // cambiar el estado de solicitud
     public function gestionSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        // ✅ Permitir acceso a administrador y protección integral
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))
-                             ->with('error', 'No tiene permisos para gestionar solicitudes.');
-        }
-
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tiene permisos para gestionar solicitudes.');
         $desechosModel = new \App\Models\SolicitudDesechosModel();
         $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
-
         $filtros = [
             'buscar'            => $this->request->getGet('buscar'),
             'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
@@ -251,7 +245,6 @@ class DesechosController extends BaseController
         $endPage = min($totalPages, $pagina + 1);
         if ($pagina == 1) $endPage = min($totalPages, 3);
         if ($pagina == $totalPages) $startPage = max(1, $totalPages - 2);
-
         $data = [
             'solicitudes'        => $solicitudesPag,
             'total'              => $total,
@@ -269,26 +262,21 @@ class DesechosController extends BaseController
         return view('desechos/gestion_solicitudes', $data);
     }
 
-    // ===== ACTUALIZAR ESTADO (AJAX) =====
+    //ACTUALIZAR ESTADO
     public function actualizarEstado()
     {
-        if (!$this->estaLogueado()) {
-            return $this->response->setJSON(['error' => 'No autorizado']);
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
 
         
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return $this->response->setJSON(['error' => 'Permisos insuficientes']);
-        }
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return $this->response->setJSON(['error' => 'Permisos insuficientes']);
 
         $id = $this->request->getPost('id');
         $tipo = $this->request->getPost('tipo');
         $nuevoEstado = $this->request->getPost('estado');
 
-        if (!in_array($nuevoEstado, ['Pendiente', 'Entregado', 'Cancelado'])) {
-            return $this->response->setJSON(['error' => 'Estado no válido']);
-        }
+        if (!in_array($nuevoEstado, ['Pendiente', 'Entregado', 'Cancelado'])) return $this->response->setJSON(['error' => 'Estado no válido']);
 
         try {
             if ($tipo == 'desechos') {
@@ -312,7 +300,6 @@ class DesechosController extends BaseController
         }
     }
 
-    // ===== EDITAR SOLICITUD (COMPLETA) =====
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -320,17 +307,11 @@ class DesechosController extends BaseController
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
-        }
+        if (!$solicitud) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
 
-        if ($solicitud['editado'] == 1) {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
-        }
+        if ($solicitud['editado'] == 1) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
 
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
-        }
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
@@ -354,17 +335,11 @@ class DesechosController extends BaseController
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
-        }
+        if (!$solicitud) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
 
-        if ($solicitud['editado'] == 1) {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
-        }
+        if ($solicitud['editado'] == 1) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
 
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
-        }
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
 
         $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
         $postVariantes = $this->request->getPost('variante_desecho') ?? [];
@@ -392,23 +367,19 @@ class DesechosController extends BaseController
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
     }
 
-    // ===== EDITAR PESO (ADMIN / PROTECCIÓN INTEGRAL) =====
+    // EDITAR PESO 
     public function obtenerPeso($id)
     {
         if (!$this->estaLogueado()) return $this->response->setJSON(['error' => 'No autorizado']);
 
-        // ✅ Permitir acceso a administrador y protección integral
+        
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return $this->response->setJSON(['error' => 'Sin permisos']);
-        }
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return $this->response->setJSON(['error' => 'Sin permisos']);
 
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) {
-            return $this->response->setJSON(['error' => 'Solicitud no encontrada']);
-        }
+        if (!$solicitud) return $this->response->setJSON(['error' => 'Solicitud no encontrada']);
 
         return $this->response->setJSON([
             'id'         => $solicitud['id'],
@@ -422,33 +393,31 @@ class DesechosController extends BaseController
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        // ✅ Permitir acceso a administrador y protección integral
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes permisos.');
-        }
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes permisos.');
 
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) {
-            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Solicitud no encontrada.');
-        }
+        if (!$solicitud) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Solicitud no encontrada.');
 
-        $peso_kg = $this->request->getPost('peso_kg') ?: null;
-        $peso_l  = $this->request->getPost('peso_l') ?: null;
+        $peso_kg = $this->request->getPost('peso_kg') !== '' ? (float)$this->request->getPost('peso_kg') : null;
+        $peso_l  = $this->request->getPost('peso_l') !== '' ? (float)$this->request->getPost('peso_l') : null;
+        
 
-        if (!is_numeric($peso_kg) || !is_numeric($peso_l) || $peso_kg < 0 || $peso_l < 0) {
-            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores deben ser numéricos y positivos.');
-        }
+        if (($peso_kg !== null && !is_numeric($peso_kg)) || ($peso_l !== null && !is_numeric($peso_l))) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores deben ser numéricos.');
+        if (($peso_kg !== null && $peso_kg < 0) || ($peso_l !== null && $peso_l < 0)) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores no pueden ser negativos.');
 
-        $solicitudModel->update($id, [
-            'peso_kg' => $peso_kg,
-            'peso_l'  => $peso_l
+        $actualizado = $solicitudModel->update($id, [
+        'peso_kg' => $peso_kg,
+        'peso_l'  => $peso_l
         ]);
 
-        $this->registrarBitacora('Edición de Peso', 'Servicio Desechos', "Se actualizó el peso de la solicitud ID $id a Kg: $peso_kg, L: $peso_l");
+        if ($actualizado) {
+            $this->registrarBitacora('Edición de Peso', 'Servicio Desechos', "Se actualizó el peso de la solicitud ID $id a Kg: $peso_kg, L: $peso_l");
+            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('success', 'Peso actualizado correctamente.');
+        }
 
-        return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('success', 'Peso actualizado correctamente.');
+        return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No se pudo actualizar el peso. Verifica los datos.');
     }
 }

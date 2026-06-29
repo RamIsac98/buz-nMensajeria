@@ -70,11 +70,15 @@
         color: var(--azul-claro);
         font-weight: bold;
     }
+
+    /* Botón de editar (lápiz) igual que en gestión */
     .btn-editar {
         background: none;
         border: none;
         padding: 0;
         transition: opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
     }
     .btn-editar:hover {
         opacity: 0.7;
@@ -82,14 +86,6 @@
     .btn-editar:disabled {
         opacity: 0.4;
         cursor: not-allowed;
-    }
-    .badge-editado {
-        background-color: #17a2b8;
-        color: white;
-        font-size: 0.6rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        margin-left: 4px;
     }
 </style>
 <?= $this->endSection() ?>
@@ -156,7 +152,7 @@
         </form>
     </div>
 
-    <!-- Tabla -->
+    <!-- Tabla con acciones -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -198,22 +194,16 @@
                                         $es_creador = ($usuario_actual == $sol['usuario_id']);
                                         $es_admin = (session()->get('rol') === 'administrador');
                                         $editado = $sol['editado'] ?? 0;
-                                        $editable = ($es_creador || $es_admin) && $editado == 0;
-                                        
-                                        if ($editable):
+
+                                        if (($es_creador || $es_admin) && $editado == 0) {
+                                            $url_editar = base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/editar/' . $sol['id']);
+                                            echo '<a href="'.$url_editar.'" class="btn-editar" title="Editar solicitud">
+                                                    <img src="'.base_url('img/pensil.png').'" alt="Editar" width="20" height="20">
+                                                  </a>';
+                                        } else {
+                                            echo '<span class="text-muted small">No editable</span>';
+                                        }
                                         ?>
-                                            <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/editar/' . $sol['id']) ?>" 
-                                               class="btn-editar" title="Editar solicitud">
-                                                <img src="<?= base_url('img/pensil.png') ?>" alt="Editar" width="20" height="20">
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="btn-editar" style="opacity:0.4; cursor:not-allowed;" title="No editable">
-                                                <img src="<?= base_url('img/pensil.png') ?>" alt="No editable" width="20" height="20">
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if ($editado == 1): ?>
-                                            <span class="badge-editado">Editada</span>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -268,8 +258,4 @@
         </div>
     </div>
 </div>
-<?= $this->endSection() ?>
-
-<?= $this->section('scripts') ?>
-<!-- No hay scripts específicos adicionales -->
 <?= $this->endSection() ?>
