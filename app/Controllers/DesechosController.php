@@ -49,19 +49,15 @@ class DesechosController extends BaseController
         $postEmpaque   = $this->request->getPost('tipo_empaque') ?? [];
         
         $codigoSolicitud = $this->request->getPost('codigo_solicitud');
-        if (empty($codigoSolicitud)) {
-            $codigoSolicitud = $solicitudModel->generarCodigoUnico();
-        }
+        if (empty($codigoSolicitud)) $codigoSolicitud = $solicitudModel->generarCodigoUnico();
 
         $codigoSolicitud = $this->request->getPost('codigo_solicitud');
         if (empty($codigoSolicitud)) {
             $codigoSolicitud = $solicitudModel->generarCodigoUnico();
         } else {
-            // Validar si el código ya existe en la BD (para evitar duplicados enviados desde el formulario)
+            // evitar duplicacion del code form
             $existe = $solicitudModel->where('codigo_solicitud', $codigoSolicitud)->first();
-            if ($existe) {
-                $codigoSolicitud = $solicitudModel->generarCodigoUnico();
-            }
+            if ($existe) $codigoSolicitud = $solicitudModel->generarCodigoUnico();
         }
 
         $insertData = [
@@ -79,8 +75,6 @@ class DesechosController extends BaseController
             'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
         ];
 
-
-
         if ($solicitudModel->insertarSolicitud($insertData)) {
             $this->registrarBitacora('Registro de Solicitud', 'Servicio Desechos', "Se generó la solicitud: " . $insertData['codigo_solicitud']);
             return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud registrada correctamente.');
@@ -96,17 +90,13 @@ class DesechosController extends BaseController
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) {
-            return redirect()->back()->with('error', 'Solicitud no encontrada.');
-        }
+        if (!$solicitud) return redirect()->back()->with('error', 'Solicitud no encontrada.');
 
         $usuarioModel = new \App\Models\UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
-
         $nombreCompleto = trim(($usuario['nombre'] ?? '') . ' ' . ($usuario['apellido'] ?? ''));
-        if (empty($nombreCompleto)) {
-            $nombreCompleto = $usuario['username'] ?? 'Usuario';
-        }
+
+        $nombreCompleto = !empty($nombreCompleto) ? $nombreCompleto : ($usuario['username'] ?? 'Usuario');
 
         $data = $solicitud;
         $data['usuario_nombre'] = $nombreCompleto;
@@ -115,52 +105,24 @@ class DesechosController extends BaseController
         $data['fecha_registro'] = date('d/m/Y H:i:s', strtotime($solicitud['fecha_registro']));
 
         $html = view('desechos/plantilla_pdf', $data);
-
         $options = new \Dompdf\Options();
         $options->set('isRemoteEnabled', true);
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
-
         $dompdf->stream('solicitud_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
         exit;
     }
 
-    public function verPdf($nombreArchivo)
-    {
-        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-
-        $ruta = FCPATH . 'uploads/pdfs/' . $nombreArchivo;
-
-        if (file_exists($ruta)) {
-            if (ob_get_length()) ob_end_clean();
-
-            return $this->response
-                ->setHeader('Content-Type', 'application/pdf')
-                ->setHeader('Content-Disposition', 'inline; filename="' . $nombreArchivo . '"')
-                ->setHeader('Content-Length', filesize($ruta))
-                ->setBody(file_get_contents($ruta));
-        } else {
-            return "El archivo no existe en: " . $ruta;
-        }
-    }
-
-    // ===== HISTORIAL DE SOLICITUDES =====
     public function registroSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        // ✅ Bloquear acceso al rol proteccion_integral
-        $rol = session()->get('rol');
-        if ($rol === 'proteccion_integral') {
-            return redirect()->to(base_url('desechos/gestionSolicitudes'))
-                             ->with('error', 'No tienes acceso al historial de solicitudes.');
-        }
+        if (session()->get('rol') === 'proteccion_integral') return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes acceso al historial de solicitudes.');
 
         $desechosModel = new \App\Models\SolicitudDesechosModel();
         $bioseguridadModel = new \App\Models\SolicitudBioseguridadModel();
-
         $filtros = [
             'buscar'            => $this->request->getGet('buscar'),
             'tipo_solicitud'    => $this->request->getGet('tipo_solicitud'),
@@ -168,7 +130,6 @@ class DesechosController extends BaseController
             'fecha_desde'       => $this->request->getGet('fecha_desde'),
             'fecha_hasta'       => $this->request->getGet('fecha_hasta')
         ];
-
         $solicitudes = [];
         $total = 0;
 
