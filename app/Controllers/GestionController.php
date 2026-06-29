@@ -22,16 +22,10 @@ class GestionController extends BaseController
 
     public function index()
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to('login');
-        }
-
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                            ->with('error', 'Acceso denegado.');
-        }
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
         try {
             $perPage = 8;
@@ -92,15 +86,11 @@ class GestionController extends BaseController
 
     private function procesarGuardado(?int $id, string $tipo): RedirectResponse
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to('login');
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $esEdicion = ($id !== null);
-        
         $pageDept = (int)($this->request->getGet('page_dept') ?? 1);
         $pageLab  = (int)($this->request->getGet('page_lab') ?? 1);
-        
         $destinoRedireccion = base_url("gestion-departamento?page_dept={$pageDept}&page_lab={$pageLab}");
 
         if ($tipo === 'departamento') {
@@ -192,13 +182,11 @@ class GestionController extends BaseController
 
     private function procesarEliminacion(int $id, string $tipo): RedirectResponse
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to('login');
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
 
         $pageDept = (int)($this->request->getGet('page_dept') ?? 1);
         $pageLab  = (int)($this->request->getGet('page_lab') ?? 1);
-        
         $destinoRedireccion = base_url("gestion-departamento?page_dept={$pageDept}&page_lab={$pageLab}");
 
         try {
@@ -226,9 +214,8 @@ class GestionController extends BaseController
 
     public function generarPdfGeneral()
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to('login');
-        }
+         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+
 
         $depto_id = $this->request->getGet('depto_id');
         $usuarioModel = new \App\Models\UsuarioModel();
@@ -251,16 +238,12 @@ class GestionController extends BaseController
 
     public function generarPdfLaboratorios()
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to('login');
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $depto_id = $this->request->getGet('depto_id');
         $labModel = new \App\Models\LaboratorioModel();
-
         $data['laboratorios'] = $labModel->getLaboratoriosFiltrados($depto_id);
         $data['depto_seleccionado'] = $depto_id;
-
         $html = view('gestionDepartamento/pdf_laboratorios', $data);
 
         $dompdf = new \Dompdf\Dompdf();
