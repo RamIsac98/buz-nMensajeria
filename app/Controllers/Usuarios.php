@@ -20,10 +20,7 @@ class Usuarios extends BaseController
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $rol = session()->get('rol');
-        if ($rol !== 'administrador' && $rol !== 'proteccion_integral') {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado: No tienes permisos.');
-        }
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado: No tienes permisos.');
 
         $usuarioModel = new UsuarioModel();
 
@@ -186,21 +183,14 @@ class Usuarios extends BaseController
     public function deshabilitar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado.');
-        }
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
-        if ($id == session()->get('usuario_id')) {
-            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta.');
-        }
+        if ($id == session()->get('usuario_id')) return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta.');
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($id);
 
-        if (!$usuario) {
-            return redirect()->to(base_url('usuarios'))->with('error', 'Usuario no registrado.');
-        }
+        if (!$usuario) return redirect()->to(base_url('usuarios'))->with('error', 'Usuario no registrado.');
 
         $nuevoEstado = ($usuario['status'] == 1) ? 0 : 1;
         $accionTexto = ($nuevoEstado == 1) ? 'Habilitar' : 'Deshabilitar';
@@ -219,21 +209,14 @@ class Usuarios extends BaseController
     public function eliminar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado.');
-        }
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
-        if ($id == session()->get('usuario_id')) {
-            return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes eliminar tu propia cuenta del sistema.');
-        }
+        if ($id == session()->get('usuario_id')) return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes eliminar tu propia cuenta del sistema.');
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($id);
 
-        if (!$usuario) {
-            return redirect()->to(base_url('usuarios'))->with('error', 'El usuario que intentas eliminar no existe.');
-        }
+        if (!$usuario) return redirect()->to(base_url('usuarios'))->with('error', 'El usuario que intentas eliminar no existe.');
 
         $usuarioModel->deleteUsuario($id);
 
@@ -249,10 +232,7 @@ class Usuarios extends BaseController
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado.');
-        }
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
         $deptModel = new DepartamentoModel();
         $data['departamentos'] = $deptModel->getDepartamentos();
@@ -263,10 +243,7 @@ class Usuarios extends BaseController
     public function guardar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado.');
-        }
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
         $usuarioModel = new UsuarioModel();
 
@@ -354,9 +331,7 @@ class Usuarios extends BaseController
         $pregunta  = $this->request->getPost('pregunta_seguridad');
         $respuesta = $this->request->getPost('respuesta_seguridad');
 
-        if (empty($pregunta) || empty($respuesta)) {
-            return redirect()->back()->with('error', 'Debes seleccionar una pregunta y escribir tu respuesta.');
-        }
+        if (empty($pregunta) || empty($respuesta)) return redirect()->back()->with('error', 'Debes seleccionar una pregunta y escribir tu respuesta.');
 
         $usuarioModel = new UsuarioModel();
         $usuarioModel->updateUsuario($idUsuario, [
@@ -384,20 +359,14 @@ class Usuarios extends BaseController
         $newPassword     = $this->request->getPost('new_password');
         $confirmPassword = $this->request->getPost('confirm_password');
 
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-            return redirect()->back()->with('error', 'Todos los campos del formulario son estrictamente obligatorios.');
-        }
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) return redirect()->back()->with('error', 'Todos los campos del formulario son estrictamente obligatorios.');
 
-        if ($newPassword !== $confirmPassword) {
-            return redirect()->back()->with('error', 'La nueva contraseña y su confirmación no coinciden.');
-        }
+        if ($newPassword !== $confirmPassword) return redirect()->back()->with('error', 'La nueva contraseña y su confirmación no coinciden.');
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($userId);
 
-        if (!$usuario || !password_verify($currentPassword, $usuario['password'])) {
-            return redirect()->back()->with('error', 'La contraseña actual introducida es incorrecta.');
-        }
+        if (!$usuario || !password_verify($currentPassword, $usuario['password'])) return redirect()->back()->with('error', 'La contraseña actual introducida es incorrecta.');
 
         $usuarioModel->updateUsuario($userId, [
             'password' => password_hash($newPassword, PASSWORD_DEFAULT)
@@ -414,17 +383,13 @@ class Usuarios extends BaseController
 
     public function solicitudDesechos()
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to(base_url('login'));
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         return view('Usuarios/SolicitudDesechos');
     }
 
     public function procesarSolicitud()
     {
-        if (!$this->estaLogueado()) {
-            return redirect()->to(base_url('login'));
-        }
+        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         return redirect()->back()->with('success', 'Solicitud registrada correctamente.');
     }
 }
