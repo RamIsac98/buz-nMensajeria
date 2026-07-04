@@ -107,15 +107,17 @@
 
     <h2 class="main-title mb-4 mt-3">Gestión de Centros / Laboratorio</h2>
 
-    <!-- Barra de filtros y botones -->
+    <!-- Barra de filtros y botones (con filtro por servidor) -->
     <div class="filter-bar mb-4 mt-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             <span class="filter-label">Buscar Laboratorios por Centro:</span>
             <select id="filtroDepartamento" class="filter-input bg-white">
-                <option value="todos">-- Mostrar Todos --</option>
+                <option value="todos" <?= ($filtro_depto ?? 'todos') === 'todos' ? 'selected' : '' ?>>-- Mostrar Todos --</option>
                 <?php if(!empty($todos_departamentos)): ?>
                     <?php foreach ($todos_departamentos as $depto): ?>
-                        <option value="<?= $depto['id'] ?>"><?= esc($depto['nombre']) ?></option>
+                        <option value="<?= $depto['id'] ?>" <?= ($filtro_depto ?? 'todos') == $depto['id'] ? 'selected' : '' ?>>
+                            <?= esc($depto['nombre']) ?>
+                        </option>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </select>
@@ -170,17 +172,17 @@
             <nav class="mt-3">
                 <ul class="pagination pagination-sm">
                     <li class="page-item <?= ($pager_dept['actual'] <= 1) ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] - 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Anterior</a>
+                        <a class="page-link" href="?filtro_depto=<?= $filtro_depto ?? 'todos' ?>&page_dept=<?= $pager_dept['actual'] - 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Anterior</a>
                     </li>
                     <li class="page-item disabled"><span class="page-link">Pág <?= $pager_dept['actual'] ?> de <?= $pager_dept['total'] ?: 1 ?></span></li>
                     <li class="page-item <?= ($pager_dept['actual'] >= $pager_dept['total']) ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] + 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Siguiente</a>
+                        <a class="page-link" href="?filtro_depto=<?= $filtro_depto ?? 'todos' ?>&page_dept=<?= $pager_dept['actual'] + 1 ?>&page_lab=<?= $pager_lab['actual'] ?>">Siguiente</a>
                     </li>
                 </ul>
             </nav>
         </div>
 
-        <!-- Columna de Laboratorios -->
+        <!-- Columna de Laboratorios (con paginación filtrada) -->
         <div class="col-lg-7">
             <h3 class="sub-title mb-3">Laboratorios <span id="textoFiltroLab" class="text-muted fs-6 fw-normal"></span></h3>
             <div class="table-responsive bg-white p-3 border rounded shadow-sm">
@@ -191,7 +193,7 @@
                     <tbody>
                         <?php if(!empty($laboratorios)): ?>
                             <?php foreach($laboratorios as $lab): ?>
-                            <tr class="lab-row" data-dept-id="<?= $lab['departamento_id'] ?>">
+                            <tr>
                                 <td><strong>#<?= $lab['id'] ?></strong></td>
                                 <td><?= esc($lab['nombre']) ?></td>
                                 <td><span class="badge bg-light text-dark border"><?= esc($lab['nombre_departamento'] ?? 'Dpto. ID: '.$lab['departamento_id']) ?></span></td>
@@ -206,7 +208,7 @@
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr id="rowVaciaLabs"><td colspan="4" class="empty-state">No hay laboratorios registrados.</td></tr>
+                            <tr id="rowVaciaLabs"><td colspan="4" class="empty-state">No hay laboratorios registrados para este centro.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -214,11 +216,11 @@
             <nav class="mt-3">
                 <ul class="pagination pagination-sm">
                     <li class="page-item <?= ($pager_lab['actual'] <= 1) ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] - 1 ?>">Anterior</a>
+                        <a class="page-link" href="?filtro_depto=<?= $filtro_depto ?? 'todos' ?>&page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] - 1 ?>">Anterior</a>
                     </li>
                     <li class="page-item disabled"><span class="page-link">Pág <?= $pager_lab['actual'] ?> de <?= $pager_lab['total'] ?: 1 ?></span></li>
                     <li class="page-item <?= ($pager_lab['actual'] >= $pager_lab['total']) ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] + 1 ?>">Siguiente</a>
+                        <a class="page-link" href="?filtro_depto=<?= $filtro_depto ?? 'todos' ?>&page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] + 1 ?>">Siguiente</a>
                     </li>
                 </ul>
             </nav>
@@ -226,7 +228,7 @@
     </div>
 </div>
 
-<!-- Modales específicos de esta página (se mantienen igual, pero sin el modal de cambio de contraseña) -->
+<!-- Modales específicos de esta página (se mantienen sin cambios) -->
 
 <!-- Modal para Nuevo Departamento -->
 <div class="modal fade" id="modalNuevoDepartamento" tabindex="-1" aria-hidden="true">
@@ -364,49 +366,33 @@
         const modalLab = new bootstrap.Modal(document.getElementById('modalEditarLab'));
         const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminar'));
 
+        // ===== FILTRO POR CENTRO (con redirección) =====
         const filtroDepto = document.getElementById('filtroDepartamento');
-        const filasLabs = document.querySelectorAll('.lab-row');
-        const textoFiltro = document.getElementById('textoFiltroLab');
-
         if (filtroDepto) {
-            const aplicarFiltrado = (deptoSeleccionado) => {
-                let visibles = 0;
-                textoFiltro.textContent = (deptoSeleccionado !== 'todos') 
-                    ? `(Filtrados por: ${filtroDepto.options[filtroDepto.selectedIndex].text})` 
-                    : '';
-
-                filasLabs.forEach(fila => {
-                    if (deptoSeleccionado === 'todos' || fila.getAttribute('data-dept-id') === deptoSeleccionado) {
-                        fila.style.display = '';
-                        visibles++;
-                    } else {
-                        fila.style.display = 'none';
-                    }
-                });
-
-                let rowVacia = document.getElementById('rowVaciaLabs');
-                if (visibles === 0 && !rowVacia) {
-                    document.querySelector('#tablaLaboratorios tbody').insertAdjacentHTML('beforeend', 
-                        '<tr id="rowVaciaLabs"><td colspan="4" class="empty-state">No hay laboratorios para el departamento seleccionado.</td></tr>');
-                } else if (visibles > 0 && rowVacia) {
-                    rowVacia.remove();
-                }
-            };
-
-            const filtroGuardado = localStorage.getItem('filtroDepartamento');
-            if (filtroGuardado) {
-                filtroDepto.value = filtroGuardado;
-                if (!filtroDepto.value) filtroDepto.value = 'todos';
+            // Mostrar el texto del filtro activo
+            const textoFiltro = document.getElementById('textoFiltroLab');
+            const params = new URLSearchParams(window.location.search);
+            const filtroActual = params.get('filtro_depto');
+            if (filtroActual && filtroActual !== 'todos') {
+                const optionText = filtroDepto.options[filtroDepto.selectedIndex]?.text || '';
+                textoFiltro.textContent = `(Filtrados por: ${optionText})`;
+            } else {
+                textoFiltro.textContent = '';
             }
-            aplicarFiltrado(filtroDepto.value);
 
+            // Al cambiar, redirigir con el nuevo filtro
             filtroDepto.addEventListener('change', function() {
-                localStorage.setItem('filtroDepartamento', this.value);
-                aplicarFiltrado(this.value);
+                const valor = this.value;
+                // Guardar en localStorage para recordar el filtro
+                localStorage.setItem('filtroDepartamento', valor);
+                const url = new URL(window.location.href);
+                url.searchParams.set('filtro_depto', valor);
+                url.searchParams.set('page_lab', 1); // Resetear página de laboratorios
+                window.location.href = url.toString();
             });
         }
 
-        // Eventos de botones (editar, eliminar, pdf)
+        // ===== EVENTOS DE BOTONES (editar, eliminar, pdf) =====
         document.body.addEventListener('click', (e) => {
             const btnEdDepto = e.target.closest('.btn-editar-depto');
             if (btnEdDepto) {
@@ -421,8 +407,13 @@
                 document.getElementById('editLabId').value = btnEdLab.dataset.id;
                 document.getElementById('editLabNombre').value = btnEdLab.dataset.nombre;
                 const selectDestino = document.getElementById('editLabDeptoId');
-                selectDestino.innerHTML = filtroDepto.innerHTML;
-                selectDestino.querySelector('option[value="todos"]')?.remove();
+                // Llenar el select con los departamentos
+                const deptoSelect = document.getElementById('filtroDepartamento');
+                selectDestino.innerHTML = deptoSelect.innerHTML;
+                // Remover la opción "todos"
+                const optionTodos = selectDestino.querySelector('option[value="todos"]');
+                if (optionTodos) optionTodos.remove();
+                // Seleccionar el departamento actual
                 selectDestino.value = btnEdLab.dataset.depto;
                 modalLab.show();
                 return;
@@ -431,14 +422,14 @@
             const btnDel = e.target.closest('.btn-eliminar-trigger');
             if (btnDel) {
                 const form = document.getElementById('formEliminar');
-                form.action = `<?= base_url('gestion-departamento/eliminar-') ?>${btnDel.dataset.tipo}/${btnDel.dataset.id}?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>`;
+                form.action = `<?= base_url('gestion-departamento/eliminar-') ?>${btnDel.dataset.tipo}/${btnDel.dataset.id}?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>&filtro_depto=<?= $filtro_depto ?? 'todos' ?>`;
                 modalEliminar.show();
                 return;
             }
 
             const btnPdf = e.target.closest('.btn-pdf-trigger');
             if (btnPdf) {
-                const deptoId = filtroDepto.value;
+                const deptoId = filtroDepto?.value || 'todos';
                 const esGeneral = btnPdf.dataset.type === 'general';
                 const endpoint = esGeneral ? 'generar-pdf-general' : 'generar-pdf';
                 const url = `<?= base_url('gestion-departamento/') ?>${endpoint}?depto_id=${deptoId}`;

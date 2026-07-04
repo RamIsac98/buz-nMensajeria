@@ -27,11 +27,12 @@ class GestionController extends BaseController
         $rol = session()->get('rol');
         if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
 
-        try {
+            try {
             $perPage = 8;
-            
             $pageDept = (int)($this->request->getGet('page_dept') ?? 1);
             $pageLab  = (int)($this->request->getGet('page_lab') ?? 1);
+            $filtroDepto = $this->request->getGet('filtro_depto');
+            $filtroDepto = ($filtroDepto === 'todos' || empty($filtroDepto)) ? null : (int)$filtroDepto;
 
             if ($pageDept < 1) $pageDept = 1;
             if ($pageLab < 1) $pageLab = 1;
@@ -42,15 +43,16 @@ class GestionController extends BaseController
             $data = [
                 'departamentos'       => $this->deptModel->getDepartamentosPaginados($perPage, $offsetDept),
                 'todos_departamentos' => $this->deptModel->getDepartamentos(),
-                'laboratorios'        => $this->labModel->getLaboratoriosPaginados($perPage, $offsetLab),
+                'laboratorios'        => $this->labModel->getLaboratoriosPaginados($perPage, $offsetLab, $filtroDepto),
                 'pager_dept'          => [
-                    'actual' => $pageDept, 
+                    'actual' => $pageDept,
                     'total'  => (int)ceil($this->deptModel->countDepartamentos() / $perPage)
                 ],
                 'pager_lab'           => [
-                    'actual' => $pageLab, 
-                    'total'  => (int)ceil($this->labModel->countLaboratorios() / $perPage)
-                ]
+                    'actual' => $pageLab,
+                    'total'  => (int)ceil($this->labModel->countLaboratorios($filtroDepto) / $perPage)
+                ],
+                'filtro_depto'        => $filtroDepto
             ];
 
             return view('gestionDepartamento/gestion_departamento', $data);

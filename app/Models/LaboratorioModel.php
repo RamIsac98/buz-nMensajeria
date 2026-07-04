@@ -15,19 +15,31 @@ class LaboratorioModel extends Model
         return $this->db->query($sql, [$departamento_id, $nombre]);
     }
 
-    public function getLaboratoriosPaginados(int $limit, int $offset): array
+    public function getLaboratoriosPaginados(int $limit, int $offset, ?int $departamento_id = null): array
     {
         $sql = "SELECT l.*, d.nombre as nombre_departamento 
                 FROM laboratorios l 
-                JOIN departamentos d ON l.departamento_id = d.id 
-                ORDER BY l.id DESC LIMIT ? OFFSET ?";
-        return $this->db->query($sql, [$limit, $offset])->getResultArray();
+                JOIN departamentos d ON l.departamento_id = d.id";
+        $params = [];
+        if ($departamento_id !== null) {
+            $sql .= " WHERE l.departamento_id = ?";
+            $params[] = $departamento_id;
+        }
+        $sql .= " ORDER BY l.id DESC LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        return $this->db->query($sql, $params)->getResultArray();
     }
 
-    public function countLaboratorios(): int
+    public function countLaboratorios(?int $departamento_id = null): int
     {
         $sql = "SELECT COUNT(id) as total FROM laboratorios";
-        return (int)$this->db->query($sql)->getRowArray()['total'];
+        $params = [];
+        if ($departamento_id !== null) {
+            $sql .= " WHERE departamento_id = ?";
+            $params[] = $departamento_id;
+        }
+        return (int)$this->db->query($sql, $params)->getRowArray()['total'];
     }
 
     // CORREGIDO: Removida la instrucción nativa preexistente
