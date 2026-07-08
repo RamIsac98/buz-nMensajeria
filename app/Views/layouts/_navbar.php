@@ -217,7 +217,7 @@ $currentPath = service('request')->getUri()->getPath();
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle user-dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="<?= base_url('img/user.svg') ?>" width="22" height="22" class="rounded-circle" alt="User">
-                        <span class="ms-1"><?= esc($username) ?></span>
+                        <span class="ms-1"><?= esc($usuario['display_username'] ?? $username) ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
                         <li>

@@ -8,7 +8,15 @@ class UsuarioModel extends Model
 {
     protected $table = 'usuarios';
     protected $primaryKey = 'id';
-    
+
+    private function formatearUsername(string $username): string
+    {
+        if (strlen($username) <= 1) {
+            return $username;
+        }
+        return $username[0] . ' ' . substr($username, 1);
+    }
+
     public function getRolesDisponibles()
     {
         $sql = "SELECT DISTINCT rol FROM usuarios";
@@ -25,16 +33,20 @@ class UsuarioModel extends Model
     public function findById($id)
     {
         $sql = "SELECT u.*, 
-                    l.nombre AS nombre_laboratorio, 
-                    d.nombre AS departamento,
-                    d.id AS departamento_id
-                FROM usuarios u
-                LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
-                LEFT JOIN departamentos d ON l.departamento_id = d.id
-                WHERE u.id = ? 
-                LIMIT 1";
+                        l.nombre AS nombre_laboratorio, 
+                        d.nombre AS departamento,
+                        d.id AS departamento_id
+                    FROM usuarios u
+                    LEFT JOIN laboratorios l ON u.laboratorio_id = l.id
+                    LEFT JOIN departamentos d ON l.departamento_id = d.id
+                    WHERE u.id = ? 
+                    LIMIT 1";
 
-        return $this->db->query($sql, [$id])->getRowArray();
+        $result = $this->db->query($sql, [$id])->getRowArray();
+        if ($result) {
+            $result['display_username'] = $this->formatearUsername($result['username']);
+        }
+        return $result;
     }
 
     public function findByUsername($username)
@@ -49,14 +61,12 @@ class UsuarioModel extends Model
         return $this->db->query($sql, [$cedula])->getRowArray();
     }
 
-    
     public function existeCedula(string $cedula): bool
     {
         $sql = "SELECT 1 FROM usuarios WHERE cedula = ? LIMIT 1";
         $resultado = $this->db->query($sql, [$cedula])->getRowArray();
         return !empty($resultado);
     }
-
 
     public function existeCedulaExcluyendoId(string $cedula, $id): bool
     {
@@ -67,12 +77,14 @@ class UsuarioModel extends Model
 
     public function insertUsuario($datos)
     {
-        $sql = "INSERT INTO usuarios (username, password, rol, cedula, nombre, apellido, laboratorio_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO usuarios (username, password, rol, cedula, tipo_cedula, nombre, apellido, laboratorio_id, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         return $this->db->query($sql, [
-            $datos['username'], 
-            $datos['password'], 
-            $datos['rol'], 
-            $datos['cedula'], 
+            $datos['username'],
+            $datos['password'],
+            $datos['rol'],
+            $datos['cedula'],
+            $datos['tipo_cedula'] ?? 'V',
             $datos['nombre'] ?? null,
             $datos['apellido'] ?? null,
             $datos['laboratorio_id'] ?? null,
@@ -113,7 +125,7 @@ class UsuarioModel extends Model
 
     private function armarCondicionesFiltro($filtros, &$values)
     {
-        $where = ["1=1"]; // Base para concatenar AND
+        $where = ["1=1"];
 
         if (!empty($filtros['buscar'])) {
             $where[] = "(username LIKE ? OR cedula LIKE ?)";
@@ -151,12 +163,14 @@ class UsuarioModel extends Model
         $whereSql = $this->armarCondicionesFiltro($filtros, $values);
         
         $sql = "SELECT * FROM usuarios WHERE $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
-        
-        
         $values[] = (int)$limit;
         $values[] = (int)$offset;
 
-        return $this->db->query($sql, $values)->getResultArray();
+        $resultados = $this->db->query($sql, $values)->getResultArray();
+        foreach ($resultados as &$row) {
+            $row['display_username'] = $this->formatearUsername($row['username']);
+        }
+        return $resultados;
     }
 
     public function getReporteGeneral($departamento_id): array

@@ -79,7 +79,6 @@ class Usuarios extends BaseController
         
         $dompdf->stream("Reporte_Usuarios_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
     }
-
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -117,7 +116,7 @@ class Usuarios extends BaseController
         return view('usuarios/editar', $data);
     }
 
-    public function actualizar($id)
+        public function actualizar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         if (!$this->verificarAccesoGestion()) {
@@ -134,6 +133,7 @@ class Usuarios extends BaseController
 
         $username       = trim($this->request->getPost('username'));
         $cedula         = trim($this->request->getPost('cedula'));
+        $tipo_cedula    = $this->request->getPost('tipo_cedula');
         $nombre         = trim($this->request->getPost('nombre'));
         $apellido       = trim($this->request->getPost('apellido'));
         $rol            = $this->request->getPost('rol');
@@ -141,8 +141,28 @@ class Usuarios extends BaseController
         $eliminarPregunta = $this->request->getPost('eliminar_pregunta');
         $id_laboratorio = $this->request->getPost('id_laboratorio') ?? null;
 
-        if (empty($username) || empty($cedula) || empty($nombre) || empty($apellido) || empty($rol) || empty($id_laboratorio)) {
-            return redirect()->back()->with('error', 'Todos los campos (Username, Cédula, Nombre, Apellido, Rol y Laboratorio) son obligatorios.');
+        // ---- Validaciones ----
+        if (empty($username)) return redirect()->back()->with('error', 'El campo Username es obligatorio.')->withInput();
+        if (strlen($username) < 3) return redirect()->back()->with('error', 'El nombre de usuario debe tener al menos 3 caracteres.')->withInput();
+        if (strpos($username, ' ') !== false) return redirect()->back()->with('error', 'El nombre de usuario no puede contener espacios.')->withInput();
+
+        if (empty($cedula)) return redirect()->back()->with('error', 'El campo Cédula es obligatorio.')->withInput();
+        if (!ctype_digit($cedula) || strlen($cedula) !== 8) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
+
+        if (empty($tipo_cedula)) return redirect()->back()->with('error', 'Debe seleccionar el tipo de cédula.')->withInput();
+        if (!in_array($tipo_cedula, ['V', 'E'])) return redirect()->back()->with('error', 'Tipo de cédula inválido.')->withInput();
+
+        if (empty($nombre)) return redirect()->back()->with('error', 'El campo Nombre es obligatorio.')->withInput();
+        if (strlen($nombre) > 25) return redirect()->back()->with('error', 'El nombre no puede exceder los 25 caracteres.')->withInput();
+
+        if (empty($apellido)) return redirect()->back()->with('error', 'El campo Apellido es obligatorio.')->withInput();
+        if (strlen($apellido) > 25) return redirect()->back()->with('error', 'El apellido no puede exceder los 25 caracteres.')->withInput();
+
+        if (empty($rol)) return redirect()->back()->with('error', 'Debe seleccionar un rol.')->withInput();
+        if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Debe seleccionar un laboratorio.')->withInput();
+
+        if (!empty($nuevaClave) && strlen($nuevaClave) < 6) {
+            return redirect()->back()->with('error', 'La nueva contraseña debe tener al menos 6 caracteres.')->withInput();
         }
 
         if ($usuarioModel->existeCedulaExcluyendoId($cedula, $id)) {
@@ -152,6 +172,7 @@ class Usuarios extends BaseController
         $datosUpdate = [
             'username'       => $username,
             'cedula'         => $cedula,
+            'tipo_cedula'    => $tipo_cedula,
             'nombre'         => $nombre,
             'apellido'       => $apellido,
             'rol'            => $rol,
@@ -171,11 +192,7 @@ class Usuarios extends BaseController
 
         $usuarioModel->updateUsuario($id, $datosUpdate);
 
-        $this->registrarBitacora(
-            'Modificación Completa de Usuario', 
-            'Administración', 
-            "Se actualizaron los datos del usuario '" . $username . "'" . $logPregunta
-        );
+        $this->registrarBitacora('Modificación Completa de Usuario', 'Administración', "Se actualizaron los datos del usuario '" . $username . "'" . $logPregunta);
 
         return redirect()->to(base_url('usuarios'))->with('success', 'Información de usuario actualizada con éxito.');
     }
@@ -249,19 +266,34 @@ class Usuarios extends BaseController
 
         $username       = trim($this->request->getPost('username') ?? '');
         $cedula         = trim($this->request->getPost('cedula') ?? '');
+        $tipo_cedula    = $this->request->getPost('tipo_cedula') ?? '';
         $nombre         = trim($this->request->getPost('nombre') ?? '');
         $apellido       = trim($this->request->getPost('apellido') ?? '');
         $rol            = $this->request->getPost('rol') ?? '';
         $password       = $this->request->getPost('password') ?? '';
         $id_laboratorio = $this->request->getPost('id_laboratorio') ?? '';
 
-        // Validaciones
+        // ---- Validaciones de servidor ----
         if (empty($username)) return redirect()->back()->with('error', 'Falta el campo: Nombre de Usuario (username)')->withInput();
+        if (strlen($username) < 3) return redirect()->back()->with('error', 'El nombre de usuario debe tener al menos 3 caracteres.')->withInput();
+        if (strpos($username, ' ') !== false) return redirect()->back()->with('error', 'El nombre de usuario no puede contener espacios.')->withInput();
+
         if (empty($cedula)) return redirect()->back()->with('error', 'Falta el campo: Cédula de Identidad (cedula)')->withInput();
+        if (!ctype_digit($cedula) || strlen($cedula) !== 8) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
+
+        if (empty($tipo_cedula)) return redirect()->back()->with('error', 'Falta el campo: Tipo de Cédula (tipo_cedula)')->withInput();
+        if (!in_array($tipo_cedula, ['V', 'E'])) return redirect()->back()->with('error', 'Tipo de cédula inválido. Debe ser V o E.')->withInput();
+
         if (empty($nombre)) return redirect()->back()->with('error', 'Falta el campo: Nombre')->withInput();
+        if (strlen($nombre) > 25) return redirect()->back()->with('error', 'El nombre no puede exceder los 25 caracteres.')->withInput();
+
         if (empty($apellido)) return redirect()->back()->with('error', 'Falta el campo: Apellido')->withInput();
+        if (strlen($apellido) > 25) return redirect()->back()->with('error', 'El apellido no puede exceder los 25 caracteres.')->withInput();
+
         if (empty($rol)) return redirect()->back()->with('error', 'Falta el campo: Rol / Permiso (rol)')->withInput();
         if (empty($password)) return redirect()->back()->with('error', 'Falta el campo: Contraseña (password)')->withInput();
+        if (strlen($password) < 6) return redirect()->back()->with('error', 'La contraseña debe tener al menos 6 caracteres.')->withInput();
+
         if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Falta el campo: Laboratorio (id_laboratorio)')->withInput();
 
         if ($usuarioModel->existeCedula($cedula)) {
@@ -271,6 +303,7 @@ class Usuarios extends BaseController
         $datosNuevo = [
             'username'       => $username,
             'cedula'         => $cedula,
+            'tipo_cedula'    => $tipo_cedula,
             'nombre'         => $nombre,
             'apellido'       => $apellido,
             'rol'            => $rol,
@@ -281,11 +314,7 @@ class Usuarios extends BaseController
 
         $usuarioModel->insertUsuario($datosNuevo);
 
-        $this->registrarBitacora(
-            'Creación de Usuario', 
-            'Administración', 
-            "Se creó exitosamente el usuario: " . $username
-        );
+        $this->registrarBitacora('Creación de Usuario', 'Administración', "Se creó exitosamente el usuario: " . $username);
 
         return redirect()->to(base_url('usuarios'))->with('success', 'Usuario creado e incorporado con éxito.');
     }
