@@ -23,7 +23,9 @@ class Login extends BaseController
 
         if ($usuario && password_verify($password, $usuario['password'])) 
         {
-            if ($usuario['status'] == 0) return redirect()->back()->with('error', 'Tu usuario está deshabilitado. Contacta al administrador.');
+            if ($usuario['status'] == 0) {
+                return redirect()->back()->with('error', 'Tu usuario está deshabilitado. Contacta al administrador.');
+            }
 
             $session->set([
                 'usuario_id' => $usuario['id'],
@@ -34,11 +36,23 @@ class Login extends BaseController
 
             $this->registrarBitacora('Inició sesión con éxito', 'Sesión', "El usuario {$username} ingresó al sistema.");
 
+            // Verificar pregunta de seguridad
             if (empty($usuario['pregunta_seguridad']) || empty($usuario['respuesta_seguridad'])) {
-                return redirect()->to(base_url('usuarios/configurar_pregunta'))->with('info', 'Por ser tu primer ingreso, debes configurar una pregunta de seguridad.');
+                return redirect()->to(base_url('usuarios/configurar_pregunta'))
+                                 ->with('info', 'Por ser tu primer ingreso, debes configurar una pregunta de seguridad.');
             }
 
-            return redirect()->to(base_url('interfazinicial/menuusuario'));
+            // Redirigir según el rol
+            $rol = $usuario['rol'];
+            switch ($rol) {
+                case 'proteccion_integral':
+                    return redirect()->to(base_url('dashboard'));
+                case 'administrador':
+                    return redirect()->to(base_url('usuarios/bitacora'));
+                default:
+                    // PAI, TAI, Jefe_Laboratorio, Auxiliar
+                    return redirect()->to(base_url('desechos/registroSolicitudes'));
+            }
         }
 
         return redirect()->to(base_url('login'))->with('error', 'Usuario o contraseña incorrectos.');
@@ -63,11 +77,15 @@ class Login extends BaseController
         $usuarioModel = new UsuarioModel();
         $cedula = $this->request->getPost('cedula');
 
-        if (empty($cedula)) return redirect()->back()->with('error', 'El campo cédula es obligatorio.');
+        if (empty($cedula)) {
+            return redirect()->back()->with('error', 'El campo cédula es obligatorio.');
+        }
 
         $usuario = $usuarioModel->findByCedula($cedula);
 
-        if (!$usuario) return redirect()->to(base_url('login'))->with('error', 'La cédula ingresada no coincide con ningún usuario registrado.');
+        if (!$usuario) {
+            return redirect()->to(base_url('login'))->with('error', 'La cédula ingresada no coincide con ningún usuario registrado.');
+        }
 
         if (empty($usuario['pregunta_seguridad']) || empty($usuario['respuesta_seguridad'])) {
             $this->registrarBitacora('Intento recuperar clave sin pregunta', 'Seguridad', "Cédula {$cedula} no posee preguntas configuradas.");
@@ -89,14 +107,22 @@ class Login extends BaseController
         $nuevaClave       = $this->request->getPost('password');
         $confirmarClave   = $this->request->getPost('confirm_password');
 
-        if (empty($idUsuario) || empty($respuestaEnviada) || empty($nuevaClave)) return redirect()->to(base_url('login'))->with('error', 'Datos de recuperación incompletos.');
+        if (empty($idUsuario) || empty($respuestaEnviada) || empty($nuevaClave)) {
+            return redirect()->to(base_url('login'))->with('error', 'Datos de recuperación incompletos.');
+        }
 
         $usuario = $usuarioModel->findById($idUsuario);
-        if (!$usuario) return redirect()->to(base_url('login'))->with('error', 'Usuario no válido.');
+        if (!$usuario) {
+            return redirect()->to(base_url('login'))->with('error', 'Usuario no válido.');
+        }
 
-        if ($nuevaClave !== $confirmarClave) return $this->preguntaSegError($idUsuario, $usuario['pregunta_seguridad'], 'Las contraseñas ingresadas no coinciden.');
+        if ($nuevaClave !== $confirmarClave) {
+            return $this->preguntaSegError($idUsuario, $usuario['pregunta_seguridad'], 'Las contraseñas ingresadas no coinciden.');
+        }
 
-        if (!password_verify($respuestaEnviada, $usuario['respuesta_seguridad'])) return $this->preguntaSegError($idUsuario, $usuario['pregunta_seguridad'], 'La respuesta a la pregunta de seguridad es incorrecta.');
+        if (!password_verify($respuestaEnviada, $usuario['respuesta_seguridad'])) {
+            return $this->preguntaSegError($idUsuario, $usuario['pregunta_seguridad'], 'La respuesta a la pregunta de seguridad es incorrecta.');
+        }
        
         $usuarioModel->updateUsuario($idUsuario, [
             'password' => password_hash($nuevaClave, PASSWORD_DEFAULT)

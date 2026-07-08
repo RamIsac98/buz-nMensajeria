@@ -374,7 +374,19 @@ class Usuarios extends BaseController
             "El usuario " . $session->get('username') . " estableció su pregunta de recuperación con éxito."
         );
 
-        return redirect()->to(base_url('interfazinicial/menuusuario'))->with('success', 'Pregunta de seguridad guardada correctamente.');
+        $rol = session()->get('rol');
+        switch ($rol) {
+            case 'proteccion_integral':
+                $destino = 'dashboard';
+                break;
+            case 'administrador':
+                $destino = 'usuarios/bitacora';
+                break;
+            default:
+                $destino = 'desechos/registroSolicitudes';
+        }
+
+        return redirect()->to(base_url($destino))->with('success', 'Pregunta de seguridad guardada correctamente.');
     }
 
     public function cambiar_password_post()

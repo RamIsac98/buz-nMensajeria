@@ -4,7 +4,6 @@ $username = session()->get('username') ?? 'Sistema';
 
 // Opciones base para todos los roles (excepto administrador y protección integral)
 $baseItems = [
-    'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
     'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos Biológicos'],
     'bioseguridad' => ['url' => 'solicitud_bioseguridad', 'label' => 'Solicitud de Materiales de Bioseguridad'],
     'registro'     => ['url' => 'desechos/registroSolicitudes', 'label' => 'Registro']
@@ -30,6 +29,7 @@ if ($rolUsuario === 'administrador') {
                 ['url' => 'usuarios/bitacora', 'label' => 'Bitácora']
             ]
         ]
+        
     ];
 }
 
@@ -37,7 +37,6 @@ if ($rolUsuario === 'administrador') {
 $proteccionItems = [];
 if ($rolUsuario === 'proteccion_integral') {
     $proteccionItems = [
-        'inicio'       => ['url' => 'interfazinicial/menuusuario', 'label' => 'Inicio'],
         'dashboard'    => ['url' => 'dashboard', 'label' => 'Peso Trimestral DB'],
         'gestion'      => ['url' => 'desechos/gestionSolicitudes', 'label' => 'Gestión Solicitudes'],
         'usuarios'     => ['url' => 'usuarios', 'label' => 'Gestión Usuarios'],
@@ -181,9 +180,7 @@ $currentPath = service('request')->getUri()->getPath();
 
 <nav class="navbar navbar-expand-lg custom-navbar shadow-sm">
     <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center" href="<?= base_url('interfazinicial/menuusuario') ?>">
-            <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2">
-        </a>
+            <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2 navbar-brand d-flex align-items-center">
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
