@@ -381,6 +381,12 @@ document.addEventListener('DOMContentLoaded', function () {
             errorModal.show();
             return;
         }
+
+        if (password.value.includes(' ')) {
+        errorMsg.textContent = 'La contraseña no puede contener espacios en blanco.';
+        errorModal.show();
+        return;
+        }
         
 
         // ---- Si todo es válido, mostrar confirmación ----

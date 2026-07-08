@@ -106,7 +106,7 @@
     <!-- Tabla detallada con meses en español -->
     <div class="card card-chart mt-4">
         <div class="card-header bg-light">
-            <h5 class="mb-0">📋 Detalle diario de desechos aprobados</h5>
+            <h5 class="mb-0">Detalle diario de desechos aprobados</h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

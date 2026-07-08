@@ -34,6 +34,8 @@ class Login extends BaseController
                 'logged_in'  => true
             ]);
 
+            $session->setFlashdata('mostrar_bienvenida', true);
+
             $this->registrarBitacora('Inició sesión con éxito', 'Sesión', "El usuario {$username} ingresó al sistema.");
 
             // Verificar pregunta de seguridad

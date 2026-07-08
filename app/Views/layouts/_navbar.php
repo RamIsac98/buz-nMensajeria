@@ -29,7 +29,6 @@ if ($rolUsuario === 'administrador') {
                 ['url' => 'usuarios/bitacora', 'label' => 'Bitácora']
             ]
         ]
-        
     ];
 }
 
@@ -180,7 +179,7 @@ $currentPath = service('request')->getUri()->getPath();
 
 <nav class="navbar navbar-expand-lg custom-navbar shadow-sm">
     <div class="container-fluid px-4">
-            <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2 navbar-brand d-flex align-items-center">
+        <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2 navbar-brand d-flex align-items-center">
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -234,6 +233,8 @@ $currentPath = service('request')->getUri()->getPath();
         </div>
     </div>
 </nav>
+
+<!-- Mensajes flash para cambio de contraseña -->
 <?php if (session()->getFlashdata('password_success')): ?>
     <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
         <?= session()->getFlashdata('password_success') ?>
@@ -247,6 +248,7 @@ $currentPath = service('request')->getUri()->getPath();
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
+
 <!-- Modal cambio de contraseña -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -279,3 +281,25 @@ $currentPath = service('request')->getUri()->getPath();
         </div>
     </div>
 </div>
+
+<!-- ===== NUEVO: SweetAlert2 para mensaje de bienvenida ===== -->
+<?php if (session()->getFlashdata('mostrar_bienvenida')): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener username de sesión y formatearlo (primera letra + espacio + resto)
+        const username = "<?= esc(session()->get('username')) ?>";
+        const displayUsername = username.length > 1 ? username[0] + ' ' + username.slice(1) : username;
+        
+        Swal.fire({
+            icon: 'success',
+            title: '¡Bienvenido!',
+            text: `Bienvenido al sistema, ${displayUsername}`,
+            confirmButtonColor: '#2073AF',
+            timer: 1000,
+            timerProgressBar: true,
+            showConfirmButton: false // Se cierra automáticamente después de 4 segundos
+        });
+    });
+</script>
+<?php endif; ?>

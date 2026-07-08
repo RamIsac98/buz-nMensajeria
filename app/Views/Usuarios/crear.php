@@ -79,11 +79,11 @@
                 <?= csrf_field() ?> 
                 
                 <div class="mb-3">
-                    <label class="form-label">Nombre</label>
+                    <label class="form-label">Nombres</label>
                     <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej. Juan" value="<?= old('nombre') ?>" required maxlength="25">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Apellido</label>
+                    <label class="form-label">Apellidos</label>
                     <input type="text" name="apellido" id="apellido" class="form-control" placeholder="Ej. Pérez" value="<?= old('apellido') ?>" required maxlength="25">
                 </div>
 
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
             errorModal.show();
             return;
         }
-        if (apellido.value.length > 25) {
+        if (apellido.value.length > 10) {
             errorMsg.textContent = 'El campo "Apellido" no puede exceder los 25 caracteres.';
             errorModal.show();
             return;
@@ -343,6 +343,12 @@ document.addEventListener('DOMContentLoaded', function () {
             errorMsg.textContent = 'El campo "Contraseña" es obligatorio.';
             errorModal.show();
             return;
+        }
+
+        if (password.value.includes(' ')) {
+        errorMsg.textContent = 'La contraseña no puede contener espacios en blanco.';
+        errorModal.show();
+        return;
         }
         if (password.value.length < 6) {
             errorMsg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
