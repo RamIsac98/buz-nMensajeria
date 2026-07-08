@@ -237,7 +237,19 @@ $currentPath = service('request')->getUri()->getPath();
         </div>
     </div>
 </nav>
+<?php if (session()->getFlashdata('password_success')): ?>
+    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <?= session()->getFlashdata('password_success') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
 
+<?php if (session()->getFlashdata('password_error')): ?>
+    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <?= session()->getFlashdata('password_error') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
 <!-- Modal cambio de contraseña -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

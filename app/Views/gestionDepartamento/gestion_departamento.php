@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/base') ?>
 
-<?= $this->section('title') ?>Gestión de Departamentos y Laboratorios<?= $this->endSection() ?>
+<?= $this->section('title') ?>Gestión de Centros y Laboratorios<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <style>
@@ -235,19 +235,19 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
         <div class="modal-content border-0 shadow">
             <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
-                <h5 class="modal-title">Añadir Nuevo Departamento</h5>
+                <h5 class="modal-title">Añadir Nuevo Centro</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="<?= base_url('gestion-departamento/guardar-departamento') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST">
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label text-secondary small font-weight-bold text-uppercase">Nombre del Departamento</label>
+                        <label class="form-label text-secondary small font-weight-bold text-uppercase">Nombre del Centro</label>
                         <input type="text" name="nombre" class="form-control" placeholder="Ej. Ingeniería de Sistemas" required>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top p-2">
                     <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-custom px-3">Guardar Departamento</button>
+                    <button type="submit" class="btn btn-custom px-3">Guardar Centro</button>
                 </div>
             </form>
         </div>
@@ -265,9 +265,9 @@
             <form action="<?= base_url('gestion-departamento/guardar-laboratorio') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST">
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label text-secondary small font-weight-bold text-uppercase">Seleccionar Departamento</label>
+                        <label class="form-label text-secondary small font-weight-bold text-uppercase">Seleccionar Centro</label>
                         <select name="departamento_id" class="form-select" required>
-                            <option value="">-- Seleccione un Dpto --</option>
+                            <option value="">-- Seleccione un Centro --</option>
                             <?php if(!empty($todos_departamentos)): ?>
                                 <?php foreach ($todos_departamentos as $depto): ?>
                                     <option value="<?= $depto['id'] ?>"><?= esc($depto['nombre']) ?></option>

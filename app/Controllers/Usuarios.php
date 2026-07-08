@@ -353,32 +353,38 @@ class Usuarios extends BaseController
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $session = session();
-        $userId = $session->get('usuario_id'); 
+        $userId = $session->get('usuario_id');
 
         $currentPassword = $this->request->getPost('current_password');
         $newPassword     = $this->request->getPost('new_password');
         $confirmPassword = $this->request->getPost('confirm_password');
 
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) return redirect()->back()->with('error', 'Todos los campos del formulario son estrictamente obligatorios.');
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            return redirect()->back()->with('password_error', 'Todos los campos son obligatorios.');
+        }
 
-        if ($newPassword !== $confirmPassword) return redirect()->back()->with('error', 'La nueva contraseña y su confirmación no coinciden.');
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->with('password_error', 'La nueva contraseña y su confirmación no coinciden.');
+        }
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($userId);
 
-        if (!$usuario || !password_verify($currentPassword, $usuario['password'])) return redirect()->back()->with('error', 'La contraseña actual introducida es incorrecta.');
+        if (!$usuario || !password_verify($currentPassword, $usuario['password'])) {
+            return redirect()->back()->with('password_error', 'La contraseña actual es incorrecta.');
+        }
 
         $usuarioModel->updateUsuario($userId, [
             'password' => password_hash($newPassword, PASSWORD_DEFAULT)
         ]);
 
         $this->registrarBitacora(
-            'Cambio de Contraseña', 
-            'Seguridad', 
+            'Cambio de Contraseña',
+            'Seguridad',
             "El usuario '" . $usuario['username'] . "' modificó con éxito sus credenciales de acceso."
         );
 
-        return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
+        return redirect()->back()->with('password_success', '¡Tu contraseña ha sido actualizada correctamente!');
     }
 
     public function solicitudDesechos()
