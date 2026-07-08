@@ -11,6 +11,12 @@ use Dompdf\Options;
 
 class DesechosController extends BaseController
 {
+
+     // Valores permitidos
+    const TIPOS_PERMITIDOS = ['B', 'C', 'D'];
+    const ESTADOS_PERMITIDOS = ['Líquido', 'Sólido'];
+    const EMPAQUES_PERMITIDOS = ['B', 'C', 'F', 'O'];
+    const ESTERILIZADO_PERMITIDOS = ['Sí', 'No'];
     //solicitud desechos
     public function crear()
     {
@@ -39,23 +45,23 @@ class DesechosController extends BaseController
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
+        $post = $this->request->getPost();
+        $validacion = $this->validarDatosSolicitud($post);
+        if ($validacion !== true) {
+            return redirect()->back()->with('error', implode('<br>', $validacion))->withInput();
+        }
+
         $solicitudModel = new SolicitudDesechosModel();
 
+        $postTipos     = $post['tipo_desecho'] ?? [];
+        $postVariantes = $post['variante_desecho'] ?? [];
+        $postEstado    = $post['estado_fisico'] ?? [];
+        $postEmpaque   = $post['tipo_empaque'] ?? [];
 
-
-        $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
-        $postVariantes = $this->request->getPost('variante_desecho') ?? [];
-        $postEstado    = $this->request->getPost('estado_fisico') ?? [];
-        $postEmpaque   = $this->request->getPost('tipo_empaque') ?? [];
-        
-        $codigoSolicitud = $this->request->getPost('codigo_solicitud');
-        if (empty($codigoSolicitud)) $codigoSolicitud = $solicitudModel->generarCodigoUnico();
-
-        $codigoSolicitud = $this->request->getPost('codigo_solicitud');
+        $codigoSolicitud = $post['codigo_solicitud'] ?? '';
         if (empty($codigoSolicitud)) {
             $codigoSolicitud = $solicitudModel->generarCodigoUnico();
         } else {
-            // evitar duplicacion del code form
             $existe = $solicitudModel->where('codigo_solicitud', $codigoSolicitud)->first();
             if ($existe) $codigoSolicitud = $solicitudModel->generarCodigoUnico();
         }
@@ -63,24 +69,129 @@ class DesechosController extends BaseController
         $insertData = [
             'codigo_solicitud'         => $codigoSolicitud,
             'usuario_id'               => session()->get('usuario_id'),
-            'ext_telefono'             => $this->request->getPost('ext_telefono'),
+            'ext_telefono'             => trim($post['ext_telefono']),
             'tipos_desecho'            => is_array($postTipos) ? implode(', ', $postTipos) : '',
             'variantes_desecho'        => is_array($postVariantes) ? implode(', ', $postVariantes) : '',
-            'esterilizado'             => $this->request->getPost('esterilizado') == 'Sí' ? 1 : 0,
-            'motivo'                   => $this->request->getPost('motivo'),
+            'esterilizado'             => ($post['esterilizado'] ?? 'No') === 'Sí' ? 1 : 0,
+            'motivo'                   => trim($post['motivo']),
             'estado'                   => is_array($postEstado) ? implode(', ', $postEstado) : '',
-            'peso_kg'                  => $this->request->getPost('peso_kg') ?: null,
-            'peso_l'                   => $this->request->getPost('peso_l') ?: null,
+            'peso_kg'                  => isset($post['peso_kg']) && $post['peso_kg'] !== '' ? (float)$post['peso_kg'] : null,
+            'peso_l'                   => isset($post['peso_l']) && $post['peso_l'] !== '' ? (float)$post['peso_l'] : null,
             'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
-            'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
+            'empaque_otro_descripcion' => trim($post['empaque_otro_descripcion'] ?? ''),
         ];
 
         if ($solicitudModel->insertarSolicitud($insertData)) {
             $this->registrarBitacora('Registro de Solicitud', 'Servicio Desechos', "Se generó la solicitud: " . $insertData['codigo_solicitud']);
             return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud registrada correctamente.');
         } else {
-            return redirect()->back()->with('error', 'Ocurrió un error en la base de datos al guardar.');
+            return redirect()->back()->with('error', 'Ocurrió un error en la base de datos al guardar.')->withInput();
         }
+    }
+    
+
+    private function validarDatosSolicitud(array $post, bool $esEdicion = false)
+    {
+        $errores = [];
+
+        // 1. Validar campos requeridos generales
+        $required = ['ext_telefono', 'motivo'];
+        foreach ($required as $campo) {
+            if (empty(trim($post[$campo] ?? ''))) {
+                $errores[] = "El campo '" . ucfirst(str_replace('_', ' ', $campo)) . "' es obligatorio.";
+            }
+        }
+
+
+        // 2. Validar que al menos un tipo de desecho esté seleccionado
+        $tipos = $post['tipo_desecho'] ?? [];
+        if (empty($tipos) || !is_array($tipos)) {
+            $errores[] = 'Debe seleccionar al menos un tipo de desecho.';
+        } else {
+            foreach ($tipos as $tipo) {
+                if (!in_array($tipo, self::TIPOS_PERMITIDOS, true)) {
+                    $errores[] = "Tipo de desecho '$tipo' no es válido.";
+                }
+            }
+        }
+
+        // 3. Validar estado físico (al menos uno)
+        $estados = $post['estado_fisico'] ?? [];
+        if (empty($estados) || !is_array($estados)) {
+            $errores[] = 'Debe seleccionar al menos un estado físico.';
+        } else {
+            foreach ($estados as $estado) {
+                if (!in_array($estado, self::ESTADOS_PERMITIDOS, true)) {
+                    $errores[] = "Estado físico '$estado' no es válido.";
+                }
+            }
+        }
+
+        // 4. Validar tipo de empaque (al menos uno)
+        $empaques = $post['tipo_empaque'] ?? [];
+        if (empty($empaques) || !is_array($empaques)) {
+            $errores[] = 'Debe seleccionar al menos un tipo de empaque.';
+        } else {
+            foreach ($empaques as $empaque) {
+                if (!in_array($empaque, self::EMPAQUES_PERMITIDOS, true)) {
+                    $errores[] = "Tipo de empaque '$empaque' no es válido.";
+                }
+            }
+            if (in_array('O', $empaques, true)) {
+                $descOtros = trim($post['empaque_otro_descripcion'] ?? '');
+                if (empty($descOtros)) {
+                    $errores[] = 'Debe especificar la descripción del empaque "Otros".';
+                }
+            }
+        }
+
+        // 5. Validar esterilizado
+        $esterilizado = $post['esterilizado'] ?? '';
+        if (!in_array($esterilizado, self::ESTERILIZADO_PERMITIDOS, true)) {
+            $errores[] = "Valor de esterilizado no válido.";
+        }
+
+        // 6. Validar variantes (opcional, pero si vienen deben ser textos conocidos)
+        if (!empty($tipos)) {
+            $variantes = $post['variante_desecho'] ?? [];
+            if (empty($variantes) || !is_array($variantes) || count($variantes) === 0) {
+                $errores[] = 'Debe seleccionar al menos una especificación (variante) para el tipo de desecho elegido.';
+            } else {
+                foreach ($variantes as $v) {
+                    if (!is_string($v) || trim($v) === '') {
+                        $errores[] = 'Las variantes de desecho deben ser textos válidos.';
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 7. Validar pesos (opcionales, pero si se envían deben ser numéricos >= 0)
+        if (in_array('Sólido', $estados)) {
+            $pesoKg = $post['peso_kg'] ?? null;
+            if ($pesoKg === '' || $pesoKg === null || !is_numeric($pesoKg) || $pesoKg < 0) {
+                $errores[] = 'El peso en kg es obligatorio cuando se selecciona "Sólido" y debe ser un número ≥ 0.';
+            }
+        }
+        if (in_array('Líquido', $estados)) {
+            $pesoL = $post['peso_l'] ?? null;
+            if ($pesoL === '' || $pesoL === null || !is_numeric($pesoL) || $pesoL < 0) {
+                $errores[] = 'El peso en litros es obligatorio cuando se selecciona "Líquido" y debe ser un número ≥ 0.';
+            }
+        }
+
+        // 8. Validar extensión telefónica (debe ser numérico)
+        $ext = trim($post['ext_telefono'] ?? '');
+        if ($ext !== '' && !ctype_digit($ext)) {
+            $errores[] = 'La extensión telefónica debe ser un número.';
+        }
+
+        // 9. Motivo (ya validado arriba, pero reforzamos)
+        if (empty(trim($post['motivo'] ?? ''))) {
+            $errores[] = 'El motivo es obligatorio.';
+        }
+
+        return empty($errores) ? true : $errores;
     }
 
     public function generarPdf($id)
@@ -332,38 +443,41 @@ class DesechosController extends BaseController
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
-        $solicitudModel = new SolicitudDesechosModel();
+         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
-
         if (!$solicitud) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Solicitud no encontrada.');
-
         if ($solicitud['editado'] == 1) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
+        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
+            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        }
 
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
+        $post = $this->request->getPost();
+        $validacion = $this->validarDatosSolicitud($post, true);
+        if ($validacion !== true) {
+            return redirect()->back()->with('error', implode('<br>', $validacion))->withInput();
+        }
 
-        $postTipos     = $this->request->getPost('tipo_desecho') ?? [];
-        $postVariantes = $this->request->getPost('variante_desecho') ?? [];
-        $postEstado    = $this->request->getPost('estado_fisico') ?? [];
-        $postEmpaque   = $this->request->getPost('tipo_empaque') ?? [];
+        $postTipos     = $post['tipo_desecho'] ?? [];
+        $postVariantes = $post['variante_desecho'] ?? [];
+        $postEstado    = $post['estado_fisico'] ?? [];
+        $postEmpaque   = $post['tipo_empaque'] ?? [];
 
         $updateData = [
-            'ext_telefono'             => $this->request->getPost('ext_telefono'),
+            'ext_telefono'             => trim($post['ext_telefono']),
             'tipos_desecho'            => is_array($postTipos) ? implode(', ', $postTipos) : '',
             'variantes_desecho'        => is_array($postVariantes) ? implode(', ', $postVariantes) : '',
-            'esterilizado'             => $this->request->getPost('esterilizado') == 'Sí' ? 1 : 0,
-            'motivo'                   => $this->request->getPost('motivo'),
+            'esterilizado'             => ($post['esterilizado'] ?? 'No') === 'Sí' ? 1 : 0,
+            'motivo'                   => trim($post['motivo']),
             'estado'                   => is_array($postEstado) ? implode(', ', $postEstado) : '',
-            'peso_kg'                  => $this->request->getPost('peso_kg') ?: null,
-            'peso_l'                   => $this->request->getPost('peso_l') ?: null,
+            'peso_kg'                  => isset($post['peso_kg']) && $post['peso_kg'] !== '' ? (float)$post['peso_kg'] : null,
+            'peso_l'                   => isset($post['peso_l']) && $post['peso_l'] !== '' ? (float)$post['peso_l'] : null,
             'tipo_empaque'             => is_array($postEmpaque) ? implode(', ', $postEmpaque) : '',
-            'empaque_otro_descripcion' => $this->request->getPost('empaque_otro_descripcion'),
-            'editado' => 1,
+            'empaque_otro_descripcion' => trim($post['empaque_otro_descripcion'] ?? ''),
+            'editado'                  => 1,
         ];
 
         $solicitudModel->update($id, $updateData);
-
         $this->registrarBitacora('Edición de Solicitud', 'Servicio Desechos', "Se editó la solicitud: " . $solicitud['codigo_solicitud']);
-
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
     }
 
@@ -420,4 +534,6 @@ class DesechosController extends BaseController
 
         return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No se pudo actualizar el peso. Verifica los datos.');
     }
+
+
 }

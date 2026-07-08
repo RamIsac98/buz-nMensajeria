@@ -108,6 +108,11 @@
         font-weight: bold;
         margin-left: 15px;
     }
+
+     .modal-error-icon { font-size: 3rem; color: #dc3545; }
+    .error-list { text-align: left; max-height: 200px; overflow-y: auto; padding-left: 20px; color: #721c24; }
+    .error-list li { margin-bottom: 6px; }
+    .badge-edicion { background-color: #ffc107; color: #212529; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-left: 15px; }
 </style>
 <?= $this->endSection() ?>
 
@@ -301,7 +306,29 @@
         </div>
     </div>
 </div>
-
+<!-- Modal de errores (idéntico al de formulario.php) -->
+<div class="modal fade" id="modalErrores" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background-color: #f8d7da; border-bottom: 2px solid #f5c6cb;">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i> Errores en el formulario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <div class="modal-error-icon">⚠️</div>
+                    <p class="mt-2 fw-bold">Por favor, corrija los siguientes errores:</p>
+                </div>
+                <ul class="error-list" id="listaErrores"></ul>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">Entendido, revisaré</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -337,7 +364,13 @@
             'vidrios rotos de laboratorio'
         ],
         'D': [
-            'Animales de experimentación (Ratones, Conejos, Chivos, Ovejas, Ranas, Especies Oceánicas, Otros)',
+            'Ratones',
+            'Conejos',
+            'Chivos',
+            'Ovejas',
+            'Ranas',
+            'Especies Oceánicas',
+            'Otros animales',
             'Vísceras',
             'Miembros',
             'Restos de Tejidos',
@@ -350,20 +383,18 @@
     // Variantes actuales guardadas en la solicitud (para precargar)
     const variantesGuardadas = <?= json_encode(explode(', ', $solicitud['variantes_desecho'] ?? '')) ?>;
 
-    const checksTipo = document.querySelectorAll('.chk-tipo');
+     const checksTipo = document.querySelectorAll('.chk-tipo');
     const cajaVar = document.getElementById('cajaVariantes');
+    let selectedVariants = new Set();
 
     function gatherSelectedVariants() {
         const checkboxes = cajaVar.querySelectorAll('input[type="checkbox"][name="variante_desecho[]"]');
-        const selected = [];
-        checkboxes.forEach(cb => {
-            if (cb.checked) selected.push(cb.value);
-        });
-        return selected;
+        selectedVariants.clear();
+        checkboxes.forEach(cb => { if (cb.checked) selectedVariants.add(cb.value); });
     }
 
     function rebuildVariants() {
-        const currentSelected = gatherSelectedVariants();
+        gatherSelectedVariants();
         let html = '';
         let anySelected = false;
         checksTipo.forEach(cb => {
@@ -372,7 +403,7 @@
                 const tipo = cb.value;
                 if (dicVariantes[tipo]) {
                     dicVariantes[tipo].forEach(v => {
-                        const isChecked = variantesGuardadas.includes(v) || currentSelected.includes(v);
+                        const isChecked = variantesGuardadas.includes(v) || selectedVariants.has(v);
                         html += `<div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" name="variante_desecho[]" value="${v}" ${isChecked ? 'checked' : ''}>
                                     <label class="form-check-label">${v}</label>
@@ -385,49 +416,134 @@
         cajaVar.style.display = anySelected ? 'block' : 'none';
     }
 
-    checksTipo.forEach(chk => {
-        chk.addEventListener('change', rebuildVariants);
-    });
-
+    checksTipo.forEach(chk => chk.addEventListener('change', rebuildVariants));
     rebuildVariants();
 
-    document.getElementById('estLiq').addEventListener('change', function(e) {
-        document.getElementById('inputL').disabled = !e.target.checked;
-    });
-    document.getElementById('estSol').addEventListener('change', function(e) {
-        document.getElementById('inputKg').disabled = !e.target.checked;
-    });
-    if (document.getElementById('estLiq').checked) document.getElementById('inputL').disabled = false;
-    else document.getElementById('inputL').disabled = true;
-    if (document.getElementById('estSol').checked) document.getElementById('inputKg').disabled = false;
-    else document.getElementById('inputKg').disabled = true;
+    // Control de pesos
+    const estLiq = document.getElementById('estLiq');
+    const estSol = document.getElementById('estSol');
+    const inputL = document.getElementById('inputL');
+    const inputKg = document.getElementById('inputKg');
 
-    document.getElementById('eO').addEventListener('change', function(e) {
-        const txt = document.getElementById('txtOtros');
-        txt.disabled = !e.target.checked;
-        if(e.target.checked) txt.setAttribute('required', 'required');
-        else txt.removeAttribute('required');
+    function actualizarPesos() {
+        inputL.disabled = !estLiq.checked;
+        inputKg.disabled = !estSol.checked;
+        // Si están habilitados y no tienen valor, no se marcan como required para no interferir con la validación HTML5
+    }
+    estLiq.addEventListener('change', actualizarPesos);
+    estSol.addEventListener('change', actualizarPesos);
+    actualizarPesos();
+
+    // Control de "Otros"
+    const eO = document.getElementById('eO');
+    const txtOtros = document.getElementById('txtOtros');
+    eO.addEventListener('change', function() {
+        txtOtros.disabled = !this.checked;
+        if (this.checked) txtOtros.setAttribute('required', 'required');
+        else txtOtros.removeAttribute('required');
     });
-    const eOCheck = document.getElementById('eO');
-    if (eOCheck.checked) {
-        document.getElementById('txtOtros').disabled = false;
-        document.getElementById('txtOtros').setAttribute('required', 'required');
+    if (eO.checked) {
+        txtOtros.disabled = false;
+        txtOtros.setAttribute('required', 'required');
     }
 
+    // Modal de bolsas
     const bolsaCheckbox = document.getElementById('eB');
     const modalBolsas = new bootstrap.Modal(document.getElementById('modalBolsasWarning'));
     if (bolsaCheckbox) {
         bolsaCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                modalBolsas.show();
-            }
+            if (this.checked) modalBolsas.show();
         });
     }
 
-    const modalInstance = new bootstrap.Modal(document.getElementById('modalAlert'));
-    document.getElementById('btnFakeSubmit').addEventListener('click', () => {
-        if(document.getElementById('formSolicitud').reportValidity()) modalInstance.show();
+    // Modales de confirmación y errores
+    const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalAlert'));
+    const modalErrores = new bootstrap.Modal(document.getElementById('modalErrores'));
+
+      // ======== ÚNICO MANEJADOR PARA EL BOTÓN DE ENVÍO ========
+    document.getElementById('btnFakeSubmit').addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const form = document.getElementById('formSolicitud');
+        // Validación HTML5 (campos con required)
+        if (!form.reportValidity()) return;
+
+        let errores = [];
+
+        // 1. Tipos de desecho
+        const tipos = document.querySelectorAll('input[name="tipo_desecho[]"]:checked');
+        if (tipos.length === 0) {
+            errores.push('Seleccione al menos un tipo de desecho.');
+        }
+
+        // 2. Estados físicos
+        const estados = document.querySelectorAll('input[name="estado_fisico[]"]:checked');
+        if (estados.length === 0) {
+            errores.push('Seleccione al menos un estado físico.');
+        }
+
+        // 3. Tipos de empaque
+        const empaques = document.querySelectorAll('input[name="tipo_empaque[]"]:checked');
+        if (empaques.length === 0) {
+            errores.push('Seleccione al menos un tipo de empaque.');
+        }
+
+        // 4. "Otros" empaque
+        if (eO.checked) {
+            if (txtOtros.value.trim() === '') {
+                errores.push('Debe especificar la descripción para el empaque "Otros".');
+            }
+        }
+
+        // 5. Extensión telefónica (numérica)
+        const ext = document.querySelector('input[name="ext_telefono"]');
+        if (ext && ext.value.trim() !== '' && !/^\d+$/.test(ext.value.trim())) {
+            errores.push('La extensión telefónica debe ser un número.');
+        }
+
+        // 6. Motivo
+        const motivo = document.querySelector('textarea[name="motivo"]');
+        if (motivo && motivo.value.trim() === '') {
+            errores.push('El motivo es obligatorio.');
+        }
+
+        // 7. Variantes (si hay tipos seleccionados)
+        if (tipos.length > 0) {
+            const variantes = document.querySelectorAll('input[name="variante_desecho[]"]:checked');
+            if (variantes.length === 0) {
+                errores.push('Debe seleccionar al menos una especificación (variante) para el tipo de desecho elegido.');
+            }
+        }
+
+        // 8. Pesos según estado
+        const solidoChecked = document.getElementById('estSol').checked;
+        const liquidoChecked = document.getElementById('estLiq').checked;
+        const pesoKg = document.querySelector('input[name="peso_kg"]');
+        const pesoL = document.querySelector('input[name="peso_l"]');
+
+        if (solidoChecked) {
+            if (pesoKg.value.trim() === '' || isNaN(pesoKg.value) || parseFloat(pesoKg.value) < 0) {
+                errores.push('El peso en kg es obligatorio cuando se selecciona "Sólido" y debe ser un número ≥ 0.');
+            }
+        }
+        if (liquidoChecked) {
+            if (pesoL.value.trim() === '' || isNaN(pesoL.value) || parseFloat(pesoL.value) < 0) {
+                errores.push('El peso en litros es obligatorio cuando se selecciona "Líquido" y debe ser un número ≥ 0.');
+            }
+        }
+
+        // Si hay errores, mostrar modal de errores
+        if (errores.length > 0) {
+            const lista = document.getElementById('listaErrores');
+            lista.innerHTML = errores.map(err => `<li>${err}</li>`).join('');
+            modalErrores.show();
+            return;
+        }
+
+        // Todo correcto: mostrar modal de confirmación
+        modalConfirmacion.show();
     });
+
     document.getElementById('btnRealSubmit').addEventListener('click', () => {
         document.getElementById('formSolicitud').submit();
     });
