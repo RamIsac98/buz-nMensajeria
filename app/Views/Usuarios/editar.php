@@ -342,14 +342,9 @@ document.addEventListener('DOMContentLoaded', function () {
             errorModal.show();
             return;
         }
-        if (!/^\d{8}$/.test(cedulaVal)) {
-            errorMsg.textContent = 'La cédula debe ser un número de 8 dígitos (ej. 12345678).';
+        if (!/^\d{7}$/.test(cedulaVal)) {
+            errorMsg.textContent = 'La cédula debe ser un número de 7 dígitos (ej. 1234567).';
             errorModal.show();
-            return;
-        }
-        if (!/^\d{8}$/.test(cedulaVal)) {
-        errorMsg.textContent = 'La cédula debe ser un número de 8 dígitos (ej. 12345678).';
-        errorModal.show();
             return;
         }
 

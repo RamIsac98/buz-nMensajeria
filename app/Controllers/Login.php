@@ -1,16 +1,52 @@
 <?php
-
+/**
+ * Controlador de autenticación y gestión de sesiones.
+ * 
+ * Maneja el inicio de sesión, cierre de sesión, recuperación de contraseña
+ * mediante pregunta de seguridad y redirección basada en roles.
+ * 
+ * Flujo típico:
+ * 1. El usuario accede a /login (index) para ver el formulario.
+ * 2. Envía credenciales a /autenticar.
+ * 3. Si es exitoso y es primer ingreso sin pregunta seguridad, se redirige a configurar_pregunta.
+ * 4. Si tiene pregunta, se redirige según rol.
+ * 5. Si olvida contraseña, va a /olvideContrasena -> envía cédula a /validarCedula -> responde pregunta en /responder_pregunta -> envía nueva clave a /nuevaClave.
+ * 6. Cierre de sesión en /salir.
+ */
 namespace App\Controllers;
 
 use App\Models\UsuarioModel;
 
 class Login extends BaseController
 {
+    /**
+     * Muestra el formulario de inicio de sesión.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista 'login/login'
+     */
     public function index()
     {
         return view('login/login');
     }
-
+     /**
+     * Procesa las credenciales de login.
+     * 
+     * - Valida username y password contra la base de datos.
+     * - Verifica estado del usuario (0 = deshabilitado).
+     * - Crea sesión con datos del usuario.
+     * - Registra bitácora de inicio exitoso.
+     * - Si el usuario no tiene pregunta de seguridad configurada (primer ingreso),
+     *   redirige a configurar pregunta.
+     * - Redirige según el rol:
+     *   - 'proteccion_integral' → /dashboard
+     *   - 'administrador' → /usuarios/bitacora
+     *   - Otros (PAI, TAI, Jefe_Laboratorio, Auxiliar) → /desechos/registroSolicitudes
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección según resultado.
+     * 
+     * @example
+     * POST /login/autenticar con campos 'username' y 'password'
+     */
     public function autenticar()
     {
         $session = session();
@@ -59,7 +95,18 @@ class Login extends BaseController
 
         return redirect()->to(base_url('login'))->with('error', 'Usuario o contraseña incorrectos.');
     }
-
+    /**
+     * Cierra la sesión del usuario actual.
+     * 
+     * - Registra en bitácora el cierre de sesión.
+     * - Destruye la sesión.
+     * - Redirige a login.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección a /login
+     * 
+     * @example
+     * GET /login/salir
+     */
     public function salir()
     {
         $session = session();
@@ -68,12 +115,30 @@ class Login extends BaseController
 
         return redirect()->to(base_url('login'));
     }
-
+    /**
+     * Muestra el formulario para solicitar recuperación de contraseña.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista 'login/olvide_contrasena'
+     */
     public function olvideContrasena()
     {
         return view('login/olvide_contrasena');
     }
-
+    /**
+     * Valida la cédula ingresada para recuperación de contraseña.
+     * 
+     * - Busca usuario por cédula.
+     * - Si no existe, redirige con error.
+     * - Si existe pero no tiene pregunta de seguridad configurada,
+     *   registra en bitácora y redirige con error.
+     * - Si tiene pregunta, muestra la vista 'login/responder_pregunta'
+     *   con el id del usuario y la pregunta.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Redirección o vista con pregunta.
+     * 
+     * @example
+     * POST /login/validarCedula con campo 'cedula'
+     */
     public function validarCedula()
     {
         $usuarioModel = new UsuarioModel();
@@ -99,7 +164,23 @@ class Login extends BaseController
             'pregunta'   => $usuario['pregunta_seguridad']
         ]);
     }
-
+    /**
+     * Procesa la respuesta a la pregunta de seguridad y establece nueva contraseña.
+     * 
+     * - Valida que todos los campos estén presentes.
+     * - Busca el usuario por id.
+     * - Verifica que nueva contraseña y confirmación coincidan.
+     * - Verifica que la respuesta de seguridad sea correcta (password_verify).
+     * - Actualiza la contraseña en base de datos (hash).
+     * - Registra en bitácora la recuperación exitosa.
+     * - Redirige a login con mensaje de éxito.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Redirección o vista con error (si falla verificación).
+     * 
+     * @example
+     * POST /login/nuevaClave con campos:
+     *   'usuario_id', 'respuesta_seguridad', 'password', 'confirm_password'
+     */
     public function nuevaClave()
     {
         $usuarioModel = new UsuarioModel();
@@ -138,7 +219,18 @@ class Login extends BaseController
 
         return redirect()->to(base_url('login'))->with('success', 'Contraseña restablecida con éxito. Ya puedes iniciar sesión con tu nueva clave.');
     }
-
+    /**
+     * Método privado para reenviar la vista de pregunta de seguridad con un mensaje de error.
+     * 
+     * @param int    $idUsuario    ID del usuario.
+     * @param string $pregunta     Texto de la pregunta de seguridad.
+     * @param string $mensajeError Mensaje de error a mostrar.
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista 'login/responder_pregunta' con datos.
+     * 
+     * @example
+     * $this->preguntaSegError(1, '¿Nombre de tu mascota?', 'Respuesta incorrecta');
+     */
     private function preguntaSegError($idUsuario, $pregunta, $mensajeError)
     {
         return view('login/responder_pregunta', [

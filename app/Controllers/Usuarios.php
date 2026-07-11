@@ -147,7 +147,7 @@ class Usuarios extends BaseController
         if (strpos($username, ' ') !== false) return redirect()->back()->with('error', 'El nombre de usuario no puede contener espacios.')->withInput();
 
         if (empty($cedula)) return redirect()->back()->with('error', 'El campo Cédula es obligatorio.')->withInput();
-        if (!ctype_digit($cedula) || strlen($cedula) !== 8) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
+        if (!ctype_digit($cedula) || strlen($cedula) !== 7) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
 
         if (empty($tipo_cedula)) return redirect()->back()->with('error', 'Debe seleccionar el tipo de cédula.')->withInput();
         if (!in_array($tipo_cedula, ['V', 'E'])) return redirect()->back()->with('error', 'Tipo de cédula inválido.')->withInput();
@@ -432,7 +432,7 @@ class Usuarios extends BaseController
             "El usuario '" . $usuario['username'] . "' modificó con éxito sus credenciales de acceso."
         );
 
-        return redirect()->back()->with('password_success', '¡Tu contraseña ha sido actualizada correctamente!');
+        return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
     }
 
     public function solicitudDesechos()

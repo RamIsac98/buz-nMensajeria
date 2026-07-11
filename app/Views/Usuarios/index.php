@@ -387,7 +387,7 @@
     </main>
 </div>
 
-<!-- Modales (se mantienen aquí porque son específicos de esta página) -->
+
 <div class="modal fade" id="modalCambiarEstado" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-custom-width">
         <div class="modal-content border-0 shadow">

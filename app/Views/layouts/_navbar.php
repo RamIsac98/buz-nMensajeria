@@ -2,6 +2,9 @@
 $rolUsuario = session()->get('rol');
 $username = session()->get('username') ?? 'Sistema';
 
+// Formatear username para mostrar (primera letra + espacio + resto)
+$displayUsername = (strlen($username) > 1) ? $username[0] . ' ' . substr($username, 1) : $username;
+
 // Opciones base para todos los roles (excepto administrador y protección integral)
 $baseItems = [
     'desechos'     => ['url' => 'desechos/formulario', 'label' => 'Solicitud de Recolección de Desechos Biológicos'],
@@ -49,7 +52,6 @@ if ($rolUsuario === 'administrador') {
 } elseif ($rolUsuario === 'proteccion_integral') {
     $menuItems = $proteccionItems;
 } else {
-    // PAI, TAI, Jefe_Laboratorio, Auxiliar
     $menuItems = $baseItems;
 }
 
@@ -178,7 +180,7 @@ $currentPath = service('request')->getUri()->getPath();
 </style>
 
 <nav class="navbar navbar-expand-lg custom-navbar shadow-sm">
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-4 ">
         <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" width="40" height="40" class="d-inline-block me-2 navbar-brand d-flex align-items-center">
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
@@ -213,7 +215,7 @@ $currentPath = service('request')->getUri()->getPath();
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle user-dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="<?= base_url('img/user.svg') ?>" width="22" height="22" class="rounded-circle" alt="User">
-                        <span class="ms-1"><?= esc($usuario['display_username'] ?? $username) ?></span>
+                        <span class="ms-1"><?= esc($displayUsername) ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
                         <li>
@@ -234,20 +236,7 @@ $currentPath = service('request')->getUri()->getPath();
     </div>
 </nav>
 
-<!-- Mensajes flash para cambio de contraseña -->
-<?php if (session()->getFlashdata('password_success')): ?>
-    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-        <?= session()->getFlashdata('password_success') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-<?php endif; ?>
 
-<?php if (session()->getFlashdata('password_error')): ?>
-    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
-        <?= session()->getFlashdata('password_error') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-<?php endif; ?>
 
 <!-- Modal cambio de contraseña -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
@@ -257,7 +246,7 @@ $currentPath = service('request')->getUri()->getPath();
                 <h5 class="modal-title">Cambiar Contraseña</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="<?= base_url('usuarios/cambiar_password_post') ?>" method="POST">
+            <form action="<?= base_url('usuarios/cambiar_password_post') ?>" method="POST" id="formCambiarPassword">
                 <?= csrf_field() ?>
                 <div class="modal-body p-4">
                     <div class="mb-3">
@@ -266,11 +255,11 @@ $currentPath = service('request')->getUri()->getPath();
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Nueva Contraseña</label>
-                        <input type="password" name="new_password" class="form-control" required>
+                        <input type="password" name="new_password" id="new_password" class="form-control" required>
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-semibold">Confirmar Nueva</label>
-                        <input type="password" name="confirm_password" class="form-control" required>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -282,24 +271,74 @@ $currentPath = service('request')->getUri()->getPath();
     </div>
 </div>
 
-<!-- ===== NUEVO: SweetAlert2 para mensaje de bienvenida ===== -->
+
+
+<!-- ===== SweetAlert2 para mensaje de bienvenida ===== -->
 <?php if (session()->getFlashdata('mostrar_bienvenida')): ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Obtener username de sesión y formatearlo (primera letra + espacio + resto)
-        const username = "<?= esc(session()->get('username')) ?>";
-        const displayUsername = username.length > 1 ? username[0] + ' ' + username.slice(1) : username;
-        
         Swal.fire({
             icon: 'success',
             title: '¡Bienvenido!',
-            text: `Bienvenido al sistema, ${displayUsername}`,
+            text: 'Bienvenido al sistema, <?= esc($displayUsername) ?>',
             confirmButtonColor: '#2073AF',
-            timer: 1000,
+            timer: 4000,
             timerProgressBar: true,
-            showConfirmButton: false // Se cierra automáticamente después de 4 segundos
+            showConfirmButton: false
         });
     });
 </script>
 <?php endif; ?>
+
+<!-- ===== MODAL DE VALIDACIÓN EN CLIENTE (pequeño y personalizado) ===== -->
+<div class="modal fade" id="modalClienteError" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background-color: #f8d7da; border-bottom: 2px solid #f5c6cb;">
+                <h5 class="modal-title text-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Error
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="fs-6 mb-0" id="clienteErrorMsg">Mensaje de error.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-danger btn-sm px-4" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VALIDACIÓN EN CLIENTE CON MODAL ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('formCambiarPassword');
+        const modalError = new bootstrap.Modal(document.getElementById('modalClienteError'));
+        const errorMsg = document.getElementById('clienteErrorMsg');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const newPass = document.getElementById('new_password').value;
+                const confirmPass = document.getElementById('confirm_password').value;
+
+                // Validar espacios
+                if (newPass.includes(' ')) {
+                    e.preventDefault();
+                    errorMsg.textContent = 'La nueva contraseña no puede contener espacios en blanco.';
+                    modalError.show();
+                    return false;
+                }
+
+                // Validar coincidencia
+                if (newPass !== confirmPass) {
+                    e.preventDefault();
+                    errorMsg.textContent = 'Las contraseñas nuevas no coinciden. Por favor, verifíquelas.';
+                    modalError.show();
+                    return false;
+                }
+            });
+        }
+    });
+</script>

@@ -5,7 +5,7 @@
 <?= $this->section('styles') ?>
 <meta name="csrf-token" content="<?= csrf_hash() ?>">
 <style>
-    /* Estilos específicos de esta página */
+    /* ===== ESTILOS ESPECÍFICOS DE LA PÁGINA ===== */
     .main-title {
         color: var(--azul-oscuro);
         font-weight: bold;
@@ -91,7 +91,7 @@
         text-align: center;
         min-width: 85px;
     }
-    /* Estilo para el botón de lápiz (editar peso) */
+    /* Botón editar peso (lápiz) */
     .btn-editar {
         background: none;
         border: none;
@@ -105,7 +105,7 @@
         opacity: 0.4;
         cursor: not-allowed;
     }
-    /* Ajustes de tabla para evitar desbordamiento */
+    /* Ajustes de tabla */
     .table {
         min-width: 800px;
     }
@@ -138,9 +138,16 @@
 <div class="container-fluid my-5 px-4">
     <h2 class="main-title">Gestión de Solicitudes</h2>
 
+    <!-- Mensajes Flash -->
     <?php if (session()->getFlashdata('success')) : ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <?= session()->getFlashdata('success') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('error')) : ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('error') ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -192,7 +199,7 @@
         </form>
     </div>
 
-    <!-- Tabla -->
+    <!-- Tabla de Solicitudes -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -228,10 +235,12 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 align-items-center">
+                                            <!-- Botón PDF -->
                                             <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank" title="Ver PDF">
                                                 <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
                                             </a>
-                                            <?php if (session()->get('rol') === 'administrador' && $sol['tipo_solicitud'] == 'Desechos Biológicos'): ?>
+                                            <!-- Botón Editar Peso (solo para administradores y protección integral, solo Desechos Biológicos) -->
+                                            <?php if (in_array(session()->get('rol'), ['administrador', 'proteccion_integral']) && $sol['tipo_solicitud'] == 'Desechos Biológicos'): ?>
                                                 <button type="button" class="btn-editar" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#modalEditarPeso"
@@ -296,12 +305,12 @@
     </div>
 </div>
 
-<!-- Modal para editar peso (fijo) -->
+<!-- ===== MODAL EDITAR PESO ===== -->
 <div class="modal fade" id="modalEditarPeso" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header text-white" style="background-color: var(--azul-oscuro);">
-                <h5 class="modal-title">Editar Peso</h5>
+                <h5 class="modal-title">Editar Peso de la Solicitud</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formEditarPeso" action="" method="POST">
@@ -315,13 +324,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Peso (Kg)</label>
-                            <input type="number" step="0.01" name="peso_kg" id="peso_kg" class="form-control" min="0">
+                            <input type="number" step="0.01" name="peso_kg" id="peso_kg" class="form-control" min="0" placeholder="0.00">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Volumen (L)</label>
-                            <input type="number" step="0.01" name="peso_l" id="peso_l" class="form-control" min="0">
+                            <input type="number" step="0.01" name="peso_l" id="peso_l" class="form-control" min="0" placeholder="0.00">
                         </div>
                     </div>
+                    <small class="text-muted">Ingresa valores numéricos positivos. Si no aplica, deja en 0.</small>
                 </div>
                 <div class="modal-footer bg-light border-top p-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -331,6 +341,7 @@
         </div>
     </div>
 </div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -408,40 +419,134 @@ document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
 document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#modalEditarPeso"]').forEach(btn => {
     btn.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
+
+        // Validación de ID antes de consultar
         if (!id) {
-            alert('Error: No se pudo obtener el ID de la solicitud.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo obtener el ID de la solicitud.',
+                confirmButtonColor: '#0d3b66' // azul-oscuro
+            });
             return;
         }
+
         const url = '<?= base_url('desechos/obtenerPeso/') ?>' + id;
 
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                return response.json();
+            })
             .then(data => {
+                // Error devuelto por el backend
                 if (data.error) {
-                    alert('Error: ' + data.error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.error,
+                        confirmButtonColor: '#0d3b66'
+                    });
                     return;
                 }
+
+                // Rellenar el formulario del modal con los datos obtenidos
                 document.getElementById('peso_id').value = data.id;
-                document.getElementById('peso_codigo').value = data.codigo;
+                document.getElementById('peso_codigo').value = data.codigo || 'Sin código';
                 document.getElementById('peso_kg').value = data.peso_kg || 0;
                 document.getElementById('peso_l').value = data.peso_l || 0;
                 document.getElementById('formEditarPeso').action = '<?= base_url('desechos/actualizarPeso/') ?>' + data.id;
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error al cargar los datos.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'Error al cargar los datos del peso. Verifica tu conexión.',
+                    confirmButtonColor: '#0d3b66'
+                });
             });
     });
 });
 
-// Validación extra al enviar el formulario
+// ===== ENVÍO DEL FORMULARIO DE EDICIÓN DE PESO (AJAX + SweetAlert2) =====
 document.getElementById('formEditarPeso').addEventListener('submit', function(e) {
+    e.preventDefault(); // Evitamos el envío tradicional para controlar la respuesta con SweetAlert2
+
+    const form = e.target;
     const kg = parseFloat(document.getElementById('peso_kg').value);
     const l = parseFloat(document.getElementById('peso_l').value);
+
+    // Validación de valores numéricos positivos
     if (isNaN(kg) || isNaN(l) || kg < 0 || l < 0) {
-        e.preventDefault();
-        alert('Por favor, ingresa valores numéricos positivos.');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Datos inválidos',
+            text: 'Por favor, ingresa valores numéricos positivos (kg y litros no pueden ser negativos).',
+            confirmButtonColor: '#0d3b66'
+        });
+        return;
     }
+
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+
+    // Feedback visual mientras se procesa la petición
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Cerrar el modal antes de mostrar el aviso de éxito
+            const modalEl = document.getElementById('modalEditarPeso');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Peso actualizado',
+                text: data.message || 'El peso y volumen se actualizaron correctamente.',
+                confirmButtonColor: '#0d3b66',
+                timer: 2000,
+                timerProgressBar: true
+            }).then(() => {
+                // Recargamos para reflejar los nuevos valores en la tabla
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'No se pudo actualizar el peso.',
+                confirmButtonColor: '#0d3b66'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error de red o servidor:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Intente nuevamente. Detalle: ' + error.message,
+            confirmButtonColor: '#0d3b66'
+        });
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+    });
 });
 </script>
 <?= $this->endSection() ?>
