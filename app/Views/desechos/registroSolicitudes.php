@@ -94,12 +94,7 @@
 <div class="container-fluid my-5 px-4">
     <h2 class="main-title">Historial de Solicitudes</h2>
 
-    <?php if (session()->getFlashdata('success')) : ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= session()->getFlashdata('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (eliminadas alertas Bootstrap) ===== -->
 
     <!-- Filtros -->
     <div class="filter-bar mb-4 mt-3">
@@ -258,4 +253,38 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<!-- SweetAlert2 (si no está en el layout) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Leer flashdata desde PHP (success y error)
+        <?php if(session()->getFlashdata('success')): ?>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
+</script>
 <?= $this->endSection() ?>
