@@ -91,7 +91,6 @@
         text-align: center;
         min-width: 85px;
     }
-    /* Botón editar peso (lápiz) */
     .btn-editar {
         background: none;
         border: none;
@@ -105,7 +104,6 @@
         opacity: 0.4;
         cursor: not-allowed;
     }
-    /* Ajustes de tabla */
     .table {
         min-width: 800px;
     }
@@ -131,6 +129,12 @@
             font-size: 0.7rem;
         }
     }
+    /* Estilo para campos deshabilitados */
+    .form-control:disabled {
+        background-color: #e9ecef;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -138,19 +142,7 @@
 <div class="container-fluid my-5 px-4">
     <h2 class="main-title">Gestión de Solicitudes</h2>
 
-    <!-- Mensajes Flash -->
-    <?php if (session()->getFlashdata('success')) : ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= session()->getFlashdata('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (session()->getFlashdata('error')) : ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?= session()->getFlashdata('error') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (eliminadas alertas Bootstrap) ===== -->
 
     <!-- Filtros -->
     <div class="filter-bar mb-4 mt-3">
@@ -235,11 +227,9 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 align-items-center">
-                                            <!-- Botón PDF -->
                                             <a href="<?= base_url(($sol['tipo_solicitud'] == 'Desechos Biológicos' ? 'desechos' : 'bioseguridad') . '/generarPdf/' . $sol['id']) ?>" target="_blank" title="Ver PDF">
                                                 <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24" height="24">
                                             </a>
-                                            <!-- Botón Editar Peso (solo para administradores y protección integral, solo Desechos Biológicos) -->
                                             <?php if (in_array(session()->get('rol'), ['administrador', 'proteccion_integral']) && $sol['tipo_solicitud'] == 'Desechos Biológicos'): ?>
                                                 <button type="button" class="btn-editar" 
                                                         data-bs-toggle="modal" 
@@ -321,6 +311,9 @@
                         <label class="form-label fw-bold">Código de Solicitud</label>
                         <input type="text" id="peso_codigo" class="form-control" readonly>
                     </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info text-dark" id="estadoFisicoBadge">Estado físico: Cargando...</span>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Peso (Kg)</label>
@@ -331,7 +324,7 @@
                             <input type="number" step="0.01" name="peso_l" id="peso_l" class="form-control" min="0" placeholder="0.00">
                         </div>
                     </div>
-                    <small class="text-muted">Ingresa valores numéricos positivos. Si no aplica, deja en 0.</small>
+                    <small class="text-muted" id="mensajeEdicion">Ingresa valores numéricos mayores o iguales a 0. El campo que no aplica estará deshabilitado.</small>
                 </div>
                 <div class="modal-footer bg-light border-top p-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -345,12 +338,47 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+// Obtener el token CSRF
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 
-// ===== CAMBIO DE ESTADO =====
+// =============================================
+// 0. MENSAJES FLASH CON SWEETALERT2 (igual que en bitacora)
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if(session()->getFlashdata('success')): ?>
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '<?= esc(session()->getFlashdata('success')) ?>',
+            confirmButtonColor: '#2073AF',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    <?php endif; ?>
+
+    <?php if(session()->getFlashdata('error')): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '<?= esc(session()->getFlashdata('error')) ?>',
+            confirmButtonColor: '#d33',
+            timer: 5000,
+            timerProgressBar: true,
+            showConfirmButton: true
+        });
+    <?php endif; ?>
+});
+
+// =============================================
+// 1. CAMBIO DE ESTADO (botón Actualizar)
+// =============================================
 document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
     btn.addEventListener('click', function() {
         const row = this.closest('tr');
@@ -362,8 +390,21 @@ document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
         const spanEstado = row.querySelector('.estado-badge');
 
         if (!spanEstado) {
-            console.error('No se encontró el badge de estado en la fila');
-            alert('Error interno: no se pudo localizar el elemento de estado.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error interno',
+                text: 'No se pudo localizar el elemento de estado.',
+                confirmButtonColor: '#0d3b66'
+            });
+            return;
+        }
+        if (!id || !tipo) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Datos incompletos',
+                text: 'Falta el ID o tipo de solicitud.',
+                confirmButtonColor: '#0d3b66'
+            });
             return;
         }
 
@@ -385,28 +426,46 @@ document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
             body: formData
         })
         .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                spanEstado.className = 'estado-badge ' + (nuevoEstado === 'Pendiente' ? 'badge-pendiente' : (nuevoEstado === 'Entregado' ? 'badge-entregado' : 'badge-cancelado'));
+                const clases = {
+                    'Pendiente': 'badge-pendiente',
+                    'Entregado': 'badge-entregado',
+                    'Cancelado': 'badge-cancelado'
+                };
+                spanEstado.className = 'estado-badge ' + (clases[nuevoEstado] || '');
                 spanEstado.textContent = nuevoEstado;
                 select.value = nuevoEstado;
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow';
-                alertDiv.style.zIndex = '9999';
-                alertDiv.innerHTML = 'Estado actualizado correctamente. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                document.body.appendChild(alertDiv);
-                setTimeout(() => alertDiv.remove(), 3000);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Estado actualizado',
+                    text: `La solicitud ahora está en estado "${nuevoEstado}".`,
+                    confirmButtonColor: '#0d3b66',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
             } else {
-                console.error('Error en respuesta:', data.error);
-                alert('Error: ' + (data.error || 'No se pudo actualizar el estado.'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.error || 'No se pudo actualizar el estado.',
+                    confirmButtonColor: '#0d3b66'
+                });
             }
         })
         .catch(error => {
-            console.error('Error de red o servidor:', error);
-            alert('Error de conexión. Intente nuevamente. Detalle: ' + error.message);
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                text: 'No se pudo conectar con el servidor.',
+                confirmButtonColor: '#0d3b66'
+            });
         })
         .finally(() => {
             boton.disabled = false;
@@ -415,18 +474,19 @@ document.querySelectorAll('.btn-actualizar-estado').forEach(btn => {
     });
 });
 
-// ===== EDITAR PESO =====
+// =============================================
+// 2. EDITAR PESO - Cargar datos en el modal
+// =============================================
 document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#modalEditarPeso"]').forEach(btn => {
     btn.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
 
-        // Validación de ID antes de consultar
         if (!id) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: 'No se pudo obtener el ID de la solicitud.',
-                confirmButtonColor: '#0d3b66' // azul-oscuro
+                confirmButtonColor: '#0d3b66'
             });
             return;
         }
@@ -439,7 +499,6 @@ document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#modalEditar
                 return response.json();
             })
             .then(data => {
-                // Error devuelto por el backend
                 if (data.error) {
                     Swal.fire({
                         icon: 'error',
@@ -450,57 +509,105 @@ document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#modalEditar
                     return;
                 }
 
-                // Rellenar el formulario del modal con los datos obtenidos
+                // Rellenar campos
                 document.getElementById('peso_id').value = data.id;
                 document.getElementById('peso_codigo').value = data.codigo || 'Sin código';
-                document.getElementById('peso_kg').value = data.peso_kg || 0;
-                document.getElementById('peso_l').value = data.peso_l || 0;
+                document.getElementById('peso_kg').value = data.peso_kg || '';
+                document.getElementById('peso_l').value = data.peso_l || '';
                 document.getElementById('formEditarPeso').action = '<?= base_url('desechos/actualizarPeso/') ?>' + data.id;
+
+                // Mostrar estado físico y habilitar/deshabilitar campos
+                const estadoFisico = data.estado_fisico || '';
+                const kgInput = document.getElementById('peso_kg');
+                const lInput = document.getElementById('peso_l');
+                const badgeEstado = document.getElementById('estadoFisicoBadge');
+                const mensaje = document.getElementById('mensajeEdicion');
+
+                badgeEstado.textContent = 'Estado físico: ' + (estadoFisico || 'No definido');
+                badgeEstado.className = 'badge ' + (estadoFisico.includes('Sólido') ? 'bg-primary' : 'bg-secondary') + ' text-white';
+
+                const esSólido = estadoFisico.includes('Sólido');
+                const esLíquido = estadoFisico.includes('Líquido');
+
+                kgInput.disabled = false;
+                lInput.disabled = false;
+                kgInput.placeholder = '0.00';
+                lInput.placeholder = '0.00';
+
+                if (esSólido && !esLíquido) {
+                    lInput.disabled = true;
+                    lInput.placeholder = 'No aplica (Sólido)';
+                    lInput.value = '';
+                    mensaje.textContent = 'Solo se puede editar el peso en kg (solicitud Sólida).';
+                } else if (esLíquido && !esSólido) {
+                    kgInput.disabled = true;
+                    kgInput.placeholder = 'No aplica (Líquido)';
+                    kgInput.value = '';
+                    mensaje.textContent = 'Solo se puede editar el volumen en litros (solicitud Líquida).';
+                } else {
+                    mensaje.textContent = 'Puede editar ambos campos (la solicitud tiene Sólido y Líquido).';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de conexión',
-                    text: 'Error al cargar los datos del peso. Verifica tu conexión.',
+                    text: 'Error al cargar los datos del peso.',
                     confirmButtonColor: '#0d3b66'
                 });
             });
     });
 });
 
-// ===== ENVÍO DEL FORMULARIO DE EDICIÓN DE PESO (AJAX + SweetAlert2) =====
+// =============================================
+// 3. ENVÍO DEL FORMULARIO DE EDICIÓN DE PESO
+// =============================================
 document.getElementById('formEditarPeso').addEventListener('submit', function(e) {
-    e.preventDefault(); // Evitamos el envío tradicional para controlar la respuesta con SweetAlert2
+    e.preventDefault();
 
     const form = e.target;
-    const kg = parseFloat(document.getElementById('peso_kg').value);
-    const l = parseFloat(document.getElementById('peso_l').value);
+    const kgInput = document.getElementById('peso_kg');
+    const lInput = document.getElementById('peso_l');
+    const kgVal = kgInput.value.trim();
+    const lVal = lInput.value.trim();
 
-    // Validación de valores numéricos positivos
-    if (isNaN(kg) || isNaN(l) || kg < 0 || l < 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Datos inválidos',
-            text: 'Por favor, ingresa valores numéricos positivos (kg y litros no pueden ser negativos).',
-            confirmButtonColor: '#0d3b66'
-        });
-        return;
+    // Validar solo campos habilitados
+    if (!kgInput.disabled && kgVal !== '') {
+        const kg = parseFloat(kgVal);
+        if (isNaN(kg) || kg < 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Dato inválido',
+                text: 'El peso en kg debe ser un número mayor o igual a 0.',
+                confirmButtonColor: '#0d3b66'
+            });
+            return;
+        }
+    }
+    if (!lInput.disabled && lVal !== '') {
+        const l = parseFloat(lVal);
+        if (isNaN(l) || l < 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Dato inválido',
+                text: 'El volumen en litros debe ser un número mayor o igual a 0.',
+                confirmButtonColor: '#0d3b66'
+            });
+            return;
+        }
     }
 
     const formData = new FormData(form);
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.textContent;
 
-    // Feedback visual mientras se procesa la petición
     submitBtn.disabled = true;
     submitBtn.textContent = 'Guardando...';
 
     fetch(form.action, {
         method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData
     })
     .then(response => {
@@ -509,20 +616,18 @@ document.getElementById('formEditarPeso').addEventListener('submit', function(e)
     })
     .then(data => {
         if (data.success) {
-            // Cerrar el modal antes de mostrar el aviso de éxito
-            const modalEl = document.getElementById('modalEditarPeso');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) modalInstance.hide();
+            const modalElement = document.getElementById('modalEditarPeso');
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modalInstance.hide();
 
             Swal.fire({
                 icon: 'success',
                 title: 'Peso actualizado',
-                text: data.message || 'El peso y volumen se actualizaron correctamente.',
+                text: data.message || 'Los valores se actualizaron correctamente.',
                 confirmButtonColor: '#0d3b66',
                 timer: 2000,
                 timerProgressBar: true
             }).then(() => {
-                // Recargamos para reflejar los nuevos valores en la tabla
                 location.reload();
             });
         } else {
@@ -535,11 +640,11 @@ document.getElementById('formEditarPeso').addEventListener('submit', function(e)
         }
     })
     .catch(error => {
-        console.error('Error de red o servidor:', error);
+        console.error('Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error de conexión',
-            text: 'Intente nuevamente. Detalle: ' + error.message,
+            text: 'Intenta nuevamente. Detalle: ' + error.message,
             confirmButtonColor: '#0d3b66'
         });
     })

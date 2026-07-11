@@ -486,54 +486,114 @@ class DesechosController extends BaseController
     {
         if (!$this->estaLogueado()) return $this->response->setJSON(['error' => 'No autorizado']);
 
-        
         $rol = session()->get('rol');
-        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return $this->response->setJSON(['error' => 'Sin permisos']);
+        if (!in_array($rol, ['administrador', 'proteccion_integral'])) {
+            return $this->response->setJSON(['error' => 'Sin permisos']);
+        }
 
         $solicitudModel = new SolicitudDesechosModel();
         $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) return $this->response->setJSON(['error' => 'Solicitud no encontrada']);
+        if (!$solicitud) {
+            return $this->response->setJSON(['error' => 'Solicitud no encontrada']);
+        }
 
         return $this->response->setJSON([
             'id'         => $solicitud['id'],
             'codigo'     => $solicitud['codigo_solicitud'],
             'peso_kg'    => $solicitud['peso_kg'],
-            'peso_l'     => $solicitud['peso_l']
+            'peso_l'     => $solicitud['peso_l'],
+            'estado_fisico' => $solicitud['estado'] // 🔥 Se añade el estado físico
         ]);
     }
 
     public function actualizarPeso($id)
-    {
-        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+{
+    // Verificar autenticación
+    if (!$this->estaLogueado()) {
+        return $this->response->setJSON(['success' => false, 'error' => 'No autenticado']);
+    }
 
-        $rol = session()->get('rol');
-        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No tienes permisos.');
+    // Verificar rol
+    $rol = session()->get('rol');
+    if (!in_array($rol, ['administrador', 'proteccion_integral'])) {
+        return $this->response->setJSON(['success' => false, 'error' => 'Permisos insuficientes']);
+    }
 
-        $solicitudModel = new SolicitudDesechosModel();
-        $solicitud = $solicitudModel->find($id);
+    $solicitudModel = new SolicitudDesechosModel();
+    $solicitud = $solicitudModel->find($id);
 
-        if (!$solicitud) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Solicitud no encontrada.');
+    if (!$solicitud) {
+        return $this->response->setJSON(['success' => false, 'error' => 'Solicitud no encontrada']);
+    }
 
-        $peso_kg = $this->request->getPost('peso_kg') !== '' ? (float)$this->request->getPost('peso_kg') : null;
-        $peso_l  = $this->request->getPost('peso_l') !== '' ? (float)$this->request->getPost('peso_l') : null;
-        
+    // Obtener valores actuales
+    $valorActualKg = $solicitud['peso_kg']; // puede ser null o float
+    $valorActualL  = $solicitud['peso_l'];
 
-        if (($peso_kg !== null && !is_numeric($peso_kg)) || ($peso_l !== null && !is_numeric($peso_l))) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores deben ser numéricos.');
-        if (($peso_kg !== null && $peso_kg < 0) || ($peso_l !== null && $peso_l < 0)) return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'Los valores no pueden ser negativos.');
+    // Obtener valores enviados
+    $peso_kg = $this->request->getPost('peso_kg');
+    $peso_l  = $this->request->getPost('peso_l');
 
-        $actualizado = $solicitudModel->update($id, [
+    // Convertir a float solo si no está vacío ('' o null)
+    $peso_kg = ($peso_kg !== '' && $peso_kg !== null) ? (float)$peso_kg : null;
+    $peso_l  = ($peso_l !== '' && $peso_l !== null) ? (float)$peso_l : null;
+
+    // Validar que si se envía un valor, sea numérico y >= 0
+    if ($peso_kg !== null && (!is_numeric($peso_kg) || $peso_kg < 0)) {
+        return $this->response->setJSON(['success' => false, 'error' => 'El peso en kg debe ser un número mayor o igual a 0']);
+    }
+    if ($peso_l !== null && (!is_numeric($peso_l) || $peso_l < 0)) {
+        return $this->response->setJSON(['success' => false, 'error' => 'El volumen en litros debe ser un número mayor o igual a 0']);
+    }
+
+    // Obtener el estado físico
+    $estadoFisico = $solicitud['estado'] ?? '';
+    $esSólido = strpos($estadoFisico, 'Sólido') !== false;
+    $esLíquido = strpos($estadoFisico, 'Líquido') !== false;
+
+    // 🔥 Validación por estado físico (solo se permite editar el campo que aplica)
+    if ($esSólido && !$esLíquido) {
+        // Solo Sólido: solo se permite kg
+        if ($peso_l !== null) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No se puede actualizar el volumen en litros porque la solicitud es solo de tipo Sólido.']);
+        }
+        // Si no envía kg, lo dejamos como null (no se actualiza)
+    } elseif ($esLíquido && !$esSólido) {
+        // Solo Líquido: solo se permite litros
+        if ($peso_kg !== null) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No se puede actualizar el peso en kg porque la solicitud es solo de tipo Líquido.']);
+        }
+        // Si no envía litros, lo dejamos como null
+    }
+    // Si contiene ambos, permitimos ambos campos sin restricción adicional
+
+    // 🔥 NUEVA VALIDACIÓN: No permitir cambiar a 0 si el valor actual es > 0
+    if ($peso_kg !== null && $valorActualKg !== null && $valorActualKg > 0 && $peso_kg == 0) {
+        return $this->response->setJSON(['success' => false, 'error' => 'No se puede establecer el peso en 0 porque actualmente tiene un valor mayor a 0.']);
+    }
+    if ($peso_l !== null && $valorActualL !== null && $valorActualL > 0 && $peso_l == 0) {
+        return $this->response->setJSON(['success' => false, 'error' => 'No se puede establecer el volumen en 0 porque actualmente tiene un valor mayor a 0.']);
+    }
+
+    // Preparar datos para actualizar
+    $data = [
         'peso_kg' => $peso_kg,
         'peso_l'  => $peso_l
-        ]);
+    ];
 
-        if ($actualizado) {
-            $this->registrarBitacora('Edición de Peso', 'Servicio Desechos', "Se actualizó el peso de la solicitud ID $id a Kg: $peso_kg, L: $peso_l");
-            return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('success', 'Peso actualizado correctamente.');
-        }
+    // Actualizar
+    $actualizado = $solicitudModel->update($id, $data);
 
-        return redirect()->to(base_url('desechos/gestionSolicitudes'))->with('error', 'No se pudo actualizar el peso. Verifica los datos.');
+    if ($actualizado) {
+        $this->registrarBitacora('Edición de Peso', 'Servicio Desechos', "Se actualizó el peso de la solicitud ID $id a Kg: $peso_kg, L: $peso_l");
+        return $this->response->setJSON(['success' => true, 'message' => 'Peso actualizado correctamente']);
     }
+
+    $errors = $solicitudModel->errors();
+    $errorMsg = !empty($errors) ? implode(', ', $errors) : 'No se pudo actualizar el peso. Verifica los datos.';
+    return $this->response->setJSON(['success' => false, 'error' => $errorMsg]);
+}
 
 
 }
