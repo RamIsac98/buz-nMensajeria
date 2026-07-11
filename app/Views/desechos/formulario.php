@@ -100,7 +100,7 @@
         width: 70px;
     }
 
-        /* Agregar estilos para el modal de errores */
+    /* Agregar estilos para el modal de errores */
     .modal-error-icon { font-size: 3rem; color: #dc3545; }
     .error-list { text-align: left; max-height: 200px; overflow-y: auto; padding-left: 20px; color: #721c24; }
     .error-list li { margin-bottom: 6px; }
@@ -109,6 +109,8 @@
 
 <?= $this->section('content') ?>
 <div class="page-title">Solicitud de Recolección de Desechos Biológicos</div>
+
+<!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (no hay alertas Bootstrap) ===== -->
 
 <div class="form-container">
     <form id="formSolicitud" action="<?= base_url('desechos/registrar') ?>" method="POST">
@@ -254,7 +256,7 @@
             </div>
             <div class="modal-body text-center p-4">
                 <p class="fs-6">Ha seleccionado el tipo de empaque <strong>B (Bolsas)</strong>.</p>
-                <p class="text-danger fw-bold">Es obligatorio identificar las bolsas, cajas y Contenedores Pulso Conrtantes con el nombre del Laboratorio y la fecha.</p>
+                <p class="text-danger fw-bold">Es obligatorio identificar las bolsas, cajas y Contenedores Pulso Cortantes con el nombre del Laboratorio y la fecha.</p>
             </div>
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background-color: var(--azul-claro);">Entendido</button>
@@ -290,7 +292,42 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
+
+    // =============================================
+    // LÓGICA DEL FORMULARIO (variantes, pesos, etc.)
+    // =============================================
     // Diccionario de variantes por tipo (actualizado según clasificación)
     const dicVariantes = {
         'B': [
@@ -380,7 +417,7 @@
     // Inicializar la vista al cargar la página
     rebuildVariants();
 
- // Control de habilitación de pesos según estado
+    // Control de habilitación de pesos según estado
     const estLiq = document.getElementById('estLiq');
     const estSol = document.getElementById('estSol');
     const inputL = document.getElementById('inputL');
@@ -494,8 +531,6 @@
         modalConfirmacion.show();
     });
 
-
-    
     document.getElementById('btnRealSubmit').addEventListener('click', () => {
         document.getElementById('formSolicitud').submit();
     });
