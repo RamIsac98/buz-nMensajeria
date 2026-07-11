@@ -109,7 +109,7 @@
         margin-left: 15px;
     }
 
-     .modal-error-icon { font-size: 3rem; color: #dc3545; }
+    .modal-error-icon { font-size: 3rem; color: #dc3545; }
     .error-list { text-align: left; max-height: 200px; overflow-y: auto; padding-left: 20px; color: #721c24; }
     .error-list li { margin-bottom: 6px; }
     .badge-edicion { background-color: #ffc107; color: #212529; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-left: 15px; }
@@ -121,6 +121,8 @@
     Editar Solicitud de Desechos
     <span class="badge-edicion">Modo Edición</span>
 </div>
+
+<!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (no hay alertas Bootstrap) ===== -->
 
 <div class="form-container">
     <form id="formSolicitud" action="<?= base_url('desechos/actualizar/' . $id_solicitud) ?>" method="POST">
@@ -306,6 +308,7 @@
         </div>
     </div>
 </div>
+
 <!-- Modal de errores (idéntico al de formulario.php) -->
 <div class="modal fade" id="modalErrores" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -332,7 +335,42 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
+
+    // =============================================
+    // LÓGICA DEL FORMULARIO (variantes, pesos, etc.)
+    // =============================================
     // Al cargar la página, mostrar el modal de advertencia única
     document.addEventListener('DOMContentLoaded', function() {
         const modalAdvertencia = new bootstrap.Modal(document.getElementById('modalAdvertenciaUnica'));
@@ -383,7 +421,7 @@
     // Variantes actuales guardadas en la solicitud (para precargar)
     const variantesGuardadas = <?= json_encode(explode(', ', $solicitud['variantes_desecho'] ?? '')) ?>;
 
-     const checksTipo = document.querySelectorAll('.chk-tipo');
+    const checksTipo = document.querySelectorAll('.chk-tipo');
     const cajaVar = document.getElementById('cajaVariantes');
     let selectedVariants = new Set();
 
@@ -460,7 +498,7 @@
     const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalAlert'));
     const modalErrores = new bootstrap.Modal(document.getElementById('modalErrores'));
 
-      // ======== ÚNICO MANEJADOR PARA EL BOTÓN DE ENVÍO ========
+    // ======== ÚNICO MANEJADOR PARA EL BOTÓN DE ENVÍO ========
     document.getElementById('btnFakeSubmit').addEventListener('click', function(e) {
         e.preventDefault();
 
