@@ -68,35 +68,45 @@ abstract class BaseController extends Controller
     }
 
 
-    public function generarPdfBitacora()
-    {
-        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-
-        $bitacoraModel = new BitacoraModel();
-
-        $filtros = [
-            'buscar' => $this->request->getGet('buscar'),
-            'tipo'   => $this->request->getGet('tipo'),
-            'desde'  => $this->request->getGet('desde'),
-            'hasta'  => $this->request->getGet('hasta')
-        ];
-
-        $paginaInicio = (int)($this->request->getGet('pagina_inicio') ?? 1);
-        $paginaFin    = (int)($this->request->getGet('pagina_fin') ?? $paginaInicio);
-        
-        $porPagina = 8; 
-        $offset    = ($paginaInicio - 1) * $porPagina;
-        $limite    = (($paginaFin - $paginaInicio) + 1) * $porPagina;
-
-        $data['bitacora'] = $bitacoraModel->getBitacoraFiltrada($filtros, $limite, $offset);
-
-        $html = view('Bitacora/bitacora_pdf', $data);
-
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-        
-        $dompdf->stream("Reporte_Bitacora_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
+public function generarPdfBitacora()
+{
+    if (!$this->estaLogueado()) {
+        return redirect()->to(base_url('login'));
     }
+
+    $bitacoraModel = new BitacoraModel();
+
+    $filtros = [
+        'buscar' => $this->request->getGet('buscar'),
+        'tipo'   => $this->request->getGet('tipo'),
+        'desde'  => $this->request->getGet('desde'),
+        'hasta'  => $this->request->getGet('hasta')
+    ];
+
+    $paginaInicio = (int)($this->request->getGet('pagina_inicio') ?? 1);
+    $paginaFin    = (int)($this->request->getGet('pagina_fin') ?? $paginaInicio);
+    
+    $porPagina = 8; 
+    $offset    = ($paginaInicio - 1) * $porPagina;
+    $limite    = (($paginaFin - $paginaInicio) + 1) * $porPagina;
+
+    $data['bitacora'] = $bitacoraModel->getBitacoraFiltrada($filtros, $limite, $offset);
+
+    // 🔥 Cierra la sesión y libera el bloqueo antes de generar el PDF
+    session_write_close();
+
+    // Limpia cualquier buffer de salida para evitar interferencias
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    $html = view('Bitacora/bitacora_pdf', $data);
+
+    $dompdf = new \Dompdf\Dompdf();
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+    
+    $dompdf->stream("Reporte_Bitacora_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
+}
 }
