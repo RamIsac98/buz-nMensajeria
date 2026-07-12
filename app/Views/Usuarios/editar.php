@@ -103,7 +103,7 @@
                             <option value="V" <?= ($usuario['tipo_cedula'] ?? '') == 'V' ? 'selected' : '' ?>>Venezolano (V)</option>
                             <option value="E" <?= ($usuario['tipo_cedula'] ?? '') == 'E' ? 'selected' : '' ?>>Extranjero (E)</option>
                         </select>
-                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= esc($usuario['cedula']) ?>" required maxlength="10" <?= isset($usuario['tipo_cedula']) && $usuario['tipo_cedula'] !== '' ? '' : 'disabled' ?>>
+                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= esc($usuario['cedula']) ?>" required maxlength="10">
                     </div>
                 </div>
 
@@ -229,11 +229,11 @@
     // =============================================
     document.addEventListener('DOMContentLoaded', function() {
         <?php if(session()->getFlashdata('success')): ?>
-            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            console.log('Mensaje success recibido: <?= json_encode(session()->getFlashdata('success')) ?>');
             Swal.fire({
                 icon: 'success',
                 title: '¡Éxito!',
-                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                text: <?= json_encode(session()->getFlashdata('success')) ?>,
                 confirmButtonColor: '#2073AF',
                 timer: 4000,
                 timerProgressBar: true,
@@ -242,11 +242,11 @@
         <?php endif; ?>
 
         <?php if(session()->getFlashdata('error')): ?>
-            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            console.log('Mensaje error recibido: <?= json_encode(session()->getFlashdata('error')) ?>');
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                text: <?= json_encode(session()->getFlashdata('error')) ?>,
                 confirmButtonColor: '#d33',
                 timer: 5000,
                 timerProgressBar: true,
@@ -256,7 +256,7 @@
     });
 
     // =============================================
-    // LÓGICA DEL FORMULARIO
+    // LÓGICA DEL FORMULARIO (validación en cliente)
     // =============================================
     document.addEventListener('DOMContentLoaded', function () {
         const formEditar = document.getElementById('formEditarUsuario');
@@ -370,7 +370,7 @@
                 return;
             }
 
-            // 5. Validar cédula: obligatoria, 8 dígitos numéricos
+            // 5. Validar cédula: entre 6 y 10 dígitos numéricos
             const cedulaVal = inputCedula.value.trim();
             if (cedulaVal === '') {
                 errorMsg.textContent = 'El campo "Cédula" es obligatorio.';
@@ -378,9 +378,9 @@
                 return;
             }
             if (!/^\d{6,10}$/.test(cedulaVal)) {
-            errorMsg.textContent = 'La cédula debe tener entre 6 y 10 dígitos numéricos.';
-            errorModal.show();
-            return;
+                errorMsg.textContent = 'La cédula debe tener entre 6 y 10 dígitos numéricos.';
+                errorModal.show();
+                return;
             }
 
             // 6. Validar rol

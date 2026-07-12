@@ -178,7 +178,7 @@ class Usuarios extends BaseController
         }
 
         if ($usuarioModel->existeCedulaExcluyendoId($cedula, $id)) {
-            return redirect()->back()->with('error', "La cédula '{$cedula}' ya pertenece a otro usuario registrado.");
+            return redirect()->back()->with('error', "La cédula {$cedula} ya pertenece a otro usuario registrado.");
         }
 
         if (!empty($nuevaClave) && strpos($nuevaClave, ' ') !== false) {
@@ -315,7 +315,7 @@ class Usuarios extends BaseController
         if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Falta el campo: Laboratorio (id_laboratorio)')->withInput();
 
         if ($usuarioModel->existeCedula($cedula)) {
-            return redirect()->back()->with('error', "Error: La cédula '{$cedula}' ya se encuentra registrada.")->withInput();
+            return redirect()->back()->with('error', "Error: La cédula {$cedula} ya se encuentra registrada.")->withInput();
         }
         if (strpos($password, ' ') !== false) {
             return redirect()->back()->with('error', 'La contraseña no puede contener espacios en blanco.')->withInput();

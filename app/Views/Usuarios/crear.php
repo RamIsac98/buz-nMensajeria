@@ -98,7 +98,7 @@
                             <option value="V" <?= old('tipo_cedula') == 'V' ? 'selected' : '' ?>>Venezolano (V)</option>
                             <option value="E" <?= old('tipo_cedula') == 'E' ? 'selected' : '' ?>>Extranjero (E)</option>
                         </select>
-                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= old('cedula') ?>" required maxlength="10" disabled>
+                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= old('cedula') ?>" required maxlength="10">
                     </div>
                 </div>
 
@@ -198,11 +198,11 @@
     // =============================================
     document.addEventListener('DOMContentLoaded', function() {
         <?php if(session()->getFlashdata('success')): ?>
-            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            console.log('Mensaje success recibido: <?= json_encode(session()->getFlashdata('success')) ?>');
             Swal.fire({
                 icon: 'success',
                 title: '¡Éxito!',
-                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                text: <?= json_encode(session()->getFlashdata('success')) ?>,
                 confirmButtonColor: '#2073AF',
                 timer: 4000,
                 timerProgressBar: true,
@@ -211,11 +211,11 @@
         <?php endif; ?>
 
         <?php if(session()->getFlashdata('error')): ?>
-            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            console.log('Mensaje error recibido: <?= json_encode(session()->getFlashdata('error')) ?>');
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                text: <?= json_encode(session()->getFlashdata('error')) ?>,
                 confirmButtonColor: '#d33',
                 timer: 5000,
                 timerProgressBar: true,
@@ -225,7 +225,7 @@
     });
 
     // =============================================
-    // LÓGICA DEL FORMULARIO
+    // LÓGICA DEL FORMULARIO (validación en cliente)
     // =============================================
     document.addEventListener('DOMContentLoaded', function () {
         const formCrear = document.getElementById('formCrearUsuario');
@@ -244,16 +244,69 @@
         const labSelect = document.getElementById('id_laboratorio');
         const password = document.getElementById('password');
 
-        // ---- Lógica de habilitación de cédula ----
-        tipoCedula.addEventListener('change', function() {
-            if (this.value !== '') {
-                inputCedula.disabled = false;
-                inputCedula.focus();
+        // =============================================
+        // FUNCIÓN REUTILIZABLE PARA CARGAR LABORATORIOS
+        // =============================================
+        function cargarLaboratorios(deptoId, callback) {
+            labSelect.innerHTML = '<option value="" disabled selected>Cargando laboratorios...</option>';
+            labSelect.disabled = true;
+
+            if (deptoId && deptoId !== "") {
+                const url = `<?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}`;
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        labSelect.innerHTML = '<option value="" disabled selected>Selecciona un laboratorio...</option>';
+                        if (data && data.length > 0) {
+                            data.forEach(lab => {
+                                labSelect.innerHTML += `<option value="${lab.id}">${lab.nombre}</option>`;
+                            });
+                            labSelect.disabled = false;
+                        } else {
+                            labSelect.innerHTML = '<option value="" disabled>No hay laboratorios en este Centro</option>';
+                            labSelect.disabled = true;
+                        }
+                        if (callback) callback(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al cargar laboratorios.');
+                        labSelect.innerHTML = '<option value="" disabled>Error al cargar laboratorios</option>';
+                        labSelect.disabled = true;
+                        if (callback) callback([]);
+                    });
             } else {
-                inputCedula.disabled = true;
-                inputCedula.value = '';
+                labSelect.innerHTML = '<option value="" disabled selected>Selecciona primero un centro...</option>';
+                labSelect.disabled = true;
+                if (callback) callback([]);
             }
+        }
+
+        // =============================================
+        // EVENTO CHANGE DEL SELECT DE CENTRO
+        // =============================================
+        deptoSelect.addEventListener('change', function() {
+            cargarLaboratorios(this.value);
         });
+
+        // =============================================
+        // AL CARGAR LA PÁGINA, SI HAY UN CENTRO SELECCIONADO
+        // CARGAR LABORATORIOS Y SELECCIONAR EL LABORATORIO PREVIO
+        // =============================================
+        const oldDepto = document.querySelector('#id_departamento').value;
+        if (oldDepto && oldDepto !== '') {
+            // Cargar laboratorios del centro seleccionado
+            cargarLaboratorios(oldDepto, function() {
+                // Después de cargar, seleccionar el laboratorio que tenía old('id_laboratorio')
+                const oldLab = '<?= old('id_laboratorio') ?>';
+                if (oldLab && oldLab !== '') {
+                    labSelect.value = oldLab;
+                }
+            });
+        }
 
         // ---- Validación antes de abrir modal de confirmación ----
         btnAbrirModal.addEventListener('click', function (event) {
@@ -334,7 +387,7 @@
                 return;
             }
 
-            // 5. Validar cédula: obligatoria, 8 dígitos numéricos
+            // 5. Validar cédula: entre 6 y 10 dígitos numéricos
             const cedulaVal = inputCedula.value.trim();
             if (cedulaVal === '') {
                 errorMsg.textContent = 'El campo "Cédula" es obligatorio. (solo debe contener números sin espacios ni puntos).';
@@ -347,9 +400,9 @@
                 return;
             }
             if (!/^\d{6,10}$/.test(cedulaVal)) {
-            errorMsg.textContent = 'La cédula debe tener entre 6 y 10 dígitos numéricos.';
-            errorModal.show();
-            return;
+                errorMsg.textContent = 'La cédula debe tener entre 6 y 10 dígitos numéricos.';
+                errorModal.show();
+                return;
             }
 
             // 6. Validar rol
@@ -402,43 +455,6 @@
         // ---- Confirmar envío ----
         btnConfirmarGuardar.addEventListener('click', function () {
             formCrear.submit();
-        });
-
-        // ---- Filtro dinámico de laboratorios ----
-        deptoSelect.addEventListener('change', function() {
-            const deptoId = this.value;
-            labSelect.innerHTML = '<option value="" disabled selected>Cargando laboratorios...</option>';
-            labSelect.disabled = true;
-
-            if (deptoId && deptoId !== "") {
-                const url = `<?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}`;
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        labSelect.innerHTML = '<option value="" disabled selected>Selecciona un laboratorio...</option>';
-                        if (data && data.length > 0) {
-                            data.forEach(lab => {
-                                labSelect.innerHTML += `<option value="${lab.id}">${lab.nombre}</option>`;
-                            });
-                            labSelect.disabled = false;
-                        } else {
-                            labSelect.innerHTML = '<option value="" disabled>No hay laboratorios en este Centro</option>';
-                            labSelect.disabled = true;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al cargar laboratorios.');
-                        labSelect.innerHTML = '<option value="" disabled>Error al cargar laboratorios</option>';
-                        labSelect.disabled = true;
-                    });
-            } else {
-                labSelect.innerHTML = '<option value="" disabled selected>Selecciona primero un centro...</option>';
-                labSelect.disabled = true;
-            }
         });
     });
 </script>
