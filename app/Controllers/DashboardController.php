@@ -9,8 +9,8 @@ class DashboardController extends BaseController
     public function index()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (session()->get('rol') !== 'proteccion_integral') return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso no autorizado.');
-
+        
+        if (session()->get('rol') !== 'proteccion_integral') return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso no autorizado.');
         $dashboardModel = new DashboardModel();
 
         $aniosDisponibles = $dashboardModel->getAniosDisponibles();

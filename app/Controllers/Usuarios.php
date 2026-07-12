@@ -20,7 +20,7 @@ class Usuarios extends BaseController
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $rol = session()->get('rol');
-        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado: No tienes permisos.');
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado: No tienes permisos.');
 
         $usuarioModel = new UsuarioModel();
 
@@ -47,10 +47,12 @@ class Usuarios extends BaseController
 
     public function generarPdfUsuarios()
     {
-        if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
+        if (!$this->estaLogueado()) {
+            return redirect()->to(base_url('login'));
+        }
         if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
-                             ->with('error', 'Acceso denegado.');
+            return redirect()->to(base_url('desechos/registroSolicitudes'))
+                            ->with('error', 'Acceso denegado.');
         }
 
         $usuarioModel = new UsuarioModel();
@@ -70,6 +72,13 @@ class Usuarios extends BaseController
 
         $data['usuarios'] = $usuarioModel->getUsuariosFiltrados($filtros, $limite, $offset);
 
+        // 🔥 Cerrar sesión y liberar buffers antes de generar el PDF
+        session_write_close();
+
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
         $html = view('usuarios/usuarios_pdf', $data);
 
         $dompdf = new \Dompdf\Dompdf();
@@ -78,12 +87,13 @@ class Usuarios extends BaseController
         $dompdf->render();
         
         $dompdf->stream("Reporte_Usuarios_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
+        // El stream ya incluye exit, por lo que no es necesario agregar más código.
     }
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
+            return redirect()->to(base_url('desechos/registroSolicitudes'))
                              ->with('error', 'Acceso denegado.');
         }
 
@@ -120,7 +130,7 @@ class Usuarios extends BaseController
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         if (!$this->verificarAccesoGestion()) {
-            return redirect()->to(base_url('interfaz_usuario_inicial'))
+            return redirect()->to(base_url('desechos/registroSolicitudes'))
                              ->with('error', 'Acceso denegado.');
         }
 
@@ -204,7 +214,7 @@ class Usuarios extends BaseController
     public function deshabilitar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado.');
 
         if ($id == session()->get('usuario_id')) return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes deshabilitar tu propia cuenta.');
 
@@ -230,7 +240,7 @@ class Usuarios extends BaseController
     public function eliminar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado.');
 
         if ($id == session()->get('usuario_id')) return redirect()->to(base_url('usuarios'))->with('error', 'Acción denegada: No puedes eliminar tu propia cuenta del sistema.');
 
@@ -253,7 +263,7 @@ class Usuarios extends BaseController
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado.');
 
         $deptModel = new DepartamentoModel();
         $data['departamentos'] = $deptModel->getDepartamentos();
@@ -264,7 +274,7 @@ class Usuarios extends BaseController
     public function guardar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
-        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
+        if (!$this->verificarAccesoGestion()) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado.');
 
         $usuarioModel = new UsuarioModel();
 

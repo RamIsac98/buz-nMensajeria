@@ -182,31 +182,8 @@
         </a>
     </div>
 
-    <section class="system-messages">
-        <?php if (session()->getFlashdata('usuario_eliminado')) : ?>
-            <div class="alert alert-danger d-flex align-items-center alert-dismissible fade show border-start border-danger border-4 shadow-sm bg-danger-subtle text-danger-emphasis" role="alert">
-                <div>
-                    <h6 class="alert-heading mb-1 font-weight-bold">Registro Eliminado</h6>
-                    <span class="small text-dark"><?= esc(session()->getFlashdata('usuario_eliminado')) ?></span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if(session()->getFlashdata('success')): ?>
-            <div class="alert alert-custom-success alert-dismissible fade show py-2" role="alert">
-                <strong>¡Éxito!</strong> <?= esc(session()->getFlashdata('success')) ?>
-                <button type="button" class="btn-close btn-close-white py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-        
-        <?php if(session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
-                <strong>¡Error!</strong> <?= esc(session()->getFlashdata('error')) ?>
-                <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-    </section>
+    <!-- ===== MENSAJES FLASH CON SWEETALERT2 (eliminadas alertas Bootstrap) ===== -->
+    <section class="system-messages"></section>
 
     <main>
         <h2 class="main-title">Panel de Gestión de Usuarios</h2>
@@ -387,7 +364,7 @@
     </main>
 </div>
 
-
+<!-- Modal cambio de estado (igual que antes) -->
 <div class="modal fade" id="modalCambiarEstado" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-custom-width">
         <div class="modal-content border-0 shadow">
@@ -408,6 +385,7 @@
     </div>
 </div>
 
+<!-- Modal PDF (igual que antes) -->
 <div class="modal fade" id="modalPdf" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="GET" action="<?= base_url('usuarios/generarPdfUsuarios') ?>" class="modal-content border-0 shadow">
@@ -438,82 +416,136 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-// Lógica de memoria de página y filtros (igual que antes)
-document.addEventListener('DOMContentLoaded', () => {
-    const currentQuery = window.location.search;
-    const pathName = window.location.pathname;
-    const memoryKey = 'usuarios_state_memory';
-    const flashKey = 'usuarios_flash_memory';
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
 
-    const systemMessages = document.querySelector('.system-messages');
+        <?php if(session()->getFlashdata('error')): ?>
+            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
 
-    const savedFlash = sessionStorage.getItem(flashKey);
-    if (savedFlash && systemMessages) {
-        systemMessages.innerHTML = savedFlash + systemMessages.innerHTML;
-        sessionStorage.removeItem(flashKey);
-    }
+        <?php if(session()->getFlashdata('usuario_eliminado')): ?>
+            console.log('Mensaje usuario_eliminado recibido: <?= esc(session()->getFlashdata('usuario_eliminado')) ?>');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Registro Eliminado',
+                text: '<?= esc(session()->getFlashdata('usuario_eliminado')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
 
-    if (currentQuery) {
-        sessionStorage.setItem(memoryKey, currentQuery);
-    } else {
-        const savedQuery = sessionStorage.getItem(memoryKey);
-        if (savedQuery) {
-            const hasNativeFlash = systemMessages && systemMessages.querySelector('.alert') !== null;
-            if (hasNativeFlash) {
-                sessionStorage.setItem(flashKey, systemMessages.innerHTML);
-            }
-            window.location.replace(pathName + savedQuery);
+    // =============================================
+    // LÓGICA DE MEMORIA DE PÁGINA Y FILTROS
+    // =============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentQuery = window.location.search;
+        const pathName = window.location.pathname;
+        const memoryKey = 'usuarios_state_memory';
+        const flashKey = 'usuarios_flash_memory';
+
+        const systemMessages = document.querySelector('.system-messages');
+
+        const savedFlash = sessionStorage.getItem(flashKey);
+        if (savedFlash && systemMessages) {
+            systemMessages.innerHTML = savedFlash + systemMessages.innerHTML;
+            sessionStorage.removeItem(flashKey);
         }
-    }
 
-    const btnLimpiar = document.querySelector('.btn-limpiar-filtros');
-    if (btnLimpiar) {
-        btnLimpiar.addEventListener('click', () => {
-            sessionStorage.removeItem(memoryKey);
-        });
-    }
-});
+        if (currentQuery) {
+            sessionStorage.setItem(memoryKey, currentQuery);
+        } else {
+            const savedQuery = sessionStorage.getItem(memoryKey);
+            if (savedQuery) {
+                const hasNativeFlash = systemMessages && systemMessages.querySelector('.alert') !== null;
+                if (hasNativeFlash) {
+                    sessionStorage.setItem(flashKey, systemMessages.innerHTML);
+                }
+                window.location.replace(pathName + savedQuery);
+            }
+        }
 
-// Lógica del modal de cambio de estado
-const modalCambiarEstado = document.getElementById('modalCambiarEstado');
-if (modalCambiarEstado) {
-    modalCambiarEstado.addEventListener('show.bs.modal', event => {
-        const button = event.relatedTarget;
-        const url = button.getAttribute('data-url');
-        const username = button.getAttribute('data-username');
-        const status = button.getAttribute('data-status');
-
-        const modalHeader = document.getElementById('modalEstadoHeader');
-        const textoAccion = document.getElementById('modalTextoAccion');
-        const textoUsuario = document.getElementById('modalTextoUsuario');
-        const textoAdvertencia = document.getElementById('modalTextoAdvertencia');
-        const btnConfirmar = document.getElementById('btnConfirmarCambioEstado');
-
-        textoUsuario.textContent = username;
-        btnConfirmar.setAttribute('href', url);
-        textoAdvertencia.classList.add('d-none');
-        modalHeader.className = 'modal-header';
-        btnConfirmar.className = 'btn btn-sm px-4 font-weight-bold';
-
-        if (status === '1') {
-            textoAccion.textContent = 'DESHABILITAR';
-            textoAccion.className = 'text-warning font-weight-bold';
-            modalHeader.classList.add('bg-warning', 'text-dark');
-            btnConfirmar.classList.add('btn-warning', 'text-dark');
-        } else if (status === '0') {
-            textoAccion.textContent = 'HABILITAR';
-            textoAccion.className = 'text-custom-success font-weight-bold';
-            modalHeader.classList.add('bg-custom-success', 'text-white');
-            btnConfirmar.classList.add('btn-custom-success', 'text-white');
-        } else if (status === 'eliminar') {
-            textoAccion.textContent = 'ELIMINAR';
-            textoAccion.className = 'text-danger font-weight-bold';
-            modalHeader.classList.add('bg-danger', 'text-white');
-            btnConfirmar.classList.add('btn-danger', 'text-white');
-            textoAdvertencia.classList.remove('d-none');
+        const btnLimpiar = document.querySelector('.btn-limpiar-filtros');
+        if (btnLimpiar) {
+            btnLimpiar.addEventListener('click', () => {
+                sessionStorage.removeItem(memoryKey);
+            });
         }
     });
-}
+
+    // =============================================
+    // LÓGICA DEL MODAL DE CAMBIO DE ESTADO
+    // =============================================
+    const modalCambiarEstado = document.getElementById('modalCambiarEstado');
+    if (modalCambiarEstado) {
+        modalCambiarEstado.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const url = button.getAttribute('data-url');
+            const username = button.getAttribute('data-username');
+            const status = button.getAttribute('data-status');
+
+            const modalHeader = document.getElementById('modalEstadoHeader');
+            const textoAccion = document.getElementById('modalTextoAccion');
+            const textoUsuario = document.getElementById('modalTextoUsuario');
+            const textoAdvertencia = document.getElementById('modalTextoAdvertencia');
+            const btnConfirmar = document.getElementById('btnConfirmarCambioEstado');
+
+            textoUsuario.textContent = username;
+            btnConfirmar.setAttribute('href', url);
+            textoAdvertencia.classList.add('d-none');
+            modalHeader.className = 'modal-header';
+            btnConfirmar.className = 'btn btn-sm px-4 font-weight-bold';
+
+            if (status === '1') {
+                textoAccion.textContent = 'DESHABILITAR';
+                textoAccion.className = 'text-warning font-weight-bold';
+                modalHeader.classList.add('bg-warning', 'text-dark');
+                btnConfirmar.classList.add('btn-warning', 'text-dark');
+            } else if (status === '0') {
+                textoAccion.textContent = 'HABILITAR';
+                textoAccion.className = 'text-custom-success font-weight-bold';
+                modalHeader.classList.add('bg-custom-success', 'text-white');
+                btnConfirmar.classList.add('btn-custom-success', 'text-white');
+            } else if (status === 'eliminar') {
+                textoAccion.textContent = 'ELIMINAR';
+                textoAccion.className = 'text-danger font-weight-bold';
+                modalHeader.classList.add('bg-danger', 'text-white');
+                btnConfirmar.classList.add('btn-danger', 'text-white');
+                textoAdvertencia.classList.remove('d-none');
+            }
+        });
+    }
 </script>
 <?= $this->endSection() ?>

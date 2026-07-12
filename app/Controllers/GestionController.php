@@ -25,7 +25,7 @@ class GestionController extends BaseController
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
 
         $rol = session()->get('rol');
-        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('interfaz_usuario_inicial'))->with('error', 'Acceso denegado.');
+        if (!in_array(session()->get('rol'), ['administrador', 'proteccion_integral'])) return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Acceso denegado.');
 
             try {
             $perPage = 8;

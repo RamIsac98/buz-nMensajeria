@@ -9,7 +9,6 @@ $routes->get('prueba/probarconexion', 'Prueba::probarConexion');
 $routes->get('login', 'Login::index');
 $routes->post('login/autenticar', 'Login::autenticar');
 $routes->get('login/salir', 'Login::salir');
-$routes->get('interfazinicial/menuusuario', 'MenuUsuario::index');
 
 // gestion de usuarios
 $routes->get('usuarios', 'Usuarios::index');

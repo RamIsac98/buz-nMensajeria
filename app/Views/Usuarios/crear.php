@@ -66,15 +66,13 @@
 <div class="container" style="max-width: 600px;">
     <h2 class="main-title">Registro de Usuarios</h2>
 
+    <!-- ===== MENSAJES FLASH CON SWEETALERT2 (eliminadas alertas Bootstrap) ===== -->
+
     <div class="card custom-card">
         <div class="card-header custom-card-header">
             <h5 class="mb-0 fw-bold">Formulario de Registro</h5>
         </div>
         <div class="card-body p-4">
-            <?php if(session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger py-2"><?= session()->getFlashdata('error') ?></div>
-            <?php endif; ?>
-
             <form id="formCrearUsuario" action="<?= base_url('usuarios/guardar') ?>" method="POST">
                 <?= csrf_field() ?> 
                 
@@ -191,221 +189,257 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const formCrear = document.getElementById('formCrearUsuario');
-    const modalConfirmar = new bootstrap.Modal(document.getElementById('modalConfirmarRegistro'));
-    const btnAbrirModal = document.getElementById('btnAbrirModal');
-    const btnConfirmarGuardar = document.getElementById('btnConfirmarGuardar');
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
 
-    // ---- Referencias a campos ----
-    const nombre = document.getElementById('nombre');
-    const apellido = document.getElementById('apellido');
-    const username = document.getElementById('username');
-    const tipoCedula = document.getElementById('tipo_cedula');
-    const inputCedula = document.getElementById('cedula');
-    const rol = document.getElementById('rol');
-    const deptoSelect = document.getElementById('id_departamento');
-    const labSelect = document.getElementById('id_laboratorio');
-    const password = document.getElementById('password');
-
-    // ---- Lógica de habilitación de cédula ----
-    tipoCedula.addEventListener('change', function() {
-        if (this.value !== '') {
-            inputCedula.disabled = false;
-            inputCedula.focus();
-        } else {
-            inputCedula.disabled = true;
-            inputCedula.value = '';
-        }
+        <?php if(session()->getFlashdata('error')): ?>
+            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
     });
 
-    // ---- Validación antes de abrir modal de confirmación ----
-    btnAbrirModal.addEventListener('click', function (event) {
-        const errorModal = new bootstrap.Modal(document.getElementById('modalError'));
-        const errorMsg = document.getElementById('errorMsg');
+    // =============================================
+    // LÓGICA DEL FORMULARIO
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function () {
+        const formCrear = document.getElementById('formCrearUsuario');
+        const modalConfirmar = new bootstrap.Modal(document.getElementById('modalConfirmarRegistro'));
+        const btnAbrirModal = document.getElementById('btnAbrirModal');
+        const btnConfirmarGuardar = document.getElementById('btnConfirmarGuardar');
 
-        // 1. Validar nombre
-        if (nombre.value.trim() === '') {
-            errorMsg.textContent = 'El campo "Nombre" es obligatorio.';
-            errorModal.show();
-            return;
-        }
-        if (nombre.value.length > 25) {
-            errorMsg.textContent = 'El campo "Nombre" no puede exceder los 25 caracteres.';
-            errorModal.show();
-            return;
-        }
-        if (nombre.value.length < 6) {
-            errorMsg.textContent = 'El campo "Nombre" debe tener al menos 6 caracteres.';
-            errorModal.show();
-            return;
-        }
-        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.value)) {
-            errorMsg.textContent = 'El campo "Nombre" solo debe contener letras y espacios.';
-            errorModal.show();
-            return;
-        }
+        // ---- Referencias a campos ----
+        const nombre = document.getElementById('nombre');
+        const apellido = document.getElementById('apellido');
+        const username = document.getElementById('username');
+        const tipoCedula = document.getElementById('tipo_cedula');
+        const inputCedula = document.getElementById('cedula');
+        const rol = document.getElementById('rol');
+        const deptoSelect = document.getElementById('id_departamento');
+        const labSelect = document.getElementById('id_laboratorio');
+        const password = document.getElementById('password');
 
-        // 2. Validar apellido
-        if (apellido.value.trim() === '') {
-            errorMsg.textContent = 'El campo "Apellido" es obligatorio.';
-            errorModal.show();
-            return;
-        }
-        if (apellido.value.length > 10) {
-            errorMsg.textContent = 'El campo "Apellido" no puede exceder los 25 caracteres.';
-            errorModal.show();
-            return;
-        }
-        if (apellido.value.length < 6) {
-            errorMsg.textContent = 'El campo "Apellido" debe tener al menos 6 caracteres.';
-            errorModal.show();
-            return;
-        }
-        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(apellido.value)) {
-            errorMsg.textContent = 'El campo "Apellido" solo debe contener letras y espacios.';
-            errorModal.show();
-            return;
-        }
+        // ---- Lógica de habilitación de cédula ----
+        tipoCedula.addEventListener('change', function() {
+            if (this.value !== '') {
+                inputCedula.disabled = false;
+                inputCedula.focus();
+            } else {
+                inputCedula.disabled = true;
+                inputCedula.value = '';
+            }
+        });
 
-        // 3. Validar username
-        const usernameVal = username.value.trim();
-        if (usernameVal === '') {
-            errorMsg.textContent = 'El campo "Username" es obligatorio.';
-            errorModal.show();
-            return;
-        }
-        if (usernameVal.length < 3) {
-            errorMsg.textContent = 'El campo "Username" debe tener al menos 3 caracteres.';
-            errorModal.show();
-            return;
-        }
-        if (/\s/.test(usernameVal)) {
-            errorMsg.textContent = 'El campo "Username" no puede contener espacios.';
-            errorModal.show();
-            return;
-        }
-        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(usernameVal)) {
-            errorMsg.textContent = 'El campo "Username" solo debe contener letras.';
-            errorModal.show();
-            return;
-        }
+        // ---- Validación antes de abrir modal de confirmación ----
+        btnAbrirModal.addEventListener('click', function (event) {
+            const errorModal = new bootstrap.Modal(document.getElementById('modalError'));
+            const errorMsg = document.getElementById('errorMsg');
 
-        // 4. Validar tipo de cédula
-        if (tipoCedula.value === '') {
-            errorMsg.textContent = 'Debes seleccionar el tipo de cédula (Venezolano o Extranjero).';
-            errorModal.show();
-            return;
-        }
+            // 1. Validar nombre
+            if (nombre.value.trim() === '') {
+                errorMsg.textContent = 'El campo "Nombre" es obligatorio.';
+                errorModal.show();
+                return;
+            }
+            if (nombre.value.length > 25) {
+                errorMsg.textContent = 'El campo "Nombre" no puede exceder los 25 caracteres.';
+                errorModal.show();
+                return;
+            }
+            if (nombre.value.length < 6) {
+                errorMsg.textContent = 'El campo "Nombre" debe tener al menos 6 caracteres.';
+                errorModal.show();
+                return;
+            }
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.value)) {
+                errorMsg.textContent = 'El campo "Nombre" solo debe contener letras y espacios.';
+                errorModal.show();
+                return;
+            }
 
-        // 5. Validar cédula: obligatoria, 8 dígitos numéricos
-        const cedulaVal = inputCedula.value.trim();
-        if (cedulaVal === '') {
-            errorMsg.textContent = 'El campo "Cédula" es obligatorio. (solo debe contener números sin espacios ni puntos).';
-            errorModal.show();
-            return;
-        }
-        else if (!/^\d+$/.test(cedulaVal)) {
-            errorMsg.textContent = 'La cédula solo debe contener números.';
-            errorModal.show();
-            return;
-        }
-        if (!/^\d{7}$/.test(cedulaVal)) {
-            errorMsg.textContent = 'La cédula debe ser un número de 7 dígitos (ej. 1234567).';
-            errorModal.show();
-            return;
-        }
+            // 2. Validar apellido
+            if (apellido.value.trim() === '') {
+                errorMsg.textContent = 'El campo "Apellido" es obligatorio.';
+                errorModal.show();
+                return;
+            }
+            if (apellido.value.length > 25) {
+                errorMsg.textContent = 'El campo "Apellido" no puede exceder los 25 caracteres.';
+                errorModal.show();
+                return;
+            }
+            if (apellido.value.length < 6) {
+                errorMsg.textContent = 'El campo "Apellido" debe tener al menos 6 caracteres.';
+                errorModal.show();
+                return;
+            }
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(apellido.value)) {
+                errorMsg.textContent = 'El campo "Apellido" solo debe contener letras y espacios.';
+                errorModal.show();
+                return;
+            }
 
-        // 6. Validar rol
-        if (rol.value === '') {
-            errorMsg.textContent = 'Debes seleccionar un rol válido.';
-            errorModal.show();
-            return;
-        }
+            // 3. Validar username
+            const usernameVal = username.value.trim();
+            if (usernameVal === '') {
+                errorMsg.textContent = 'El campo "Username" es obligatorio.';
+                errorModal.show();
+                return;
+            }
+            if (usernameVal.length < 3) {
+                errorMsg.textContent = 'El campo "Username" debe tener al menos 3 caracteres.';
+                errorModal.show();
+                return;
+            }
+            if (/\s/.test(usernameVal)) {
+                errorMsg.textContent = 'El campo "Username" no puede contener espacios.';
+                errorModal.show();
+                return;
+            }
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(usernameVal)) {
+                errorMsg.textContent = 'El campo "Username" solo debe contener letras.';
+                errorModal.show();
+                return;
+            }
 
-        // 7. Validar centro
-        if (deptoSelect.value === '') {
-            errorMsg.textContent = 'Debes seleccionar un Centro.';
-            errorModal.show();
-            return;
-        }
+            // 4. Validar tipo de cédula
+            if (tipoCedula.value === '') {
+                errorMsg.textContent = 'Debes seleccionar el tipo de cédula (Venezolano o Extranjero).';
+                errorModal.show();
+                return;
+            }
 
-        // 8. Validar laboratorio (debe estar habilitado y tener valor)
-        if (labSelect.disabled === true || labSelect.value === '') {
-            errorMsg.textContent = 'Debes seleccionar un Laboratorio válido.';
-            errorModal.show();
-            return;
-        }
+            // 5. Validar cédula: obligatoria, 8 dígitos numéricos
+            const cedulaVal = inputCedula.value.trim();
+            if (cedulaVal === '') {
+                errorMsg.textContent = 'El campo "Cédula" es obligatorio. (solo debe contener números sin espacios ni puntos).';
+                errorModal.show();
+                return;
+            }
+            else if (!/^\d+$/.test(cedulaVal)) {
+                errorMsg.textContent = 'La cédula solo debe contener números.';
+                errorModal.show();
+                return;
+            }
+            if (!/^\d{7}$/.test(cedulaVal)) {
+                errorMsg.textContent = 'La cédula debe ser un número de 7 dígitos (ej. 1234567).';
+                errorModal.show();
+                return;
+            }
 
-        // 9. Validar contraseña (mínimo 6 caracteres)
-        if (password.value.trim() === '') {
-            errorMsg.textContent = 'El campo "Contraseña" es obligatorio.';
-            errorModal.show();
-            return;
-        }
+            // 6. Validar rol
+            if (rol.value === '') {
+                errorMsg.textContent = 'Debes seleccionar un rol válido.';
+                errorModal.show();
+                return;
+            }
 
-        if (password.value.includes(' ')) {
-        errorMsg.textContent = 'La contraseña no puede contener espacios en blanco.';
-        errorModal.show();
-        return;
-        }
-        if (password.value.length < 6) {
-            errorMsg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
-            errorModal.show();
-            return;
-        }
-        
+            // 7. Validar centro
+            if (deptoSelect.value === '') {
+                errorMsg.textContent = 'Debes seleccionar un Centro.';
+                errorModal.show();
+                return;
+            }
 
-        // ---- Si todo es válido, mostrar confirmación ----
-        if (formCrear.checkValidity()) {
-            modalConfirmar.show();
-        } else {
-            formCrear.reportValidity();
-        }
-    });
+            // 8. Validar laboratorio (debe estar habilitado y tener valor)
+            if (labSelect.disabled === true || labSelect.value === '') {
+                errorMsg.textContent = 'Debes seleccionar un Laboratorio válido.';
+                errorModal.show();
+                return;
+            }
 
-    // ---- Confirmar envío ----
-    btnConfirmarGuardar.addEventListener('click', function () {
-        formCrear.submit();
-    });
+            // 9. Validar contraseña (mínimo 6 caracteres)
+            if (password.value.trim() === '') {
+                errorMsg.textContent = 'El campo "Contraseña" es obligatorio.';
+                errorModal.show();
+                return;
+            }
 
-    // ---- Filtro dinámico de laboratorios ----
-    deptoSelect.addEventListener('change', function() {
-        const deptoId = this.value;
-        labSelect.innerHTML = '<option value="" disabled selected>Cargando laboratorios...</option>';
-        labSelect.disabled = true;
+            if (password.value.includes(' ')) {
+                errorMsg.textContent = 'La contraseña no puede contener espacios en blanco.';
+                errorModal.show();
+                return;
+            }
+            if (password.value.length < 6) {
+                errorMsg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+                errorModal.show();
+                return;
+            }
 
-        if (deptoId && deptoId !== "") {
-            const url = `<?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}`;
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    labSelect.innerHTML = '<option value="" disabled selected>Selecciona un laboratorio...</option>';
-                    if (data && data.length > 0) {
-                        data.forEach(lab => {
-                            labSelect.innerHTML += `<option value="${lab.id}">${lab.nombre}</option>`;
-                        });
-                        labSelect.disabled = false;
-                    } else {
-                        labSelect.innerHTML = '<option value="" disabled>No hay laboratorios en este Centro</option>';
-                        labSelect.disabled = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al cargar laboratorios.');
-                    labSelect.innerHTML = '<option value="" disabled>Error al cargar laboratorios</option>';
-                    labSelect.disabled = true;
-                });
-        } else {
-            labSelect.innerHTML = '<option value="" disabled selected>Selecciona primero un centro...</option>';
+            // ---- Si todo es válido, mostrar confirmación ----
+            if (formCrear.checkValidity()) {
+                modalConfirmar.show();
+            } else {
+                formCrear.reportValidity();
+            }
+        });
+
+        // ---- Confirmar envío ----
+        btnConfirmarGuardar.addEventListener('click', function () {
+            formCrear.submit();
+        });
+
+        // ---- Filtro dinámico de laboratorios ----
+        deptoSelect.addEventListener('change', function() {
+            const deptoId = this.value;
+            labSelect.innerHTML = '<option value="" disabled selected>Cargando laboratorios...</option>';
             labSelect.disabled = true;
-        }
+
+            if (deptoId && deptoId !== "") {
+                const url = `<?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}`;
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        labSelect.innerHTML = '<option value="" disabled selected>Selecciona un laboratorio...</option>';
+                        if (data && data.length > 0) {
+                            data.forEach(lab => {
+                                labSelect.innerHTML += `<option value="${lab.id}">${lab.nombre}</option>`;
+                            });
+                            labSelect.disabled = false;
+                        } else {
+                            labSelect.innerHTML = '<option value="" disabled>No hay laboratorios en este Centro</option>';
+                            labSelect.disabled = true;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al cargar laboratorios.');
+                        labSelect.innerHTML = '<option value="" disabled>Error al cargar laboratorios</option>';
+                        labSelect.disabled = true;
+                    });
+            } else {
+                labSelect.innerHTML = '<option value="" disabled selected>Selecciona primero un centro...</option>';
+                labSelect.disabled = true;
+            }
+        });
     });
-});
 </script>
 <?= $this->endSection() ?>
