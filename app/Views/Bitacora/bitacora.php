@@ -1,3 +1,28 @@
+<?php
+/**
+ * Vista: Bitácora de Auditoría (listado con filtros y paginación).
+ * 
+ * Muestra el historial de eventos del sistema con opciones de búsqueda,
+ * filtros por tipo, rango de fechas y exportación a PDF.
+ * 
+ * Conexiones con el controlador:
+ * - Formulario de filtros: envía GET a 'usuarios/bitacora' → BaseController::bitacora()
+ *   (parámetros: buscar, desde, hasta, tipo)
+ * - Enlace "Limpiar Filtros": redirige a 'usuarios/bitacora' sin parámetros.
+ * - Botón PDF: abre modal que envía formulario a 'usuarios/generarPdfBitacora'
+ *   → BaseController::generarPdfBitacora() (con parámetros ocultos de filtros + página_inicio/fin)
+ * - Los mensajes flash (success/error) son mostrados vía SweetAlert2 y son generados
+ *   por el controlador en operaciones como guardar/editar/eliminar.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) que incluye Bootstrap, estilos comunes y scripts.
+ * - SweetAlert2 para mensajes flash.
+ * - Pager de CodeIgniter para paginación (objeto $pager pasado desde el controlador).
+ * - Datos: $bitacora (array de registros), $pager (objeto paginador).
+ * 
+ * @package App\Views\Bitacora
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Bitácora de Auditoría<?= $this->endSection() ?>
@@ -94,12 +119,13 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid px-4">
-    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (eliminadas alertas Bootstrap) ===== -->
-
+    <!-- ===== MENSAJES FLASH CON SWEETALERT ===== -->
+    <!-- Los mensajes flash son establecidos por el controlador BaseController en métodos bitacora() y generarPdfBitacora() -->
     <h2 class="main-title">Control de Solicitudes</h2>
 
     <!-- Filtros -->
     <div class="filter-bar mb-4">
+        <!-- Formulario que envía GET a BaseController::bitacora() -->
         <form method="GET" action="<?= base_url('usuarios/bitacora') ?>" class="row g-2 align-items-center justify-content-between">
             <div class="col-auto filter-group">
                 <span class="filter-label">Buscador</span>
@@ -130,6 +156,7 @@
                 <button type="submit" class="btn btn-link p-0 text-decoration-none filter-group border-0 bg-transparent">
                     <span class="filter-label">Buscar</span>
                 </button>
+                <!-- Enlace para limpiar filtros: redirige a BaseController::bitacora() sin parámetros -->
                 <a href="<?= base_url('usuarios/bitacora') ?>" class="text-decoration-none text-dark d-flex align-items-center ms-1" title="Limpiar Filtros">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
@@ -137,6 +164,7 @@
                     </svg>
                 </a>
                 <div class="vr mx-1"></div>
+                <!-- Botón que abre el modal para generar PDF (invoca BaseController::generarPdfBitacora) -->
                 <button type="button" class="btn btn-outline-danger p-1 border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPdf" title="Generar PDF">
                     <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24">
                 </button>
@@ -144,7 +172,7 @@
         </form>
     </div>
 
-    <!-- Tabla -->
+    <!-- Tabla de registros (datos provistos por BaseController::bitacora()) -->
     <div class="table-responsive">
         <table class="table table-custom align-middle">
             <thead>
@@ -182,7 +210,7 @@
         </table>
     </div>
 
-    <!-- Paginación -->
+   <!-- Paginación (utiliza el objeto $pager del controlador) -->
     <div class="d-flex justify-content-between align-items-center mt-4 mb-5">
         <?php 
             $total = $pager->getTotal();
@@ -200,6 +228,7 @@
         
         <nav aria-label="Navegación de bitácora">
             <ul class="pagination custom-pagination m-0">
+                <!-- Enlaces de paginación que llaman a BaseController::bitacora() con parámetro page -->
                 <?php if ($currentPage > 1): ?>
                     <li class="page-item">
                         <a class="page-link" href="<?= base_url('usuarios/bitacora?page=1' . $urlParams) ?>" aria-label="Primero">
@@ -254,7 +283,7 @@
         </div>
     </div>
 
-    <!-- Modal para generar PDF (específico de esta página) -->
+    <!-- Enlaces de paginación que llaman a BaseController::bitacora() con parámetro page -->
     <div class="modal fade" id="modalPdf" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
             <form action="<?= base_url('usuarios/generarPdfBitacora') ?>" method="GET">

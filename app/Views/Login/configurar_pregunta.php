@@ -1,3 +1,26 @@
+<?php
+/**
+ * Vista: Configuración de Pregunta de Seguridad (primer ingreso).
+ * 
+ * Muestra un formulario para que el usuario seleccione una pregunta de seguridad
+ * y proporcione su respuesta. Es utilizada después del primer inicio de sesión
+ * cuando el usuario no tiene pregunta configurada.
+ * 
+ * Conexiones con el controlador:
+ * - El formulario envía POST a la ruta 'usuarios/guardar_pregunta'.
+ *   → Controlador: Usuarios, método guardar_pregunta().
+ * - Los mensajes flash 'error' e 'info' son establecidos por el controlador
+ *   (por ejemplo, cuando hay errores de validación).
+ * - Redirige al dashboard correspondiente según el rol tras guardar.
+ * 
+ * Dependencias:
+ * - Bootstrap 5 (CSS y JS).
+ * - Logo y assets desde public/img.
+ * - CSRF token (csrf_field()).
+ * 
+ * @package App\Views\login
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

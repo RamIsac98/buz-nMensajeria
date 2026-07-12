@@ -1,3 +1,26 @@
+<?php
+/**
+ * Vista: Recuperación de Contraseña (ingreso de cédula).
+ * 
+ * Muestra un formulario para que el usuario ingrese su tipo y número de cédula
+ * para verificar su identidad antes de responder la pregunta de seguridad.
+ * 
+ * Conexiones con el controlador:
+ * - El formulario envía POST a la ruta 'login/validar_usuario'.
+ *   → Controlador: Login, método validarCedula() (aunque la ruta en la vista usa 'validar_usuario',
+ *     se debe ajustar en el archivo de rutas o en el action para que coincida).
+ * - El enlace "Volver al Login" redirige a 'login' (método index() del controlador Login).
+ * - Los mensajes flash 'error' se muestran mediante SweetAlert2 y son establecidos
+ *   por el controlador Login::validarCedula() cuando falla la validación.
+ * 
+ * Dependencias:
+ * - Bootstrap 5.
+ * - SweetAlert2 para alertas (solo para errores).
+ * - Logo y assets.
+ * 
+ * @package App\Views\login
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

@@ -1,3 +1,22 @@
+<?php
+/**
+ * Vista: Plantilla para el PDF de la Bitácora.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el reporte en PDF
+ * mediante la librería Dompdf. No utiliza el layout base.
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por BaseController::generarPdfBitacora() para renderizar el HTML
+ *   que luego se convierte a PDF.
+ * - Recibe la variable $bitacora (array de registros) desde el controlador.
+ * 
+ * Dependencias:
+ * - Estilos CSS integrados (no usa Bootstrap ni assets externos).
+ * - Dompdf para la conversión a PDF.
+ * 
+ * @package App\Views\Bitacora
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

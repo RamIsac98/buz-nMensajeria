@@ -1,3 +1,27 @@
+<?php
+/**
+ * Vista: Responder Pregunta de Seguridad y Restablecer Contraseña.
+ * 
+ * Muestra la pregunta de seguridad del usuario y un formulario para ingresar
+ * la respuesta, junto con los campos para nueva contraseña y confirmación.
+ * 
+ * Conexiones con el controlador:
+ * - El formulario envía POST a la ruta 'login/guardar_nueva_clave'.
+ *   → Controlador: Login, método nuevaClave() (aunque la ruta en la vista usa 'guardar_nueva_clave',
+ *     se debe ajustar según la ruta definida en el archivo de rutas).
+ * - Recibe datos del controlador: $usuario_id, $pregunta y posible $error (en caso de fallo).
+ * - El enlace "Cancelar operación" redirige a 'login' (método index()).
+ * - Al procesar la respuesta, el controlador valida y actualiza la contraseña,
+ *   redirigiendo a login con mensaje de éxito o error.
+ * 
+ * Dependencias:
+ * - Bootstrap 5.
+ * - Logo y assets.
+ * - CSRF token.
+ * 
+ * @package App\Views\login
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
