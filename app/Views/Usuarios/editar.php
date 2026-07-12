@@ -103,7 +103,7 @@
                             <option value="V" <?= ($usuario['tipo_cedula'] ?? '') == 'V' ? 'selected' : '' ?>>Venezolano (V)</option>
                             <option value="E" <?= ($usuario['tipo_cedula'] ?? '') == 'E' ? 'selected' : '' ?>>Extranjero (E)</option>
                         </select>
-                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= esc($usuario['cedula']) ?>" required maxlength="8" <?= isset($usuario['tipo_cedula']) && $usuario['tipo_cedula'] !== '' ? '' : 'disabled' ?>>
+                        <input type="number" name="cedula" id="cedula" class="form-control" placeholder="Número de cédula" value="<?= esc($usuario['cedula']) ?>" required maxlength="10" <?= isset($usuario['tipo_cedula']) && $usuario['tipo_cedula'] !== '' ? '' : 'disabled' ?>>
                     </div>
                 </div>
 
@@ -377,10 +377,10 @@
                 errorModal.show();
                 return;
             }
-            if (!/^\d{7}$/.test(cedulaVal)) {
-                errorMsg.textContent = 'La cédula debe ser un número de 7 dígitos (ej. 1234567).';
-                errorModal.show();
-                return;
+            if (!/^\d{6,10}$/.test(cedulaVal)) {
+            errorMsg.textContent = 'La cédula debe tener entre 6 y 10 dígitos numéricos.';
+            errorModal.show();
+            return;
             }
 
             // 6. Validar rol

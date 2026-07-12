@@ -157,7 +157,9 @@ class Usuarios extends BaseController
         if (strpos($username, ' ') !== false) return redirect()->back()->with('error', 'El nombre de usuario no puede contener espacios.')->withInput();
 
         if (empty($cedula)) return redirect()->back()->with('error', 'El campo Cédula es obligatorio.')->withInput();
-        if (!ctype_digit($cedula) || strlen($cedula) !== 7) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
+        if (!ctype_digit($cedula) || strlen($cedula) < 6 || strlen($cedula) > 10) {
+        return redirect()->back()->with('error', 'La cédula debe tener entre 6 y 10 dígitos numéricos.')->withInput();
+        }
 
         if (empty($tipo_cedula)) return redirect()->back()->with('error', 'Debe seleccionar el tipo de cédula.')->withInput();
         if (!in_array($tipo_cedula, ['V', 'E'])) return redirect()->back()->with('error', 'Tipo de cédula inválido.')->withInput();
@@ -293,7 +295,9 @@ class Usuarios extends BaseController
         if (strpos($username, ' ') !== false) return redirect()->back()->with('error', 'El nombre de usuario no puede contener espacios.')->withInput();
 
         if (empty($cedula)) return redirect()->back()->with('error', 'Falta el campo: Cédula de Identidad (cedula)')->withInput();
-        if (!ctype_digit($cedula) || strlen($cedula) !== 8) return redirect()->back()->with('error', 'La cédula debe ser un número de 8 dígitos.')->withInput();
+        if (!ctype_digit($cedula) || strlen($cedula) < 6 || strlen($cedula) > 10) {
+        return redirect()->back()->with('error', 'La cédula debe tener entre 6 y 10 dígitos numéricos.')->withInput();
+        }
 
         if (empty($tipo_cedula)) return redirect()->back()->with('error', 'Falta el campo: Tipo de Cédula (tipo_cedula)')->withInput();
         if (!in_array($tipo_cedula, ['V', 'E'])) return redirect()->back()->with('error', 'Tipo de cédula inválido. Debe ser V o E.')->withInput();
