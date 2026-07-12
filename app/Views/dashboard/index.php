@@ -62,6 +62,8 @@
 <div class="container-fluid px-4">
     <h2 class="main-title">Peso Trimestral de Desechos Biológicos</h2>
 
+    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (no hay alertas Bootstrap) ===== -->
+
     <!-- Total acumulado -->
     <div class="row">
         <div class="col-md-4">
@@ -182,8 +184,44 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
+
+    // =============================================
+    // LÓGICA DEL GRÁFICO Y FILTROS
+    // =============================================
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('chartDesechos').getContext('2d');
         let chart;

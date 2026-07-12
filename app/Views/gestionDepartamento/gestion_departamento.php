@@ -91,19 +91,7 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid px-4">
-    <!-- Mensajes flash -->
-    <?php if(session()->getFlashdata('success')): ?>
-        <div class="alert alert-custom-success alert-dismissible fade show py-2" role="alert">
-            <strong>¡Éxito!</strong> <?= esc(session()->getFlashdata('success')) ?>
-            <button type="button" class="btn-close btn-close-white py-2" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if(session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
-            <strong>¡Error!</strong> <?= esc(session()->getFlashdata('error')) ?>
-            <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (eliminadas alertas Bootstrap) ===== -->
 
     <h2 class="main-title mb-4 mt-3">Gestión de Centros / Laboratorio</h2>
 
@@ -360,7 +348,44 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+    // =============================================
+    // MENSAJES FLASH CON SWEETALERT2 (success/error)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session()->getFlashdata('success')): ?>
+            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                confirmButtonColor: '#2073AF',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                confirmButtonColor: '#d33',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: true
+            });
+        <?php endif; ?>
+    });
+
+    // =============================================
+    // LÓGICA DE LA PÁGINA (filtros, modales, PDF)
+    // =============================================
     document.addEventListener('DOMContentLoaded', () => {
         const modalDepto = new bootstrap.Modal(document.getElementById('modalEditarDepto'));
         const modalLab = new bootstrap.Modal(document.getElementById('modalEditarLab'));
