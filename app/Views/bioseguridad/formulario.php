@@ -1,3 +1,37 @@
+<?php
+/**
+ * Vista: Formulario de creación de solicitud de bioseguridad.
+ * 
+ * Muestra un formulario para que el usuario solicite materiales de bioseguridad
+ * (contenedores pulso cortante, bolsas rojas) y especifique quién retira.
+ * 
+ * Conexiones con el controlador:
+ * - Es servida por BioseguridadController::crear() (ruta '/bioseguridad/crear').
+ *   Recibe las variables:
+ *   - $usuario_data (array) – datos del usuario (departamento, laboratorio, username).
+ *   - $codigo_automatico (string) – código generado automáticamente.
+ *   - $fecha_automatica (string) – fecha actual formateada.
+ * 
+ * - Formulario: envía POST a 'bioseguridad/registrar' → 
+ *   BioseguridadController::registrar().
+ *   Nota: El campo oculto 'codigo_solicitud' está fuera del formulario en el código actual,
+ *   por lo que el controlador generará un nuevo código si no se recibe (según el método).
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador al registrar exitosamente.
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por validaciones o errores de BD.
+ * 
+ * - Validaciones en cliente: límite de contenedores (≤3), bolsas (≤10 cada una),
+ *   al menos un material seleccionado, campo "otra persona" condicional.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - JavaScript propio para validaciones y comportamiento del formulario.
+ * 
+ * @package App\Views\bioseguridad
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Solicitud de Bioseguridad<?= $this->endSection() ?>

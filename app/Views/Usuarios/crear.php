@@ -1,3 +1,56 @@
+<?php
+/**
+ * Vista: Creación de nuevo usuario.
+ * 
+ * Muestra un formulario para registrar un nuevo usuario en el sistema.
+ * Incluye campos para datos personales (nombre, apellido, username, cédula),
+ * asignación de rol, selección de centro y laboratorio (con carga dinámica AJAX),
+ * y contraseña de acceso.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial (GET): Usuarios::crear() (ruta '/usuarios/crear')
+ *   Recibe: $departamentos (lista de centros para el selector)
+ * 
+ * - Envío del formulario (POST): action="<?= base_url('usuarios/guardar') ?>"
+ *   → Usuarios::guardar() (ruta '/usuarios/guardar')
+ *   El controlador valida todos los campos (username único, cédula única,
+ *   contraseña mínima 6 caracteres, etc.) y registra el usuario en BD.
+ * 
+ * - Carga dinámica de laboratorios (AJAX GET):
+ *   URL: <?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}
+ *   → Usuarios::obtener_laboratorios_por_depto($departamento_id)
+ *   Retorna JSON con los laboratorios del centro seleccionado.
+ *   Se dispara al cambiar el select de "Centro".
+ * 
+ * - Botón "Cancelar": enlace a 'usuarios' → Usuarios::index() (ruta '/usuarios')
+ *   Redirige al listado de usuarios.
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras un registro exitoso (Usuarios::guardar()).
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas (ej. cédula duplicada, username existente).
+ * 
+ * Validaciones en cliente (con modal de errores):
+ * - Nombre: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
+ * - Apellido: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
+ * - Username: obligatorio, mínimo 3 caracteres, sin espacios, solo letras.
+ * - Tipo de cédula: obligatorio (V/E).
+ * - Cédula: obligatoria, solo números, entre 6 y 10 dígitos.
+ * - Rol: obligatorio.
+ * - Centro: obligatorio.
+ * - Laboratorio: obligatorio (debe estar habilitado y tener un valor seleccionado).
+ * - Contraseña: obligatoria, mínimo 6 caracteres, sin espacios.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - AJAX fetch para carga dinámica de laboratorios.
+ * - CSRF token (csrf_field()) para seguridad.
+ * 
+ * @package App\Views\usuarios
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Crear Usuario<?= $this->endSection() ?>

@@ -1,3 +1,52 @@
+<?php
+/**
+ * Vista: Plantilla PDF para Reporte de Laboratorios.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el reporte en PDF
+ * del listado de laboratorios, con opción de filtro por departamento.
+ * No extiende el layout base y no utiliza assets externos (CSS integrado).
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por GestionController::generarPdfLaboratorios()
+ *   Ruta: '/gestion-departamento/generar-pdf?depto_id={id}'
+ * 
+ * - Recibe del controlador las siguientes variables:
+ *   - $laboratorios (array) – Lista de laboratorios obtenida de 
+ *     LaboratorioModel::getLaboratoriosFiltrados($depto_id).
+ *     Cada registro contiene: id, nombre, nombre_departamento, departamento_id.
+ *   - $depto_seleccionado (string|int) – Valor del filtro ('todos' o ID de departamento).
+ * 
+ * - El controlador (GestionController::generarPdfLaboratorios()) realiza:
+ *   $depto_id = $this->request->getGet('depto_id');
+ *   $labModel = new \App\Models\LaboratorioModel();
+ *   $data['laboratorios'] = $labModel->getLaboratoriosFiltrados($depto_id);
+ *   $data['depto_seleccionado'] = $depto_id;
+ *   $html = view('gestionDepartamento/pdf_laboratorios', $data);
+ *   $dompdf = new \Dompdf\Dompdf();
+ *   $dompdf->loadHtml($html);
+ *   $dompdf->setPaper('A4', 'portrait');
+ *   $dompdf->render();
+ *   $dompdf->stream("Laboratorios_Reporte.pdf", ["Attachment" => true]);
+ * 
+ * - El PDF se descarga automáticamente (Attachment = true) en orientación portrait (vertical).
+ *   La orientación vertical es adecuada para mostrar el listado de laboratorios con 3 columnas.
+ * 
+ * - El reporte muestra agrupación visual por departamento: cada cambio de centro
+ *   se resalta con una línea divisoria (class="linea-agrupador") y el nombre del
+ *   centro solo se muestra en la primera fila de cada grupo (usando variable
+ *   $last_centro para controlar la repetición).
+ * 
+ * - En la cabecera, si se aplicó un filtro por departamento, muestra el nombre
+ *   del centro filtrado (tomado del primer elemento del array $laboratorios).
+ * 
+ * Dependencias:
+ * - Dompdf (librería PHP, no requiere assets externos).
+ * - No utiliza Bootstrap ni JavaScript.
+ * - Estilos CSS integrados para el formato del PDF.
+ * 
+ * @package App\Views\gestionDepartamento
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

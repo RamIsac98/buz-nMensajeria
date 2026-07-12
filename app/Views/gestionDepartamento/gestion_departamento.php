@@ -1,3 +1,68 @@
+<?php
+/**
+ * Vista: Gestión de Centros (Departamentos) y Laboratorios.
+ * 
+ * Proporciona un panel completo para administrar la estructura organizacional:
+ * listado paginado de departamentos y laboratorios, filtro de laboratorios por
+ * departamento, operaciones CRUD (crear, editar, eliminar) y generación de reportes PDF.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial y filtros (GET): GestionController::index()
+ *   Ruta: '/gestion-departamento'
+ *   Recibe: $departamentos, $todos_departamentos, $laboratorios,
+ *           $pager_dept, $pager_lab, $filtro_depto.
+ * 
+ * - Crear departamento (POST): GestionController::guardarDepartamento()
+ *   Ruta: '/gestion-departamento/guardar-departamento'
+ *   Action en modal #modalNuevoDepartamento, incluye parámetros de paginación en URL.
+ * 
+ * - Editar departamento (POST): GestionController::editarDepartamento()
+ *   Ruta: '/gestion-departamento/editar-departamento'
+ *   Action en modal #modalEditarDepto, incluye parámetros de paginación en URL.
+ * 
+ * - Eliminar departamento (GET): GestionController::eliminarDepartamento($id)
+ *   Ruta: '/gestion-departamento/eliminar-departamento/{id}'
+ *   Formulario en modal #modalEliminar (se construye dinámicamente en JavaScript).
+ * 
+ * - Crear laboratorio (POST): GestionController::guardarLaboratorio()
+ *   Ruta: '/gestion-departamento/guardar-laboratorio'
+ *   Action en modal #modalNuevoLaboratorio, incluye parámetros de paginación en URL.
+ * 
+ * - Editar laboratorio (POST): GestionController::editarLaboratorio()
+ *   Ruta: '/gestion-departamento/editar-laboratorio'
+ *   Action en modal #modalEditarLab, incluye parámetros de paginación en URL.
+ * 
+ * - Eliminar laboratorio (GET): GestionController::eliminarLaboratorio($id)
+ *   Ruta: '/gestion-departamento/eliminar-laboratorio/{id}'
+ *   Formulario en modal #modalEliminar (se construye dinámicamente en JavaScript).
+ * 
+ * - Reporte General PDF (GET): GestionController::generarPdfGeneral()
+ *   Ruta: '/gestion-departamento/generar-pdf-general?depto_id={id}'
+ *   Botón "Reporte General" (data-type="general") → abre en nueva pestaña.
+ * 
+ * - Reporte de Laboratorios PDF (GET): GestionController::generarPdfLaboratorios()
+ *   Ruta: '/gestion-departamento/generar-pdf?depto_id={id}'
+ *   Botón PDF específico (data-type="especifico") → redirige a la misma ventana.
+ * 
+ * - Filtro por departamento (GET): GestionController::index()
+ *   Select #filtroDepartamento → cambia parámetro 'filtro_depto' en URL y recarga.
+ *   Mantiene paginación y reinicia page_lab a 1.
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras operaciones CRUD exitosas (crear, editar, eliminar).
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas o errores de base de datos.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - Logo y assets desde public/img/ (pdf.svg, etc.).
+ * - JavaScript para lógica de modales, filtros y generación de PDF.
+ * 
+ * @package App\Views\gestionDepartamento
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Gestión de Centros y Laboratorios<?= $this->endSection() ?>

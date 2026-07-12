@@ -1,3 +1,49 @@
+<?php
+/**
+ * Vista: Formulario de creación de solicitud de desechos biológicos.
+ * 
+ * Muestra un formulario para que el usuario solicite la recolección de desechos
+ * biológicos (tipos B, C, D, variantes, estado físico, pesos, empaques, motivo, etc.).
+ * Incluye validaciones en cliente complejas y modales de confirmación/advertencia.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial (GET): DesechosController::crear() (ruta '/desechos/crear').
+ *   Recibe:
+ *   - $usuario_data (array) – datos del usuario (departamento, laboratorio, username).
+ *   - $codigo_automatico (string) – código único generado por el modelo.
+ *   - $fecha_automatica (string) – fecha actual formateada.
+ * 
+ * - Envío del formulario (POST): action="<?= base_url('desechos/registrar') ?>"
+ *   → DesechosController::registrar().
+ *   Incluye campo oculto 'codigo_solicitud' con el código generado (el controlador
+ *   lo usará o generará uno nuevo si no se envía).
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras un registro exitoso.
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas o errores de base de datos.
+ * 
+ * - Modal de advertencia de bolsas (contenido estático): aparece al seleccionar
+ *   el empaque "B" (Bolsas) como recordatorio de etiquetado. No requiere interacción
+ *   con el controlador.
+ * 
+ * - Modal de confirmación: muestra un mensaje antes de enviar. Al confirmar,
+ *   se ejecuta document.getElementById('formSolicitud').submit() que envía el
+ *   formulario al controlador.
+ * 
+ * - Modal de errores: muestra una lista de errores de validación en cliente antes
+ *   de llegar al servidor. Es contenido estático, pero los errores son generados
+ *   por el JavaScript de la vista.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - JavaScript propio para lógica dinámica (variantes, pesos, validaciones).
+ * 
+ * @package App\Views\desechos
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Solicitud de Recolección de Desechos Biológicos<?= $this->endSection() ?>
@@ -113,6 +159,7 @@
 <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (no hay alertas Bootstrap) ===== -->
 
 <div class="form-container">
+    <!-- El formulario envía POST a DesechosController::registrar() -->
     <form id="formSolicitud" action="<?= base_url('desechos/registrar') ?>" method="POST">
         
         <div class="watermark-container">

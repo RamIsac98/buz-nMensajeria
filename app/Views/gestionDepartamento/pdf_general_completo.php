@@ -1,3 +1,52 @@
+<?php
+/**
+ * Vista: Plantilla PDF para Reporte General de Estructura Organizacional.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el reporte en PDF
+ * que muestra la estructura jerárquica completa del sistema: departamentos,
+ * laboratorios y usuarios asociados, con su estado y rol.
+ * 
+ * No extiende el layout base y no utiliza assets externos (CSS integrado).
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por GestionController::generarPdfGeneral()
+ *   Ruta: '/gestion-departamento/generar-pdf-general?depto_id={id}'
+ * 
+ * - Recibe del controlador las siguientes variables:
+ *   - $reporte (array) – Datos jerárquicos obtenidos de UsuarioModel::getReporteGeneral($depto_id)
+ *     Cada fila contiene: nombre_departamento, nombre_laboratorio, nombre_usuario,
+ *     apellido_usuario, username_usuario, cedula_usuario, rol_usuario, estado_usuario.
+ *   - $depto_seleccionado (string|int) – Valor del filtro ('todos' o ID de departamento).
+ * 
+ * - El controlador (GestionController::generarPdfGeneral()) realiza:
+ *   $usuarioModel = new \App\Models\UsuarioModel();
+ *   $data = [
+ *       'reporte'            => $usuarioModel->getReporteGeneral($depto_id),
+ *       'depto_seleccionado' => $depto_id
+ *   ];
+ *   $html = view('gestionDepartamento/pdf_general_completo', $data);
+ *   $dompdf = new \Dompdf\Dompdf();
+ *   $dompdf->loadHtml($html);
+ *   $dompdf->setPaper('A4', 'landscape');
+ *   $dompdf->render();
+ *   $dompdf->stream("Reporte_General_Estructura_y_Usuarios.pdf", ["Attachment" => true]);
+ * 
+ * - El PDF se descarga automáticamente (Attachment = true) en orientación landscape (horizontal).
+ *   Esto permite mostrar las 6 columnas de información de manera legible.
+ * 
+ * - El reporte muestra agrupación visual: cada cambio de departamento o laboratorio
+ *   se resalta con una línea divisoria (class="linea-agrupador") y las celdas de centro
+ *   y laboratorio solo se muestran en la primera fila de cada grupo (usando variables
+ *   $last_centro y $last_lab para controlar la repetición).
+ * 
+ * Dependencias:
+ * - Dompdf (librería PHP, no requiere assets externos).
+ * - No utiliza Bootstrap ni JavaScript.
+ * - Estilos CSS integrados para el formato del PDF.
+ * 
+ * @package App\Views\gestionDepartamento
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

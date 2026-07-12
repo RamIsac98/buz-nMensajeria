@@ -1,3 +1,46 @@
+<?php
+/**
+ * Vista: Historial de Solicitudes (registro para usuarios regulares).
+ * 
+ * Muestra el historial de solicitudes combinadas de desechos y bioseguridad
+ * con filtros por tipo, estado y rango de fechas. Permite visualizar PDFs
+ * y editar solicitudes (si el usuario es el creador o administrador y la
+ * solicitud no ha sido editada previamente).
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial y filtros (GET): DesechosController::registroSolicitudes()
+ *   Ruta: '/desechos/registroSolicitudes'
+ *   Recibe: $solicitudes, $filtros, $tiposSolicitud, $estadosSolicitud,
+ *           variables de paginación ($paginaActual, $totalPages, etc.)
+ * 
+ * - Generación de PDF:
+ *   - Para desechos: '/desechos/generarPdf/{id}' → DesechosController::generarPdf($id)
+ *   - Para bioseguridad: '/bioseguridad/generarPdf/{id}' → BioseguridadController::generarPdf($id)
+ *   Ambos abren el PDF en una nueva pestaña (target="_blank").
+ * 
+ * - Edición de solicitudes (botón lápiz):
+ *   - Para desechos: '/desechos/editar/{id}' → DesechosController::editar($id)
+ *   - Para bioseguridad: '/bioseguridad/editar/{id}' → BioseguridadController::editar($id)
+ *   Solo visible si el usuario es el creador o administrador Y $editado == 0.
+ *   El controlador verifica permisos y restricción de edición única.
+ * 
+ * - Limpiar filtros: Redirige a '/desechos/registroSolicitudes' sin parámetros
+ *   → DesechosController::registroSolicitudes()
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras operaciones exitosas (edición, registro, etc.).
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas o errores de base de datos.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - Logo y assets desde public/img/ (pdf.svg, pensil.png).
+ * 
+ * @package App\Views\desechos
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Historial de Solicitudes<?= $this->endSection() ?>

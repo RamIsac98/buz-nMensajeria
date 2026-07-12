@@ -1,3 +1,53 @@
+<?php
+/**
+ * Vista: Editar Solicitud de Desechos Biológicos.
+ * 
+ * Muestra un formulario de edición para una solicitud de desechos existente,
+ * precargando todos los datos actuales. Incluye validaciones en cliente complejas:
+ * selección de tipos, variantes, estados, pesos, empaques y descripciones condicionales.
+ * La edición está restringida a una sola vez (campo 'editado' en la BD).
+ * 
+ * Conexiones con el controlador:
+ * - Es servida por DesechosController::editar($id) (ruta '/desechos/editar/{id}').
+ *   Recibe las variables:
+ *   - $usuario_data (array) – datos del usuario (departamento, laboratorio, username).
+ *   - $solicitud (array) – datos actuales de la solicitud.
+ *   - $codigo_automatico (string) – código de la solicitud (solo lectura).
+ *   - $fecha_automatica (string) – fecha de registro formateada.
+ *   - $modo_edicion (bool) – true (indica modo edición).
+ *   - $id_solicitud (int) – ID de la solicitud para el action del formulario.
+ * 
+ * - Formulario: envía POST a 'desechos/actualizar/{id}' → 
+ *   DesechosController::actualizar($id).
+ *   Incluye campo oculto _method="PUT" (opcional, el controlador también acepta POST).
+ * 
+ * - Botón "Cancelar": redirige a 'desechos/registroSolicitudes' → 
+ *   DesechosController::registroSolicitudes().
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador al actualizar.
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por validaciones o errores de BD.
+ * 
+ * - Modal de advertencia única: se muestra al cargar la página (contenido estático)
+ *   y alerta al usuario que solo puede editarse una vez (basado en el campo 'editado' del modelo).
+ * 
+ * - Modal de advertencia de bolsas: se muestra cuando se selecciona el empaque 'B' (Bolsas)
+ *   como recordatorio de etiquetado.
+ * 
+ * Validaciones en cliente:
+ * - Tipos de desecho, estados, empaques, variantes, extensión telefónica, motivo, pesos.
+ * - El campo "Otros" empaque se habilita/deshabilita según checkbox.
+ * - Los campos de peso (kg/L) se habilitan/deshabilitan según el estado físico seleccionado.
+ * - Las variantes se actualizan dinámicamente según los tipos seleccionados.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - JavaScript propio para lógica dinámica (variantes, pesos, validaciones).
+ * 
+ * @package App\Views\desechos
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Editar Solicitud de Desechos<?= $this->endSection() ?>

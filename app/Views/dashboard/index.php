@@ -1,3 +1,37 @@
+<?php
+/**
+ * Vista: Dashboard de peso trimestral de desechos biológicos.
+ * 
+ * Muestra un gráfico de barras con el peso total de desechos aprobados (estado 'Entregado')
+ * agrupado por trimestre, con filtros por año y trimestre, y una tabla detallada por día/mes.
+ * 
+ * Conexiones con el controlador:
+ * - Es servida por DashboardController::index() (ruta '/dashboard').
+ * - Datos recibidos del controlador:
+ *   - $anios_disponibles (array) – años con registros.
+ *   - $anio_seleccionado (int) – año actualmente seleccionado.
+ *   - $trimestre_seleccionado (int) – trimestre filtrado (0 = todos).
+ *   - $labels (json) – etiquetas para el gráfico (ej. ["Q1","Q2","Q3","Q4"]).
+ *   - $values (json) – valores numéricos para el gráfico.
+ *   - $total_trimestres (float) – suma total de kg del período filtrado.
+ *   - $meses (array) – datos diarios agrupados por mes para la tabla detallada.
+ * 
+ * - Filtros (año y trimestre):
+ *   - Los selects tienen valores que, al hacer clic en "Actualizar", redirigen a
+ *     DashboardController::index() con parámetros GET: ?anio=YYYY&trimestre=N.
+ *   - La URL se construye en JavaScript: window.location.href = base_url('dashboard') + '?anio=' + anio + '&trimestre=' + trimestre.
+ * 
+ * - Mensajes flash:
+ *   - Se muestran via SweetAlert2 (success/error) generados por el controlador (por ejemplo, al redirigir desde otras acciones).
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap y estilos comunes.
+ * - Chart.js (vía CDN, cargado probablemente en el layout) para el gráfico.
+ * - SweetAlert2 para mensajes flash.
+ * 
+ * @package App\Views\dashboard
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Peso trimestral de Desechos Biológicos<?= $this->endSection() ?>
@@ -62,9 +96,10 @@
 <div class="container-fluid px-4">
     <h2 class="main-title">Peso Trimestral de Desechos Biológicos</h2>
 
-    <!-- ===== MENSAJES FLASH AHORA CON SWEETALERT (no hay alertas Bootstrap) ===== -->
-
-    <!-- Total acumulado -->
+    <!-- ===== MENSAJES FLASH CON SWEETALERT ===== -->
+    <!-- Los mensajes flash son generados por el controlador DashboardController -->
+    
+    <!-- Total acumulado (datos del controlador) -->
     <div class="row">
         <div class="col-md-4">
             <div class="total-box">
@@ -75,7 +110,7 @@
         </div>
     </div>
 
-    <!-- Filtros -->
+    <!-- Filtros: invocan a DashboardController::index() con parámetros GET -->
     <div class="filter-bar d-flex flex-wrap align-items-center gap-3">
         <div>
             <label class="form-label fw-bold mb-0 me-2">Año:</label>

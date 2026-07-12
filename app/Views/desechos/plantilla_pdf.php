@@ -1,3 +1,52 @@
+<?php
+/**
+ * Vista: Plantilla PDF para solicitudes de desechos biológicos.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el reporte en PDF
+ * de una solicitud de desechos mediante la librería Dompdf.
+ * No extiende el layout base y no utiliza assets externos (CSS integrado).
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por DesechosController::generarPdf($id) (ruta '/desechos/generarPdf/{id}')
+ *   para renderizar el HTML que luego se convierte a PDF.
+ * 
+ * - Recibe del controlador las siguientes variables (asignadas desde la solicitud y el usuario):
+ *   - $codigo_solicitud (string) – Código único de la solicitud.
+ *   - $usuario_nombre (string) – Nombre completo del usuario solicitante.
+ *   - $departamento (string) – Nombre del departamento/centro.
+ *   - $laboratorio (string) – Nombre del laboratorio.
+ *   - $ext_telefono (string) – Extensión telefónica.
+ *   - $tipos_desecho (string) – Tipos de desecho seleccionados (ej. "B, C").
+ *   - $variantes_desecho (string) – Variantes/especificaciones seleccionadas.
+ *   - $estado (string) – Estado físico (ej. "Líquido, Sólido").
+ *   - $peso_kg (float|null) – Peso en kilogramos.
+ *   - $peso_l (float|null) – Volumen en litros.
+ *   - $esterilizado (int) – 1 = Sí, 0 = No.
+ *   - $tipo_empaque (string) – Tipos de empaque (ej. "B, C, F").
+ *   - $empaque_otro_descripcion (string|null) – Descripción si se seleccionó "O" (Otros).
+ *   - $motivo (string) – Motivo del descarte.
+ *   - $fecha_registro (string) – Fecha y hora de registro formateada (ej. "dd/mm/YYYY HH:MM:SS").
+ * 
+ * - El controlador define el tamaño de papel (A4, portrait) y la orientación.
+ *   En DesechosController::generarPdf() se usa:
+ *   $options = new \Dompdf\Options();
+ *   $options->set('isRemoteEnabled', true);
+ *   $dompdf = new \Dompdf\Dompdf($options);
+ *   $dompdf->loadHtml($html);
+ *   $dompdf->setPaper('A4', 'portrait');
+ *   $dompdf->render();
+ *   $dompdf->stream('solicitud_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
+ * 
+ * - El PDF se muestra en línea (Attachment = false) o puede descargarse (Attachment = true)
+ *   según la configuración en el controlador.
+ * 
+ * Dependencias:
+ * - Dompdf (librería PHP, no requiere assets externos).
+ * - No utiliza Bootstrap ni JavaScript.
+ * 
+ * @package App\Views\desechos
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

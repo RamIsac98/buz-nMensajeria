@@ -1,3 +1,34 @@
+<?php
+/**
+ * Vista: Plantilla PDF para el reporte de usuarios.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el reporte en PDF
+ * del listado de usuarios, con los filtros aplicados y rango de páginas
+ * seleccionado.
+ * 
+ * No extiende el layout base y no utiliza assets externos (CSS integrado).
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por Usuarios::generarPdfUsuarios() (ruta '/usuarios/generarPdfUsuarios')
+ *   La cual recibe los parámetros GET: buscar, rol, estado, pagina_inicio, pagina_fin.
+ *   El controlador obtiene los registros correspondientes usando UsuarioModel::getUsuariosFiltrados()
+ *   con el límite calculado según el rango de páginas.
+ * 
+ * - Recibe del controlador la variable $usuarios (array) – lista de usuarios a incluir en el PDF.
+ * 
+ * - El controlador define el tamaño de papel (A4, portrait), y genera el PDF con Dompdf.
+ *   El PDF se descarga con nombre "Reporte_Usuarios_Paginas_{inicio}_al_{fin}.pdf" (Attachment = true).
+ * 
+ * - La vista muestra una tabla con: ID, Nombre Completo, Usuario, Cédula, Rol, Estado.
+ * 
+ * Dependencias:
+ * - Dompdf (librería PHP, no requiere assets externos).
+ * - No utiliza Bootstrap ni JavaScript.
+ * - Estilos CSS integrados para el formato del PDF.
+ * 
+ * @package App\Views\usuarios
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

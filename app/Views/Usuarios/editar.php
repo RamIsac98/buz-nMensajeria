@@ -1,3 +1,72 @@
+<?php
+/**
+ * Vista: Edición de usuario existente.
+ * 
+ * Muestra un formulario para editar los datos de un usuario registrado en el sistema.
+ * Incluye campos para datos personales (nombre, apellido, username, cédula),
+ * asignación de rol, selección de centro y laboratorio (con carga dinámica AJAX),
+ * cambio de contraseña opcional y opción para eliminar la pregunta de seguridad.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial (GET): Usuarios::editar($id) (ruta '/usuarios/editar/{id}')
+ *   Recibe:
+ *   - $usuario (array) – Datos completos del usuario a editar.
+ *   - $departamentos (array) – Lista de todos los centros para el selector.
+ *   - $id_departamento_actual (int|null) – ID del centro al que pertenece el usuario.
+ *   - $laboratorios (array) – Lista de laboratorios del centro actual (precargados).
+ * 
+ * - Envío del formulario (POST): action="<?= base_url('usuarios/actualizar/'.$usuario['id']) ?>"
+ *   → Usuarios::actualizar($id) (ruta '/usuarios/actualizar/{id}')
+ *   El controlador valida todos los campos (username único excluyendo el ID actual,
+ *   cédula única excluyendo el ID actual, contraseña opcional con mínimo 6 caracteres,
+ *   eliminación de pregunta de seguridad si se marca, etc.) y actualiza el usuario en BD.
+ *   Registra la operación en bitácora (registrarBitacora).
+ * 
+ * - Carga dinámica de laboratorios (AJAX GET):
+ *   URL: <?= site_url('usuarios/obtener_laboratorios_por_depto') ?>/${deptoId}
+ *   → Usuarios::obtener_laboratorios_por_depto($departamento_id)
+ *   Retorna JSON con los laboratorios del centro seleccionado.
+ *   Se dispara al cambiar el select de "Centro".
+ * 
+ * - Botón "Cancelar": enlace a 'usuarios' → Usuarios::index() (ruta '/usuarios')
+ *   Redirige al listado de usuarios.
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras una actualización exitosa (Usuarios::actualizar()).
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas (ej. cédula duplicada, username existente, permisos insuficientes).
+ * 
+ * - Registro de bitácora: El controlador Usuarios::actualizar() llama a
+ *   $this->registrarBitacora() con la acción 'Modificación Completa de Usuario'
+ *   y el detalle de los cambios realizados.
+ * 
+ * Validaciones en cliente (con modal de errores):
+ * - Nombre: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
+ * - Apellido: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
+ * - Username: obligatorio, mínimo 3 caracteres, sin espacios, solo letras.
+ * - Tipo de cédula: obligatorio (V/E).
+ * - Cédula: obligatoria, solo números, entre 6 y 10 dígitos.
+ * - Rol: obligatorio.
+ * - Centro: obligatorio.
+ * - Laboratorio: obligatorio (debe estar habilitado y tener un valor seleccionado).
+ * - Contraseña: opcional, pero si se ingresa debe tener mínimo 6 caracteres y sin espacios.
+ * 
+ * Área de seguridad:
+ * - Muestra la pregunta de seguridad actual del usuario (si existe).
+ * - Permite eliminar la pregunta de seguridad mediante checkbox (campo 'eliminar_pregunta').
+ *   El controlador, al recibir este campo, establece pregunta_seguridad y respuesta_seguridad
+ *   como NULL en la base de datos.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - AJAX fetch para carga dinámica de laboratorios.
+ * - CSRF token (csrf_field()) para seguridad.
+ * 
+ * @package App\Views\usuarios
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Editar Usuario<?= $this->endSection() ?>

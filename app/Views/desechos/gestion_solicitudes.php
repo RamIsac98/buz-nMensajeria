@@ -1,3 +1,53 @@
+<?php
+/**
+ * Vista: Gestión de Solicitudes (panel de administración).
+ * 
+ * Muestra un listado combinado de solicitudes de desechos y bioseguridad,
+ * con opciones para filtrar, cambiar estado, editar peso de desechos (solo para
+ * administradores/protección integral) y generar PDFs.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial y filtros (GET): DesechosController::gestionSolicitudes()
+ *   Ruta: '/desechos/gestionSolicitudes'
+ *   Recibe: $solicitudes, $filtros, $tiposSolicitud, $estadosSolicitud,
+ *           variables de paginación ($paginaActual, $totalPages, etc.)
+ * 
+ * - Cambio de estado (POST): DesechosController::actualizarEstado()
+ *   Ruta: '/desechos/actualizarEstado'
+ *   Llamada vía AJAX/fetch con parámetros: id, tipo, estado
+ *   Retorna JSON { success: true/false, error: mensaje }
+ * 
+ * - Obtener datos para editar peso (GET): DesechosController::obtenerPeso($id)
+ *   Ruta: '/desechos/obtenerPeso/{id}'
+ *   Llamada vía AJAX/fetch, retorna JSON con id, codigo, peso_kg, peso_l, estado_fisico
+ * 
+ * - Actualizar peso (POST): DesechosController::actualizarPeso($id)
+ *   Ruta: '/desechos/actualizarPeso/{id}'
+ *   Llamada vía AJAX/fetch con FormData (peso_kg, peso_l)
+ *   Retorna JSON { success: true/false, error/message }
+ * 
+ * - Generación de PDF:
+ *   - Para desechos: '/desechos/generarPdf/{id}' → DesechosController::generarPdf($id)
+ *   - Para bioseguridad: '/bioseguridad/generarPdf/{id}' → BioseguridadController::generarPdf($id)
+ * 
+ * - Limpiar filtros: Redirige a '/desechos/gestionSolicitudes' sin parámetros
+ *   → DesechosController::gestionSolicitudes()
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s). Generado por el controlador
+ *     tras operaciones exitosas (cambio de estado, actualización de peso, etc.)
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar). Generado por
+ *     validaciones fallidas o errores de base de datos.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - JavaScript para peticiones AJAX (cambio de estado, edición de peso).
+ * - CSRF token en meta tag para seguridad en peticiones.
+ * 
+ * @package App\Views\desechos
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Gestión de Solicitudes<?= $this->endSection() ?>

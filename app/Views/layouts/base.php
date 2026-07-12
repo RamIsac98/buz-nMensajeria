@@ -1,3 +1,32 @@
+<?php
+/**
+ * Vista: Layout base del sistema (base.php).
+ * 
+ * Este es el layout principal que extienden todas las vistas del sistema.
+ * Define la estructura HTML común (doctype, head, body, navbar, footer implícito)
+ * y las secciones que las vistas hijas pueden llenar: title, styles, content, scripts.
+ * 
+ * Conexiones con el controlador:
+ * - Este layout NO llama directamente a ningún controlador, pero es el contenedor
+ *   de todas las vistas renderizadas por los controladores.
+ * - Todas las vistas que extienden este layout (usando <?= $this->extend('layouts/base') ?>)
+ *   son servidas por los controladores correspondientes (Login, DesechosController,
+ *   BioseguridadController, GestionController, Usuarios, etc.).
+ * - La vista parcial 'layouts/_navbar' (incluida aquí) contiene los enlaces a
+ *   los controladores (Login::salir(), Usuarios::cambiar_password_post(), etc.).
+ * - El contenido dinámico (secciones 'content', 'styles', 'scripts') es inyectado
+ *   por las vistas hijas, que a su vez reciben datos de los controladores.
+ * - Los assets (Bootstrap CSS/JS, logo) se cargan desde la carpeta public/.
+ * 
+ * Dependencias:
+ * - Bootstrap 5 (CSS y JS) desde public/bootstrap5/.
+ * - Logo y assets desde public/img/.
+ * - La vista parcial _navbar (layouts/_navbar) que contiene la barra de navegación.
+ * - SweetAlert2 (cargado en _navbar para mensajes flash y bienvenida).
+ * 
+ * @package App\Views\layouts
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

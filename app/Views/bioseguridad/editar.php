@@ -1,3 +1,46 @@
+<?php
+/**
+ * Vista: Editar Solicitud de Bioseguridad.
+ * 
+ * Muestra el formulario de edición de una solicitud existente, precargando los datos
+ * actuales. Incluye validaciones en cliente (máximos de unidades, material requerido,
+ * campos condicionales) y modales de advertencia sobre la edición única.
+ * 
+ * Conexiones con el controlador:
+ * - Es servida por BioseguridadController::editar($id) (ruta '/bioseguridad/editar/{id}').
+ *   Recibe las variables:
+ *   - $usuario_data (array) – datos del usuario solicitante (departamento, laboratorio, etc.)
+ *   - $solicitud (array) – datos actuales de la solicitud.
+ *   - $codigo_automatico (string) – código de la solicitud (solo lectura).
+ *   - $fecha_automatica (string) – fecha de registro formateada.
+ *   - $modo_edicion (bool) – true (indica modo edición).
+ *   - $id_solicitud (int) – ID de la solicitud para el action del formulario.
+ * 
+ * - Formulario: envía POST a 'bioseguridad/actualizar/{id}' → 
+ *   BioseguridadController::actualizar($id).
+ *   Incluye campo oculto _method="PUT" para simular verbo PUT (opcional, el controlador
+ *   también acepta POST con el parámetro _method).
+ * 
+ * - Mensajes flash: 
+ *   - 'success' → SweetAlert2 (icono éxito, timer 4s).
+ *   - 'error' → SweetAlert2 (icono error, timer 5s, botón confirmar).
+ *   Son generados por el controlador al procesar la actualización (registraBitacora)
+ *   y al validar permisos o errores de base de datos.
+ * 
+ * - Botón "Cancelar": redirige a 'desechos/registroSolicitudes' (método 
+ *   DesechosController::registroSolicitudes()).
+ * 
+ * - Modal de advertencia única: se muestra al cargar la página (contenido estático,
+ *   no requiere interacción con el controlador). Avisa que solo se puede editar una vez.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - JavaScript propio para validaciones y comportamiento del formulario.
+ * 
+ * @package App\Views\bioseguridad
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Editar Solicitud de Bioseguridad<?= $this->endSection() ?>

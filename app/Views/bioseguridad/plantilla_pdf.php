@@ -1,3 +1,35 @@
+<?php
+/**
+ * Vista: Plantilla PDF para solicitud de bioseguridad.
+ * 
+ * Esta vista se utiliza exclusivamente para generar el PDF de una solicitud
+ * mediante la librería Dompdf. No utiliza el layout base.
+ * 
+ * Conexiones con el controlador:
+ * - Es invocada por BioseguridadController::generarPdf($id) (ruta '/bioseguridad/generarPdf/{id}')
+ *   para renderizar el HTML que luego se convierte a PDF.
+ * 
+ * - Recibe del controlador las siguientes variables (asignadas desde la solicitud y el usuario):
+ *   - $codigo_solicitud (string)
+ *   - $usuario_nombre (string) – nombre completo del usuario.
+ *   - $departamento (string)
+ *   - $laboratorio (string)
+ *   - $ext_telefono (string)
+ *   - $contenedores_pulso_cantidad (int)
+ *   - $bolsas_rojas_pequena, $bolsas_rojas_mediana, $bolsas_rojas_grande (int)
+ *   - $quien_retira (string) – 'mi_persona' o 'otra_persona'
+ *   - $nombre_otra_persona (string|null)
+ *   - $fecha_registro (string) – fecha formateada.
+ * 
+ * - El controlador define el tamaño de papel (A4, portrait) y la orientación.
+ * 
+ * Dependencias:
+ * - Dompdf (librería PHP, no requiere assets externos).
+ * - No utiliza Bootstrap ni JavaScript.
+ * 
+ * @package App\Views\bioseguridad
+ */
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

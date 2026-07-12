@@ -1,4 +1,41 @@
 <?php
+/**
+ * Vista parcial: Barra de navegación principal (_navbar).
+ * 
+ * Esta vista se incluye en el layout base (layouts/base.php) y se muestra
+ * en todas las páginas del sistema después del inicio de sesión.
+ * 
+ * Genera dinámicamente el menú de navegación según el rol del usuario:
+ * - 'administrador': Solicitudes, Gestión Solicitudes, Configuración (submenú con Gestión Usuarios, Gestión Centros/Laboratorios, Bitácora)
+ * - 'proteccion_integral': Peso Trimestral DB, Gestión Solicitudes, Gestión Usuarios, Gestión Centros/Laboratorios
+ * - Otros roles (PAI, TAI, Jefe_Laboratorio, Auxiliar): Solicitud de Recolección de Desechos Biológicos, Solicitud de Materiales de Bioseguridad, Registro
+ * 
+ * Conexiones con el controlador:
+ * - Menú "Solicitud de Recolección de Desechos Biológicos": enlace a 'desechos/formulario' → DesechosController::crear()
+ * - Menú "Solicitud de Materiales de Bioseguridad": enlace a 'solicitud_bioseguridad' (probablemente ruta definida en Routes) → BioseguridadController::crear()
+ * - Menú "Registro": enlace a 'desechos/registroSolicitudes' → DesechosController::registroSolicitudes()
+ * - Menú "Gestión Solicitudes": enlace a 'desechos/gestionSolicitudes' → DesechosController::gestionSolicitudes()
+ * - Menú "Peso Trimestral DB": enlace a 'dashboard' → DashboardController::index()
+ * - Menú "Gestión Usuarios": enlace a 'usuarios' → Usuarios::index()
+ * - Menú "Gestión Centros y Laboratorios": enlace a 'gestion-departamento' → GestionController::index()
+ * - Menú "Bitácora": enlace a 'usuarios/bitacora' → BaseController::bitacora()
+ * - Submenú "Configuración": dropdown con los enlaces anteriores (solo administrador)
+ * - Cerrar sesión: enlace a 'login/salir' → Login::salir()
+ * - Cambiar contraseña: formulario en modal que envía POST a 'usuarios/cambiar_password_post' → Usuarios::cambiar_password_post()
+ *   Incluye validación en cliente (espacios, coincidencia) con modal de error.
+ * 
+ * - Mensaje de bienvenida: se muestra con SweetAlert2 al cargar la página si existe la flashdata 'mostrar_bienvenida',
+ *   que es establecida por Login::autenticar() al iniciar sesión.
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) que incluye Bootstrap 5 y estilos comunes.
+ * - SweetAlert2 (CDN) para el mensaje de bienvenida.
+ * - Logo y assets desde public/img/ (logo.svg, user.svg).
+ * 
+ * @package App\Views\layouts
+ */
+?>
+<?php
 $rolUsuario = session()->get('rol');
 $username = session()->get('username') ?? 'Sistema';
 

@@ -1,3 +1,57 @@
+<?php
+/**
+ * Vista: Listado de usuarios (panel de administración).
+ * 
+ * Muestra una tabla con todos los usuarios registrados, con opciones de
+ * búsqueda y filtrado por rol y estado. Incluye acciones para crear,
+ * editar, habilitar/deshabilitar, eliminar usuarios y generar reporte PDF.
+ * 
+ * Conexiones con el controlador:
+ * - Carga inicial y filtros (GET): Usuarios::index() (ruta '/usuarios')
+ *   Recibe: $usuarios (lista paginada), $roles_disponibles, $pager.
+ *   Los filtros se aplican vía parámetros GET: buscar, rol, estado.
+ * 
+ * - Crear nuevo usuario: enlace a 'usuarios/crear' → Usuarios::crear() (GET)
+ * 
+ * - Editar usuario: enlace 'usuarios/editar/{id}' → Usuarios::editar($id) (GET)
+ *   Se muestra como botón con ícono de lápiz (pencil-square.svg).
+ * 
+ * - Cambiar estado (habilitar/deshabilitar): botón slider que abre modal.
+ *   Al confirmar, redirige a 'usuarios/deshabilitar/{id}' → Usuarios::deshabilitar($id) (GET)
+ *   El controlador cambia el status (0/1) y registra en bitácora.
+ *   No permite deshabilitar la propia cuenta.
+ * 
+ * - Eliminar usuario: botón de papelera (trash-x.svg) que abre modal.
+ *   Al confirmar, redirige a 'usuarios/eliminar/{id}' → Usuarios::eliminar($id) (GET)
+ *   El controlador elimina físicamente el registro y registra en bitácora.
+ *   No permite eliminar la propia cuenta.
+ * 
+ * - Generar PDF: modal que envía GET a 'usuarios/generarPdfUsuarios'
+ *   → Usuarios::generarPdfUsuarios() (GET)
+ *   Incluye campos ocultos con los filtros actuales y campos para rango de páginas.
+ * 
+ * - Mensajes flash:
+ *   - 'success' → SweetAlert2 (éxito). Generado por Usuarios::guardar(), Usuarios::actualizar(), etc.
+ *   - 'error' → SweetAlert2 (error). Generado por validaciones fallidas, permisos, etc.
+ *   - 'usuario_eliminado' → SweetAlert2 (warning). Generado por Usuarios::eliminar() al eliminar exitosamente.
+ * 
+ * - Botón "Limpiar Filtros": redirige a 'usuarios' sin parámetros → Usuarios::index().
+ * 
+ * - Paginación: los enlaces de página incluyen el parámetro 'page' con los filtros actuales,
+ *   invocando a Usuarios::index() con los parámetros GET.
+ * 
+ * - La cuenta propia del usuario está protegida: no muestra botones de editar/deshabilitar/eliminar
+ *   para el usuario autenticado (solo muestra "Tu Cuenta (Protegida)").
+ * 
+ * Dependencias:
+ * - Layout base (layouts/base) con Bootstrap 5.
+ * - SweetAlert2 (CDN) para mensajes flash.
+ * - Assets: pencil-square.svg, trash-x.svg, pdf.svg desde public/img/.
+ * - Memoria de sesión (sessionStorage) para mantener filtros entre recargas (lógica frontend, no controlador).
+ * 
+ * @package App\Views\usuarios
+ */
+?>
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('title') ?>Administración de Usuarios<?= $this->endSection() ?>
