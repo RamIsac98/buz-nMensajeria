@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Controlador para la gestión de solicitudes de bioseguridad.
+ * 
+ * Permite crear, editar, registrar, actualizar y generar PDF de solicitudes
+ * de bioseguridad (contenedores, bolsas rojas, quien retira, etc.).
+ * 
+ * Hereda de BaseController para usar verificación de sesión y registro de bitácora.
+ * 
+ * Dependencias:
+ * - SolicitudBioseguridadModel para operaciones CRUD.
+ * - UsuarioModel para obtener datos del usuario.
+ * - Dompdf para generación de PDF.
+ */
+
 namespace App\Controllers;
 
 use App\Models\SolicitudBioseguridadModel;
@@ -9,7 +23,18 @@ use Dompdf\Options;
 
 class BioseguridadController extends BaseController
 {
-    //crear Solicitud
+        /**
+     * Muestra el formulario para crear una nueva solicitud de bioseguridad.
+     * 
+     * - Verifica sesión activa.
+     * - Obtiene los datos del usuario actual (incluyendo departamento y laboratorio).
+     * - Genera automáticamente un código único de solicitud y la fecha actual.
+     * 
+     * @return mixed Vista 'bioseguridad/formulario' con datos del usuario, código y fecha, o redirección a login.
+     * 
+     * @example
+     * GET /bioseguridad/crear
+     */
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -31,7 +56,21 @@ class BioseguridadController extends BaseController
         return view('bioseguridad/formulario', $data);
     }
 
-    //registro en la BD
+        /**
+     * Procesa el registro de una nueva solicitud de bioseguridad en la base de datos.
+     * 
+     * - Verifica sesión activa.
+     * - Aplica validaciones: contenedores ≤ 3, cada tipo de bolsa ≤ 10.
+     * - Si 'quien_retira' es 'otra_persona', guarda el nombre; en caso contrario, null.
+     * - Genera código automático si no se envía.
+     * - Inserta en la tabla solicitudes_bioseguridad.
+     * - Registra en bitácora la operación.
+     * 
+     * @return mixed Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /bioseguridad/registrar (con datos del formulario)
+     */
     public function registrar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -74,7 +113,23 @@ class BioseguridadController extends BaseController
             return redirect()->back()->with('error', 'Error al guardar en la base de datos.');
         }
     }
-
+    
+       /**
+     * Genera un PDF de una solicitud de bioseguridad específica y lo muestra en el navegador.
+     * 
+     * - Verifica sesión activa.
+     * - Obtiene la solicitud por ID (usa método find() de Model).
+     * - Obtiene los datos del usuario asociado.
+     * - Construye el nombre completo del usuario (nombre + apellido o username).
+     * - Renderiza la vista 'bioseguridad/plantilla_pdf' y genera el PDF con Dompdf.
+     * - El PDF se muestra en línea (Attachment = false).
+     * 
+     * @param int $id ID de la solicitud.
+     * @return void Descarga o visualización del PDF.
+     * 
+     * @example
+     * GET /bioseguridad/generarPdf/5
+     */
     public function generarPdf($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -112,7 +167,20 @@ class BioseguridadController extends BaseController
         $dompdf->stream('bioseguridad_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
         exit;
     }
-
+        /**
+     * Muestra un archivo PDF previamente guardado en el servidor (en modo inline).
+     * 
+     * - Verifica sesión activa.
+     * - Busca el archivo en la carpeta 'uploads/pdfs/' dentro del directorio público.
+     * - Si existe, limpia el buffer y envía el PDF con cabeceras adecuadas para visualización.
+     * - Si no existe, retorna un mensaje de error.
+     * 
+     * @param string $nombreArchivo Nombre del archivo PDF a mostrar.
+     * @return mixed Contenido del PDF con cabeceras o mensaje de error.
+     * 
+     * @example
+     * GET /bioseguridad/verPdf/mi_archivo.pdf
+     */
     public function verPdf($nombreArchivo)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -130,6 +198,22 @@ class BioseguridadController extends BaseController
         }
     }
 
+        /**
+     * Muestra el formulario de edición de una solicitud de bioseguridad.
+     * 
+     * - Verifica sesión activa.
+     * - Busca la solicitud por ID.
+     * - Verifica que no haya sido editada previamente (editado == 1).
+     * - Verifica permisos: solo el usuario creador o administrador pueden editar.
+     * - Prepara los datos del usuario y de la solicitud para la vista de edición.
+     * 
+     * 
+     * @param int $id ID de la solicitud.
+     * @return mixed Vista 'bioseguridad/editar' con datos o redirección con error.
+     * 
+     * @example
+     * GET /bioseguridad/editar/10
+     */
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -149,9 +233,6 @@ class BioseguridadController extends BaseController
         if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
             return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
         }
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
-        }
 
         $usuarioModel = new UsuarioModel();
         $usuario = $usuarioModel->findById($solicitud['usuario_id']);
@@ -168,6 +249,23 @@ class BioseguridadController extends BaseController
         return view('bioseguridad/editar', $data);
     }
 
+        /**
+     * Procesa la actualización de una solicitud de bioseguridad existente.
+     * 
+     * - Verifica sesión activa.
+     * - Busca la solicitud por ID.
+     * - Valida que no esté editada previamente y que el usuario tenga permisos.
+     * - Aplica las mismas validaciones de cantidad (contenedores ≤3, bolsas ≤10).
+     * - Actualiza los campos y marca el campo 'editado' como 1.
+     * - Registra la operación en bitácora.
+     * 
+     * 
+     * @param int $id ID de la solicitud.
+     * @return mixed Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /bioseguridad/actualizar/10 (con datos del formulario)
+     */
     public function actualizar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -181,10 +279,6 @@ class BioseguridadController extends BaseController
 
         if ($solicitud['editado'] == 1) {
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'Esta solicitud ya fue editada anteriormente.');
-        }
-
-        if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {
-            return redirect()->to(base_url('desechos/registroSolicitudes'))->with('error', 'No tienes permiso para editar esta solicitud.');
         }
 
         if (session()->get('usuario_id') != $solicitud['usuario_id'] && session()->get('rol') !== 'administrador') {

@@ -1,5 +1,20 @@
 <?php
-
+/**
+ * Controlador de gestión de usuarios (administración y protección integral).
+ * 
+ * Proporciona operaciones CRUD, filtrado, generación de PDF, gestión de seguridad
+ * (pregunta de recuperación y cambio de contraseña) y bitácora de acciones.
+ * 
+ * Solo accesible para roles 'administrador' y 'proteccion_integral'.
+ * Hereda de BaseController para autenticación y auditoría.
+ * 
+ * Dependencias:
+ * - UsuarioModel, DepartamentoModel, LaboratorioModel.
+ * - Dompdf para generación de PDFs.
+ * - Servicio de paginación de CodeIgniter.
+ * 
+ * @package App\Controllers
+ */
 namespace App\Controllers;
 
 use App\Models\UsuarioModel;
@@ -8,13 +23,31 @@ use App\Models\LaboratorioModel;
 
 class Usuarios extends BaseController
 {
-    // Método para verificar acceso (administrador o protección integral)
+        /**
+     * Verifica si el rol de la sesión tiene permisos de gestión.
+     * Solo 'administrador' o 'proteccion_integral' pueden acceder.
+     *
+     * @return bool True si tiene acceso, False en otro caso.
+     */
     private function verificarAccesoGestion(): bool
     {
         $rol = session()->get('rol');
         return ($rol === 'administrador' || $rol === 'proteccion_integral');
     }
 
+    /**
+     * Muestra el listado de usuarios con filtros y paginación.
+     * 
+     * Filtros GET:
+     * - buscar (string) : búsqueda por username, nombre, apellido, cedula
+     * - rol (string)    : filtro por rol
+     * - estado (string) : filtro por estado (activo/inactivo)
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista renderizada o redirección.
+     * 
+     * @example
+     * GET /usuarios?buscar=juan&rol=admin&page=2
+     */
     public function index()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -45,6 +78,21 @@ class Usuarios extends BaseController
         return view('usuarios/index', $data);
     }
 
+    /**
+     * Genera y descarga un PDF con el listado de usuarios filtrado.
+     * 
+     * Permite seleccionar un rango de páginas (cada página = 8 registros).
+     * Parámetros GET:
+     * - buscar, rol, estado (idem index)
+     * - pagina_inicio (int) : página desde la cual comenzar (por defecto 1)
+     * - pagina_fin    (int) : página final (por defecto igual a inicio)
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|void Redirige si no hay permisos o descarga el PDF.
+     * 
+     * @example
+     * GET /usuarios/generarPdfUsuarios?buscar=admin&pagina_inicio=1&pagina_fin=3
+     */
+
     public function generarPdfUsuarios()
     {
         if (!$this->estaLogueado()) {
@@ -72,7 +120,7 @@ class Usuarios extends BaseController
 
         $data['usuarios'] = $usuarioModel->getUsuariosFiltrados($filtros, $limite, $offset);
 
-        // 🔥 Cerrar sesión y liberar buffers antes de generar el PDF
+        // Cerrar sesión y liberar buffers
         session_write_close();
 
         while (ob_get_level()) {
@@ -89,6 +137,20 @@ class Usuarios extends BaseController
         $dompdf->stream("Reporte_Usuarios_Paginas_{$paginaInicio}_al_{$paginaFin}.pdf", ["Attachment" => true]);
         // El stream ya incluye exit, por lo que no es necesario agregar más código.
     }
+
+    
+    /**
+     * Muestra el formulario de edición de un usuario específico.
+     * 
+     * Carga los departamentos y laboratorios asociados.
+     * 
+     * @param int $id ID del usuario a editar.
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
+     * 
+     * @example
+     * GET /usuarios/editar/5
+     */
+
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -126,6 +188,18 @@ class Usuarios extends BaseController
         return view('usuarios/editar', $data);
     }
 
+    /**
+     * Procesa la actualización de los datos de un usuario.
+     * 
+     * Valida campos, verifica duplicados de cédula y permite cambiar contraseña
+     * o eliminar la pregunta de seguridad.
+     *
+     * @param int $id ID del usuario a actualizar.
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje de éxito/error.
+     * 
+     * @example
+     * POST /usuarios/actualizar/5 (con datos del formulario)
+     */
         public function actualizar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -213,6 +287,18 @@ class Usuarios extends BaseController
         return redirect()->to(base_url('usuarios'))->with('success', 'Información de usuario actualizada con éxito.');
     }
 
+    /**
+     * Cambia el estado (habilitar/deshabilitar) de un usuario.
+     * 
+     * No permite deshabilitar la propia cuenta.
+     *
+     * @param int $id ID del usuario.
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * GET /usuarios/deshabilitar/5
+     */
+
     public function deshabilitar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -239,6 +325,18 @@ class Usuarios extends BaseController
         return redirect()->to(base_url('usuarios'))->with('success', "Estado modificado a '" . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo') . "' con éxito.");
     }   
 
+    /**
+     * Elimina físicamente un usuario de la base de datos.
+     * 
+     * No permite eliminar la propia cuenta.
+     *
+     * @param int $id ID del usuario a eliminar.
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * GET /usuarios/eliminar/5
+     */
+
     public function eliminar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -262,6 +360,17 @@ class Usuarios extends BaseController
         return redirect()->to(base_url('usuarios'))->with('usuario_eliminado', 'El expediente del usuario ha sido borrado físicamente del sistema.');
     }
 
+    /**
+     * Muestra el formulario para crear un nuevo usuario.
+     * 
+     * Carga la lista de departamentos para el selector.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
+     * 
+     * @example
+     * GET /usuarios/crear
+     */
+
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -272,6 +381,17 @@ class Usuarios extends BaseController
 
         return view('usuarios/crear', $data);
     }
+
+    /**
+     * Procesa la creación de un nuevo usuario.
+     * 
+     * Valida todos los campos, verifica cédula única y guarda en la BD.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * POST /usuarios/guardar (con datos del formulario)
+     */
 
     public function guardar()
     {
@@ -340,6 +460,18 @@ class Usuarios extends BaseController
         return redirect()->to(base_url('usuarios'))->with('success', 'Usuario creado e incorporado con éxito.');
     }
 
+    /**
+     * Endpoint AJAX para obtener los laboratorios de un departamento.
+     * 
+     * Retorna JSON con la lista de laboratorios.
+     *
+     * @param int|null $departamento_id ID del departamento.
+     * @return \CodeIgniter\HTTP\Response JSON.
+     * 
+     * @example
+     * GET /usuarios/obtener_laboratorios_por_depto/3
+     */
+
     public function obtener_laboratorios_por_depto($departamento_id = null)
     {
         if (ob_get_length()) ob_clean();
@@ -365,12 +497,31 @@ class Usuarios extends BaseController
         return $this->response->setJSON($resultado);
     }
 
+    /**
+     * Muestra el formulario para configurar la pregunta de seguridad.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
+     * 
+     * @example
+     * GET /usuarios/configurar_pregunta
+     */
     public function configurar_pregunta()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         return view('login/configurar_pregunta');
     }
 
+ 
+    /**
+     * Guarda la pregunta y respuesta de seguridad del usuario autenticado.
+     * 
+     * La respuesta se almacena hasheada.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección según el rol.
+     * 
+     * @example
+     * POST /usuarios/guardar_pregunta (con pregunta_seguridad y respuesta_seguridad)
+     */
     public function guardar_pregunta()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -410,6 +561,17 @@ class Usuarios extends BaseController
         return redirect()->to(base_url($destino))->with('success', 'Pregunta de seguridad guardada correctamente.');
     }
 
+    /**
+     * Procesa el cambio de contraseña del usuario autenticado.
+     * 
+     * Verifica la contraseña actual, valida coincidencia de nueva y confirmación,
+     * y actualiza el hash en la base de datos.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * POST /usuarios/cambiar_password_post (con current_password, new_password, confirm_password)
+     */
     public function cambiar_password_post()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -449,12 +611,34 @@ class Usuarios extends BaseController
         return redirect()->back()->with('success', '¡Tu contraseña ha sido actualizada correctamente!');
     }
 
+        /**
+     * !!! Muestra una vista de solicitud de desechos.
+     * 
+     * Actualmente solo retorna la vista 'Usuarios/SolicitudDesechos' sin lógica adicional.
+     * Posiblemente es un método heredado o no implementado completamente.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
+     * 
+     * @example
+     * GET /usuarios/solicitudDesechos
+     */
     public function solicitudDesechos()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
         return view('Usuarios/SolicitudDesechos');
     }
 
+        /**
+     * !!! Procesa una solicitud de desechos (método placeholder).
+     * 
+     * Solo redirige hacia atrás con mensaje de éxito, sin realizar ninguna operación.
+     * Probablemente es un stub o no está implementado.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * POST /usuarios/procesarSolicitud
+     */
     public function procesarSolicitud()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));

@@ -1,5 +1,24 @@
 <?php
 
+/**
+ * Controlador para la gestión de solicitudes de desechos biológicos.
+ * 
+ * Proporciona funcionalidades completas: creación, registro, validación,
+ * edición, actualización, cambio de estado, generación de PDF, listado
+ * combinado con solicitudes de bioseguridad, y gestión de pesos.
+ * 
+ * Hereda de BaseController para autenticación y auditoría.
+ * 
+ * Dependencias:
+ * - SolicitudDesechosModel, SolicitudBioseguridadModel, UsuarioModel
+ * - Dompdf para generación de PDF
+ * 
+ * OBSERVACIONES:
+ * - Los métodos registroSolicitudes() y gestionSolicitudes() tienen código
+ *   muy similar (duplicado) que podría extraerse a un método privado.
+ * - La paginación se maneja manualmente con array_slice, no con el pager nativo.
+ * - Se usan constantes de clase para validación de valores permitidos.
+*/
 namespace App\Controllers;
 
 use App\Models\SolicitudDesechosModel;
@@ -12,12 +31,25 @@ use Dompdf\Options;
 class DesechosController extends BaseController
 {
 
-     // Valores permitidos
+     // Valores permitidos en el formulario
     const TIPOS_PERMITIDOS = ['B', 'C', 'D'];
     const ESTADOS_PERMITIDOS = ['Líquido', 'Sólido'];
     const EMPAQUES_PERMITIDOS = ['B', 'C', 'F', 'O'];
     const ESTERILIZADO_PERMITIDOS = ['Sí', 'No'];
-    //solicitud desechos
+    
+    
+       /**
+     * Muestra el formulario para crear una nueva solicitud de desechos.
+     * 
+     * - Verifica sesión activa.
+     * - Obtiene datos del usuario (departamento, laboratorio).
+     * - Genera código automático y fecha actual.
+     * 
+     * @return mixed Vista 'desechos/formulario' con datos, o redirección a login.
+     * 
+     * @example
+     * GET /desechos/crear
+     */
     public function crear()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -40,7 +72,21 @@ class DesechosController extends BaseController
         return view('desechos/formulario', $data);
     }
 
-    //registro en la BD
+       /**
+     * Procesa el registro de una nueva solicitud de desechos.
+     * 
+     * - Verifica sesión activa.
+     * - Valida los datos con validarDatosSolicitud().
+     * - Convierte arrays de selección múltiple a strings separados por coma.
+     * - Genera código único si no se proporciona o ya existe.
+     * - Inserta en la tabla solicitudes_desechos.
+     * - Registra en bitácora.
+     * 
+     * @return mixed Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /desechos/registrar (con datos del formulario)
+     */
     public function registrar()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -89,7 +135,29 @@ class DesechosController extends BaseController
         }
     }
     
-
+        /**
+     * Valida los datos de una solicitud de desechos (creación o edición).
+     * 
+     * Comprueba:
+     * - Campos requeridos: ext_telefono, motivo.
+     * - Al menos un tipo de desecho (B, C, D) seleccionado.
+     * - Al menos un estado físico (Líquido/Sólido) seleccionado.
+     * - Al menos un tipo de empaque (B, C, F, O) seleccionado.
+     *   - Si se selecciona 'O', requiere descripción.
+     * - Esterilizado debe ser 'Sí' o 'No'.
+     * - Al menos una variante para el tipo de desecho seleccionado.
+     * - Si estado físico incluye 'Sólido', peso_kg debe ser numérico ≥ 0.
+     * - Si estado físico incluye 'Líquido', peso_l debe ser numérico ≥ 0.
+     * - Extensión telefónica debe ser numérica.
+     * 
+     * @param array $post        Datos del formulario.
+     * @param bool  $esEdicion   Indica si es edición (no se usa actualmente).
+     * @return bool|array True si es válido, o array de mensajes de error.
+     * 
+     * @example
+     * $errores = $this->validarDatosSolicitud($_POST);
+     * if ($errores !== true) { ... }
+     */
     private function validarDatosSolicitud(array $post, bool $esEdicion = false)
     {
         $errores = [];
@@ -194,6 +262,20 @@ class DesechosController extends BaseController
         return empty($errores) ? true : $errores;
     }
 
+        /**
+     * Genera un PDF de una solicitud de desechos específica.
+     * 
+     * - Verifica sesión activa.
+     * - Obtiene solicitud por ID y datos del usuario.
+     * - Renderiza vista 'desechos/plantilla_pdf' y genera PDF con Dompdf.
+     * - Muestra en línea (Attachment = false).
+     * 
+     * @param int $id ID de la solicitud.
+     * @return void Descarga o visualización del PDF.
+     * 
+     * @example
+     * GET /desechos/generarPdf/5
+     */
     public function generarPdf($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -225,7 +307,23 @@ class DesechosController extends BaseController
         $dompdf->stream('solicitud_' . $solicitud['codigo_solicitud'] . '.pdf', ['Attachment' => false]);
         exit;
     }
-
+        /**
+     * Muestra el historial de solicitudes (registro) para usuarios no administradores.
+     * 
+     * - Verifica sesión activa.
+     * - Si el rol es 'proteccion_integral', redirige a gestión (acceso denegado).
+     * - Combina solicitudes de desechos y bioseguridad según filtros.
+     * - Ordena por fecha descendente.
+     * - Paginación manual con array_slice (10 por página).
+     * - Prepara datos para la vista: solicitudes, total, filtros, etc.
+     * 
+     * Código similar a gestionSolicitudes().
+     * 
+     * @return mixed Vista 'desechos/registroSolicitudes' con datos.
+     * 
+     * @example
+     * GET /desechos/registroSolicitudes?buscar=quimico&tipo_solicitud=Desechos Biológicos&page=2
+     */
     public function registroSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -298,7 +396,22 @@ class DesechosController extends BaseController
         return view('desechos/registroSolicitudes', $data);
     }
 
-    // cambiar el estado de solicitud
+        /**
+     * Panel de gestión de solicitudes (solo administradores y protección integral).
+     * 
+     * - Verifica sesión y rol (administrador o proteccion_integral).
+     * - Combina solicitudes de desechos y bioseguridad con filtros.
+     * - Agrega campo 'tabla_origen' para identificar el tipo.
+     * - Paginación manual con array_slice (10 por página).
+     * - Prepara datos para la vista de gestión.
+     * 
+     *  Código muy similar a registroSolicitudes().
+     * 
+     * @return mixed Vista 'desechos/gestion_solicitudes' con datos.
+     * 
+     * @example
+     * GET /desechos/gestionSolicitudes?estado_solicitud=Pendiente&page=1
+     */
     public function gestionSolicitudes()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -373,7 +486,21 @@ class DesechosController extends BaseController
         return view('desechos/gestion_solicitudes', $data);
     }
 
-    //ACTUALIZAR ESTADO
+        /**
+     * Actualiza el estado de una solicitud (vía AJAX).
+     * 
+     * - Verifica sesión y rol (administrador o proteccion_integral).
+     * - Recibe por POST: id, tipo (desechos/bioseguridad), estado.
+     * - Valida que el estado sea permitido.
+     * - Llama al modelo correspondiente para actualizar.
+     * - Registra en bitácora.
+     * - Retorna JSON con éxito o error.
+     * 
+     * @return \CodeIgniter\HTTP\Response Respuesta JSON.
+     * 
+     * @example
+     * POST /desechos/actualizarEstado (con id, tipo, estado)
+     */
     public function actualizarEstado()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -411,6 +538,21 @@ class DesechosController extends BaseController
         }
     }
 
+        /**
+     * Muestra el formulario de edición de una solicitud de desechos.
+     * 
+     * - Verifica sesión activa.
+     * - Busca la solicitud por ID.
+     * - Verifica que no esté editada (editado != 1).
+     * - Verifica permisos: creador o administrador.
+     * - Prepara datos para la vista de edición.
+     * 
+     * @param int $id ID de la solicitud.
+     * @return mixed Vista 'desechos/editar' o redirección con error.
+     * 
+     * @example
+     * GET /desechos/editar/10
+     */
     public function editar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -439,6 +581,23 @@ class DesechosController extends BaseController
         return view('desechos/editar', $data);
     }
 
+        /**
+     * Procesa la actualización de una solicitud de desechos existente.
+     * 
+     * - Verifica sesión activa.
+     * - Busca la solicitud por ID.
+     * - Valida permisos y que no esté editada.
+     * - Valida datos con validarDatosSolicitud().
+     * - Convierte arrays a strings.
+     * - Actualiza y marca editado = 1.
+     * - Registra en bitácora.
+     * 
+     * @param int $id ID de la solicitud.
+     * @return mixed Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /desechos/actualizar/10
+     */
     public function actualizar($id)
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -481,7 +640,19 @@ class DesechosController extends BaseController
         return redirect()->to(base_url('desechos/registroSolicitudes'))->with('success', 'Solicitud actualizada correctamente.');
     }
 
-    // EDITAR PESO 
+        /**
+     * Obtiene los datos de peso de una solicitud (vía AJAX).
+     * 
+     * - Verifica sesión y rol (administrador o proteccion_integral).
+     * - Busca la solicitud por ID.
+     * - Retorna JSON con id, código, peso_kg, peso_l, estado_fisico.
+     * 
+     * @param int $id ID de la solicitud.
+     * @return \CodeIgniter\HTTP\Response Respuesta JSON.
+     * 
+     * @example
+     * GET /desechos/obtenerPeso/5
+     */
     public function obtenerPeso($id)
     {
         if (!$this->estaLogueado()) return $this->response->setJSON(['error' => 'No autorizado']);
@@ -503,10 +674,25 @@ class DesechosController extends BaseController
             'codigo'     => $solicitud['codigo_solicitud'],
             'peso_kg'    => $solicitud['peso_kg'],
             'peso_l'     => $solicitud['peso_l'],
-            'estado_fisico' => $solicitud['estado'] // 🔥 Se añade el estado físico
+            'estado_fisico' => $solicitud['estado']
         ]);
     }
 
+        /**
+     * Actualiza los pesos de una solicitud (vía AJAX).
+     * 
+     * - Verifica sesión y rol (administrador o proteccion_integral).
+     * - Valida que los valores sean numéricos ≥ 0.
+     * - Restringe según estado físico: si solo Sólido, solo permite kg; si solo Líquido, solo litros.
+     * - No permite cambiar a 0 si el valor actual es > 0 (protección contra borrado accidental).
+     * - Actualiza y registra en bitácora.
+     * 
+     * @param int $id ID de la solicitud.
+     * @return \CodeIgniter\HTTP\Response Respuesta JSON con éxito o error.
+     * 
+     * @example
+     * POST /desechos/actualizarPeso/5 (con peso_kg y/o peso_l)
+     */
     public function actualizarPeso($id)
 {
     // Verificar autenticación
@@ -552,7 +738,7 @@ class DesechosController extends BaseController
     $esSólido = strpos($estadoFisico, 'Sólido') !== false;
     $esLíquido = strpos($estadoFisico, 'Líquido') !== false;
 
-    // 🔥 Validación por estado físico (solo se permite editar el campo que aplica)
+    // Validación por estado físico (solo se permite editar el campo que aplica)
     if ($esSólido && !$esLíquido) {
         // Solo Sólido: solo se permite kg
         if ($peso_l !== null) {
@@ -568,7 +754,7 @@ class DesechosController extends BaseController
     }
     // Si contiene ambos, permitimos ambos campos sin restricción adicional
 
-    // 🔥 NUEVA VALIDACIÓN: No permitir cambiar a 0 si el valor actual es > 0
+    // No permitir cambiar a 0 si el valor actual es > 0
     if ($peso_kg !== null && $valorActualKg !== null && $valorActualKg > 0 && $peso_kg == 0) {
         return $this->response->setJSON(['success' => false, 'error' => 'No se puede establecer el peso en 0 porque actualmente tiene un valor mayor a 0.']);
     }

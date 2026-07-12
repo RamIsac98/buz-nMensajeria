@@ -1,5 +1,23 @@
 <?php
-
+/**
+ * Controlador para la gestión de centros (departamentos) y laboratorios.
+ * 
+ * Proporciona CRUD completo, listado paginado con filtros por departamento
+ * y generación de reportes en PDF (estructura organizacional y listado de laboratorios).
+ * 
+ * Solo accesible para roles 'administrador' y 'proteccion_integral'.
+ * Hereda de BaseController para autenticación y auditoría.
+ * 
+ * Dependencias:
+ * - DepartamentoModel, LaboratorioModel para operaciones CRUD.
+ * - UsuarioModel para reporte general (en generarPdfGeneral).
+ * - Dompdf para generación de PDFs.
+ * 
+ * OBSERVACIONES:
+ * - La validación de unicidad (is_unique) se maneja correctamente tanto para creación como edición.
+ * - La paginación se construye manualmente sin usar el pager nativo de CI.
+ * - Los métodos guardar/editar redirigen a la misma página manteniendo los parámetros de paginación.
+ */
 namespace App\Controllers;
 
 use App\Models\DepartamentoModel;
@@ -19,6 +37,20 @@ class GestionController extends BaseController
         $this->labModel  = new LaboratorioModel();
     }
 
+        /**
+     * Página principal de gestión de centros y laboratorios.
+     * 
+     * - Verifica sesión y rol (admin o protección integral).
+     * - Obtiene listados paginados de departamentos y laboratorios (8 por página).
+     * - Permite filtrar laboratorios por departamento (filtro_depto vía GET).
+     * - Prepara datos de paginación para ambas tablas.
+     * - Captura excepciones y registra error en log.
+     * 
+     * @return mixed Vista 'gestionDepartamento/gestion_departamento' o redirección.
+     * 
+     * @example
+     * GET /gestion-departamento?page_dept=2&page_lab=1&filtro_depto=3
+     */
 
     public function index()
     {
@@ -63,11 +95,29 @@ class GestionController extends BaseController
         }
     }
 
-    //CRUD CENTRO/LABORATORIO
+        /**
+     * Wrapper para guardar un nuevo centro.
+     * 
+     * NOTA: "DEPARTAMENTO Y CENTRO ES LO MISMO SOLO QUE EN LAS ULTIMAS FACES HUBO CAMBIO DE TERMINO"
+     * 
+     * @return RedirectResponse Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /gestion-departamento/guardarDepartamento (con campo 'nombre')
+     */
     public function guardarDepartamento(): RedirectResponse
     {
         return $this->procesarGuardado(null, 'departamento');
     }
+
+        /**
+     * Wrapper para editar un departamento existente.
+     * 
+     * @return RedirectResponse Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /gestion-departamento/editarDepartamento (con campos 'id' y 'nombre')
+     */
 
     public function editarDepartamento(): RedirectResponse
     {
@@ -75,16 +125,55 @@ class GestionController extends BaseController
         return $this->procesarGuardado(($id !== null) ? (int)$id : null, 'departamento');
     }
 
+        /**
+     * Wrapper para guardar un nuevo laboratorio.
+     * 
+     * @return RedirectResponse Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /gestion-departamento/guardarLaboratorio (con campos 'nombre_laboratorio' y 'departamento_id')
+     */
+
     public function guardarLaboratorio(): RedirectResponse
     {
         return $this->procesarGuardado(null, 'laboratorio');
     }
+
+
+        /**
+     * Wrapper para editar un laboratorio existente.
+     * 
+     * @return RedirectResponse Redirección con mensaje de éxito o error.
+     * 
+     * @example
+     * POST /gestion-departamento/editarLaboratorio (con campos 'id', 'nombre_laboratorio', 'departamento_id')
+     */
+
 
     public function editarLaboratorio(): RedirectResponse
     {
         $id = $this->request->getPost('id');
         return $this->procesarGuardado(($id !== null) ? (int)$id : null, 'laboratorio');
     }
+
+        /**
+     * Procesa la creación o actualización de departamentos o laboratorios.
+     * 
+     * - Verifica sesión.
+     * - Construye reglas de validación según el tipo (incluyendo unicidad).
+     * - Para departamentos: solo valida 'nombre'.
+     * - Para laboratorios: valida 'nombre_laboratorio' y 'departamento_id'.
+     * - Si falla la validación, redirige con error y mantiene el input.
+     * - En éxito, ejecuta el modelo correspondiente y registra en bitácora.
+     * - Mantiene los parámetros de paginación en la redirección.
+     * 
+     * @param int|null $id   ID para edición (null para creación).
+     * @param string   $tipo 'departamento' o 'laboratorio'.
+     * @return RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * // Interno, no se llama directamente desde rutas.
+     */
 
     private function procesarGuardado(?int $id, string $tipo): RedirectResponse
     {
@@ -172,15 +261,52 @@ class GestionController extends BaseController
         }
     }
 
+        /**
+     * Wrapper para eliminar un departamento.
+     * 
+     * @param int $id ID del departamento.
+     * @return RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * GET /gestion-departamento/eliminarDepartamento/5
+     */
+
     public function eliminarDepartamento($id): RedirectResponse
     {
         return $this->procesarEliminacion((int)$id, 'departamento');
     }
 
+        /**
+     * Wrapper para eliminar un laboratorio.
+     * 
+     * @param int $id ID del laboratorio.
+     * @return RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * GET /gestion-departamento/eliminarLaboratorio/12
+     */
+
     public function eliminarLaboratorio($id): RedirectResponse
     {
         return $this->procesarEliminacion((int)$id, 'laboratorio');
     }
+
+        /**
+     * Procesa la eliminación de un departamento o laboratorio.
+     * 
+     * - Verifica sesión.
+     * - Busca el registro antes de eliminar para obtener el nombre.
+     * - Ejecuta la eliminación mediante el modelo correspondiente.
+     * - Registra en bitácora si fue exitoso.
+     * - Mantiene los parámetros de paginación en la redirección.
+     * 
+     * @param int    $id   ID del registro.
+     * @param string $tipo 'departamento' o 'laboratorio'.
+     * @return RedirectResponse Redirección con mensaje.
+     * 
+     * @example
+     * // Interno.
+     */
 
     private function procesarEliminacion(int $id, string $tipo): RedirectResponse
     {
@@ -214,6 +340,21 @@ class GestionController extends BaseController
         }
     }
 
+        /**
+     * Genera un PDF con el reporte general de estructura organizacional y usuarios.
+     * 
+     * - Verifica sesión.
+     * - Obtiene el parámetro GET 'depto_id' (puede ser 'todos' o un ID).
+     * - Llama a UsuarioModel::getReporteGeneral() para obtener datos jerárquicos.
+     * - Renderiza vista 'gestionDepartamento/pdf_general_completo' en landscape.
+     * - Descarga el PDF (Attachment).
+     * 
+     * @return void Descarga del PDF.
+     * 
+     * @example
+     * GET /gestion-departamento/generarPdfGeneral?depto_id=todos
+     */
+
     public function generarPdfGeneral()
     {
          if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
@@ -238,6 +379,20 @@ class GestionController extends BaseController
         exit();
     }
 
+        /**
+     * Genera un PDF con el listado de laboratorios, opcionalmente filtrado por departamento.
+     * 
+     * - Verifica sesión.
+     * - Obtiene el parámetro GET 'depto_id' (puede ser 'todos' o un ID).
+     * - Obtiene laboratorios filtrados mediante LaboratorioModel::getLaboratoriosFiltrados().
+     * - Renderiza vista 'gestionDepartamento/pdf_laboratorios' en portrait.
+     * - Descarga el PDF (Attachment).
+     * 
+     * @return void Descarga del PDF.
+     * 
+     * @example
+     * GET /gestion-departamento/generarPdfLaboratorios?depto_id=2
+     */
     public function generarPdfLaboratorios()
     {
         if (!$this->estaLogueado()) return redirect()->to(base_url('login'));
