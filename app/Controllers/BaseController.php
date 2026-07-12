@@ -1,5 +1,5 @@
 <?php
-//bitacora
+
 namespace App\Controllers;
 
 use CodeIgniter\Controller;

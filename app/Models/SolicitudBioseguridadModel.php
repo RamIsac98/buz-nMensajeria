@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Modelo para gestión de solicitudes de bioseguridad.
+ * 
+ * Tabla: solicitudes_bioseguridad
+ * Campos: id (PK), codigo_solicitud, usuario_id, ext_telefono,
+ *         contenedores_pulso_cantidad, bolsas_rojas_pequena, bolsas_rojas_mediana,
+ *         bolsas_rojas_grande, quien_retira, nombre_otra_persona,
+ *         estado_solicitud, fecha_registro, editado
+ * 
+ * Relaciona con usuarios, laboratorios y departamentos para obtener datos completos.
+ * Utiliza SQL directo.
+ */
 namespace App\Models;
 
 use CodeIgniter\Model;
@@ -20,6 +32,23 @@ class SolicitudBioseguridadModel extends Model
         'estado_solicitud',
         'editado'
     ];
+
+        /**
+     * Genera un código único para la solicitud con formato "BIO-YYYY-XXXX".
+     * 
+     * Obtiene el último código de la tabla solicitudes_desechos (!!!)
+     * con prefijo "BIO-YYYY" y extrae la secuencia numérica para incrementarla.
+     * Si no hay registros, comienza en 0001.
+     * 
+     * !!! ADVERTENCIA: Esta función consulta la tabla 'solicitudes_desechos'
+     * en lugar de 'solicitudes_bioseguridad'. ESTADO EN DEMO
+     * 
+     * @return string Código generado (ej. "BIO-2026-0005")
+     * 
+     * @example
+     * $model = new SolicitudBioseguridadModel();
+     * $codigo = $model->generarCodigoUnico(); // "BIO-2026-0007"
+     */
 
     public function generarCodigoUnico(): string
     {
@@ -43,6 +72,32 @@ class SolicitudBioseguridadModel extends Model
         return $prefix . "-" . $secuencia;
     }
 
+        /**
+     * Inserta una nueva solicitud de bioseguridad.
+     * 
+     * Los valores por defecto para cantidades son 0, para quien_retira es 'mi_persona',
+     * para estado_solicitud es 'Pendiente', y nombre_otra_persona puede ser null.
+     * 
+     * @param array $data Arreglo con claves: codigo_solicitud, usuario_id, ext_telefono,
+     *                    contenedores_pulso_cantidad (opcional), bolsas_rojas_pequena (opcional),
+     *                    bolsas_rojas_mediana (opcional), bolsas_rojas_grande (opcional),
+     *                    quien_retira (opcional), nombre_otra_persona (opcional),
+     *                    estado_solicitud (opcional).
+     * @return bool True si la inserción fue exitosa, false en caso contrario.
+     * 
+     * @example
+     * $data = [
+     *     'codigo_solicitud' => $model->generarCodigoUnico(),
+     *     'usuario_id' => 5,
+     *     'ext_telefono' => '1234',
+     *     'contenedores_pulso_cantidad' => 2,
+     *     'bolsas_rojas_pequena' => 10,
+     *     'quien_retira' => 'otra_persona',
+     *     'nombre_otra_persona' => 'Juan Pérez'
+     * ];
+     * $model->insertarSolicitud($data);
+     */
+
     public function insertarSolicitud(array $data): bool
     {
         $sql = "INSERT INTO solicitudes_bioseguridad 
@@ -65,6 +120,28 @@ class SolicitudBioseguridadModel extends Model
         ]);
     }
 
+        /**
+     * Construye la cláusula WHERE para los filtros.
+     * 
+     * Utiliza una configuración de filtros con un arreglo asociativo que mapea
+     * el nombre del filtro a una tupla: [condición SQL, función transformadora].
+     * Los filtros soportados:
+     *   - 'buscar': búsqueda en nombre de departamento (LIKE)
+     *   - 'estado_solicitud': coincidencia exacta
+     *   - 'fecha_desde': fecha >= con hora 00:00:00
+     *   - 'fecha_hasta': fecha <= con hora 23:59:59
+     * 
+     * @param array $filtros Arreglo con claves opcionales: buscar, estado_solicitud, fecha_desde, fecha_hasta.
+     * @param array &$values Arreglo para llenar con valores (pasado por referencia).
+     * @return string Cláusula WHERE (ej. "1=1 AND s.estado_solicitud = ? AND s.fecha_registro >= ?").
+     * 
+     * @example
+     * $values = [];
+     * $where = $model->armarCondicionesFiltro(['estado_solicitud'=>'Pendiente'], $values);
+     * // $where = "1=1 AND s.estado_solicitud = ?"
+     * // $values = ['Pendiente']
+     */
+    
     private function armarCondicionesFiltro($filtros, &$values)
     {
         $where = [];
@@ -86,7 +163,18 @@ class SolicitudBioseguridadModel extends Model
         return empty($where) ? "1=1" : implode(" AND ", $where);
     }
 
-
+    /**
+     * Cuenta el total de solicitudes que cumplen los filtros.
+     * 
+     * Utiliza LEFT JOIN con usuarios, laboratorios y departamentos para
+     * poder aplicar el filtro de búsqueda por nombre de departamento.
+     * 
+     * @param array $filtros Mismos filtros que en armarCondicionesFiltro.
+     * @return int Número total de registros.
+     * 
+     * @example
+     * $total = $model->countSolicitudesFiltradas(['estado_solicitud'=>'Entregado']);
+     */
     public function countSolicitudesFiltradas($filtros)
     {
         $values = [];
@@ -103,6 +191,20 @@ class SolicitudBioseguridadModel extends Model
         return $resultado['total'];
     }
 
+    /**
+     * Obtiene solicitudes filtradas y paginadas.
+     * 
+     * Incluye datos adicionales: username, nombre_laboratorio, nombre_departamento.
+     * Ordena por id DESC.
+     * 
+     * @param array $filtros Mismos filtros que en armarCondicionesFiltro.
+     * @param int   $limit   Número de registros a obtener.
+     * @param int   $offset  Desplazamiento.
+     * @return array Lista de registros de solicitudes con datos relacionados.
+     * 
+     * @example
+     * $solicitudes = $model->getSolicitudesFiltradas(['buscar'=>'Química'], 10, 0);
+     */
     public function getSolicitudesFiltradas($filtros, $limit, $offset)
     {
         $values = [];
@@ -122,6 +224,16 @@ class SolicitudBioseguridadModel extends Model
         return $this->db->query($sql, $values)->getResultArray();
     }
 
+    /**
+     * Actualiza el estado de una solicitud específica.
+     * 
+     * @param int    $id          ID de la solicitud.
+     * @param string $nuevoEstado Nuevo estado (ej. 'Aprobado', 'Rechazado').
+     * @return bool True si la actualización fue exitosa, false en caso contrario.
+     * 
+     * @example
+     * $model->actualizarEstado(12, 'Entregado');
+     */
     public function actualizarEstado($id, $nuevoEstado)
     {
         $sql = "UPDATE solicitudes_bioseguridad SET estado_solicitud = ? WHERE id = ?";
