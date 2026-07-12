@@ -46,13 +46,13 @@
             font-size: 0.9rem;
         }
 
-        .form-control {
+        .form-control, .form-select {
             border: 2px solid #e0e0e0;
             border-radius: 0.75rem;
             padding: 0.7rem 1rem;
             transition: all 0.2s;
         }
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             border-color: var(--azul-claro);
             box-shadow: 0 0 0 0.25rem rgba(32, 115, 175, 0.25);
             outline: none;
@@ -86,9 +86,17 @@
             border-color: var(--azul-claro);
         }
 
-        .alert {
-            border-radius: 2rem;
-            font-size: 0.85rem;
+        .cedula-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .cedula-group .form-select {
+            width: auto;
+            flex: 0 0 120px;
+        }
+        .cedula-group .form-control {
+            flex: 1;
         }
     </style>
 </head>
@@ -98,21 +106,42 @@
     <div class="text-center mb-4">
         <img src="<?= base_url('img/logo.svg') ?>" alt="Logo" class="mb-3" style="width: 70px; height: auto;">
         <h3 class="fw-bold fs-4">Recuperación de Cuenta</h3>
-        <p class="text-muted small">Ingresa tu cédula de identidad para verificar tu perfil en el sistema.</p>
+        <p class="text-muted small">Ingresa tu cédula de identidad (con tipo) para verificar tu perfil en el sistema.</p>
     </div>
 
+    <!-- ===== SWEETALERT2 PARA MENSAJES FLASH ===== -->
     <?php if (session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger text-center py-2 mb-4" role="alert">
-            <?= session()->getFlashdata('error') ?>
-        </div>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '<?= esc(session()->getFlashdata('error')) ?>',
+                    confirmButtonColor: '#d33',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showConfirmButton: true
+                });
+            });
+        </script>
     <?php endif; ?>
 
     <form action="<?= base_url('login/validar_usuario') ?>" method="POST">
         <?= csrf_field() ?>
         <div class="mb-4">
-            <label for="cedula" class="form-label">Cédula de Identidad</label>
-            <input type="text" name="cedula" id="cedula" class="form-control" 
-                   placeholder="Ej: 12345678" required autocomplete="off">
+            <label for="tipo_cedula" class="form-label">Tipo de Cédula</label>
+            <div class="cedula-group">
+                <select name="tipo_cedula" id="tipo_cedula" class="form-select" required>
+                    <option value="">Seleccione...</option>
+                    <option value="V" <?= old('tipo_cedula') == 'V' ? 'selected' : '' ?>>Venezolano (V)</option>
+                    <option value="E" <?= old('tipo_cedula') == 'E' ? 'selected' : '' ?>>Extranjero (E)</option>
+                </select>
+                <input type="text" name="cedula" id="cedula" class="form-control" 
+                       placeholder="Número de cédula" value="<?= old('cedula') ?>" 
+                       required autocomplete="off" maxlength="10">
+            </div>
+            <small class="text-muted">La cédula debe tener entre 6 y 10 dígitos numéricos.</small>
         </div>
 
         <div class="d-grid gap-3">

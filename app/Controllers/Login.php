@@ -142,20 +142,27 @@ class Login extends BaseController
     public function validarCedula()
     {
         $usuarioModel = new UsuarioModel();
+        $tipo = $this->request->getPost('tipo_cedula');
         $cedula = $this->request->getPost('cedula');
 
-        if (empty($cedula)) {
-            return redirect()->back()->with('error', 'El campo cédula es obligatorio.');
+        if (empty($tipo) || empty($cedula)) {
+            return redirect()->back()->with('error', 'Debe seleccionar el tipo de cédula y escribir el número.')->withInput();
         }
 
-        $usuario = $usuarioModel->findByCedula($cedula);
+        // Validar que la cédula sea numérica y tenga entre 6 y 10 dígitos
+        if (!ctype_digit($cedula) || strlen($cedula) < 6 || strlen($cedula) > 10) {
+            return redirect()->back()->with('error', 'La cédula debe tener entre 6 y 10 dígitos numéricos.')->withInput();
+        }
+
+        // Buscar por tipo y número de cédula
+        $usuario = $usuarioModel->findByTipoCedula($tipo, $cedula);
 
         if (!$usuario) {
             return redirect()->to(base_url('login'))->with('error', 'La cédula ingresada no coincide con ningún usuario registrado.');
         }
 
         if (empty($usuario['pregunta_seguridad']) || empty($usuario['respuesta_seguridad'])) {
-            $this->registrarBitacora('Intento recuperar clave sin pregunta', 'Seguridad', "Cédula {$cedula} no posee preguntas configuradas.");
+            $this->registrarBitacora('Intento recuperar clave sin pregunta', 'Seguridad', "Cédula {$tipo}-{$cedula} no posee preguntas configuradas.");
             return redirect()->to(base_url('login'))->with('error', 'Tu usuario no posee una pregunta de seguridad registrada. No puedes restablecer tu clave ni iniciar sesión. Contacta al administrador.');
         }
 

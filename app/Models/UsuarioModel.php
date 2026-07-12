@@ -61,6 +61,12 @@ class UsuarioModel extends Model
         return $this->db->query($sql, [$cedula])->getRowArray();
     }
 
+    public function findByTipoCedula(string $tipo, string $cedula)
+    {
+        $sql = "SELECT * FROM usuarios WHERE tipo_cedula = ? AND cedula = ? LIMIT 1";
+        return $this->db->query($sql, [$tipo, $cedula])->getRowArray();
+    }
+
     public function existeCedula(string $cedula): bool
     {
         $sql = "SELECT 1 FROM usuarios WHERE cedula = ? LIMIT 1";
@@ -198,4 +204,6 @@ class UsuarioModel extends Model
         
         return $this->db->query($sql, $params)->getResultArray();
     }
+
+    
 }

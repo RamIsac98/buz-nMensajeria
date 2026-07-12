@@ -100,47 +100,55 @@
             <p class="text-muted small mt-2">Acceso seguro al sistema</p>
         </div>
         
-        <?php if (session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger text-center py-2 mb-4 small fw-semibold border-0 rounded-pill" role="alert">
-                <?= session()->getFlashdata('error') ?>
-            </div>
-        <?php endif; ?>
+    <!-- ===== SWEETALERT2 PARA MENSAJES FLASH ===== -->
+    <?php if (session()->getFlashdata('success') || session()->getFlashdata('error')): ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                <?php if(session()->getFlashdata('success')): ?>
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: '<?= esc(session()->getFlashdata('success')) ?>',
+                        confirmButtonColor: '#2073AF',
+                        timer: 4000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                <?php endif; ?>
 
-        <form action="<?= base_url('login/autenticar') ?>" method="POST" autocomplete="off">
-            <?= csrf_field() ?>
-            <div class="mb-3">
-                <label for="username" class="form-label fw-semibold text-ivic small">Usuario</label>
-                <input type="text" name="username" id="username" class="form-control" placeholder="Ingresa tu usuario" required>
-            </div>
-            
-            <div class="mb-4">
-                <label for="password" class="form-label fw-semibold text-ivic small">Contraseña</label>
-                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
-            </div>
-            
-            <button type="submit" class="btn btn-login w-100 fw-semibold shadow-sm">
-                Iniciar Sesión
-            </button>
-        </form>
+                <?php if(session()->getFlashdata('error')): ?>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: '<?= esc(session()->getFlashdata('error')) ?>',
+                        confirmButtonColor: '#d33',
+                        timer: 5000,
+                        timerProgressBar: true,
+                        showConfirmButton: true
+                    });
+                <?php endif; ?>
+            });
+        </script>
+    <?php endif; ?>
 
-        <div class="text-center mt-4">
-            <a href="<?= base_url('login/olvide_contrasena') ?>" class="forgot-password">
-                ¿Olvidaste tu contraseña?
-            </a>
+    <form action="<?= base_url('login/autenticar') ?>" method="POST">
+        <?= csrf_field() ?>
+        <div class="mb-3">
+            <label for="username" class="form-label">Nombre de Usuario</label>
+            <input type="text" name="username" id="username" class="form-control" placeholder="Ej. jperez" required autofocus>
         </div>
-
-        <div class="text-center mt-4 footer-note">
-            <span>© <?= date('Y') ?> - Sistema de Mensajería</span>
+        <div class="mb-4">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
         </div>
-    </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-login w-100 py-2 fw-bold">Iniciar Sesión</button>
+            <a href="<?= base_url('login/olvide_contrasena') ?>" class="btn-link-custom text-center mt-2">¿Olvidaste tu contraseña?</a>
+        </div>
+    </form>
+</div>
 
-    <script>
-        // Restablece el formulario al cargar la página (evita autocompletado persistente)
-        window.addEventListener('pageshow', function () {
-            const form = document.querySelector('form');
-            if (form) form.reset();
-        });
-    </script>
-    <script src="<?= base_url('bootstrap5/js/bootstrap.bundle.min.js') ?>"></script>
+<script src="<?= base_url('bootstrap5/js/bootstrap.bundle.min.js') ?>"></script>
 </body>
 </html>
