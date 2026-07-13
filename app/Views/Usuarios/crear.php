@@ -32,8 +32,8 @@
  *     validaciones fallidas (ej. cédula duplicada, username existente).
  * 
  * Validaciones en cliente (con modal de errores):
- * - Nombre: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
- * - Apellido: obligatorio, mínimo 6 caracteres, máximo 25, solo letras y espacios.
+ * - Nombre: obligatorio, mínimo 3 caracteres, máximo 25, solo letras y espacios.
+ * - Apellido: obligatorio, mínimo 3 caracteres, máximo 25, solo letras y espacios.
  * - Username: obligatorio, mínimo 3 caracteres, sin espacios, solo letras.
  * - Tipo de cédula: obligatorio (V/E).
  * - Cédula: obligatoria, solo números, entre 6 y 10 dígitos.
@@ -377,8 +377,8 @@
                 errorModal.show();
                 return;
             }
-            if (nombre.value.length < 6) {
-                errorMsg.textContent = 'El campo "Nombre" debe tener al menos 6 caracteres.';
+            if (nombre.value.length < 3) {
+                errorMsg.textContent = 'El campo "Nombre" debe tener al menos 3 caracteres.';
                 errorModal.show();
                 return;
             }
@@ -399,8 +399,8 @@
                 errorModal.show();
                 return;
             }
-            if (apellido.value.length < 6) {
-                errorMsg.textContent = 'El campo "Apellido" debe tener al menos 6 caracteres.';
+            if (apellido.value.length < 3) {
+                errorMsg.textContent = 'El campo "Apellido" debe tener al menos 3 caracteres.';
                 errorModal.show();
                 return;
             }
@@ -479,7 +479,7 @@
                 return;
             }
 
-            // 9. Validar contraseña (mínimo 6 caracteres)
+            // 9. Validar contraseña (mínimo 3 caracteres)
             if (password.value.trim() === '') {
                 errorMsg.textContent = 'El campo "Contraseña" es obligatorio.';
                 errorModal.show();
@@ -491,8 +491,8 @@
                 errorModal.show();
                 return;
             }
-            if (password.value.length < 6) {
-                errorMsg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+            if (password.value.length < 3) {
+                errorMsg.textContent = 'La contraseña debe tener al menos 3 caracteres.';
                 errorModal.show();
                 return;
             }

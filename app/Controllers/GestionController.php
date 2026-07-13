@@ -327,7 +327,7 @@ class GestionController extends BaseController
             }
 
             if ($registro && $eliminado) {
-                $nombre = $registro['nombre'];
+                $nombre = $registro['nombre'] ?? "ID: {$id}";
                 $this->registrarBitacora('Eliminar', ucfirst($tipo), "Se eliminó el $tipo: $nombre (ID: $id)");
                 return redirect()->to($destinoRedireccion)->with('success', ucfirst($tipo) . " '$nombre' eliminado correctamente.");
             }

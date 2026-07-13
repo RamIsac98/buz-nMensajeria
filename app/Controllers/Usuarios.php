@@ -247,8 +247,8 @@ class Usuarios extends BaseController
         if (empty($rol)) return redirect()->back()->with('error', 'Debe seleccionar un rol.')->withInput();
         if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Debe seleccionar un laboratorio.')->withInput();
 
-        if (!empty($nuevaClave) && strlen($nuevaClave) < 6) {
-            return redirect()->back()->with('error', 'La nueva contraseña debe tener al menos 6 caracteres.')->withInput();
+        if (!empty($nuevaClave) && strlen($nuevaClave) < 3) {
+            return redirect()->back()->with('error', 'La nueva contraseña debe tener al menos 3 caracteres.')->withInput();
         }
 
         if ($usuarioModel->existeCedulaExcluyendoId($cedula, $id)) {
@@ -430,7 +430,7 @@ class Usuarios extends BaseController
 
         if (empty($rol)) return redirect()->back()->with('error', 'Falta el campo: Rol / Permiso (rol)')->withInput();
         if (empty($password)) return redirect()->back()->with('error', 'Falta el campo: Contraseña (password)')->withInput();
-        if (strlen($password) < 6) return redirect()->back()->with('error', 'La contraseña debe tener al menos 6 caracteres.')->withInput();
+        if (strlen($password) < 3) return redirect()->back()->with('error', 'La contraseña debe tener al menos 3 caracteres.')->withInput();
 
         if (empty($id_laboratorio)) return redirect()->back()->with('error', 'Falta el campo: Laboratorio (id_laboratorio)')->withInput();
 

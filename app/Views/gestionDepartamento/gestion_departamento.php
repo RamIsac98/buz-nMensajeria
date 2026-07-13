@@ -421,12 +421,17 @@
     // MENSAJES FLASH CON SWEETALERT2 (success/error)
     // =============================================
     document.addEventListener('DOMContentLoaded', function() {
-        <?php if(session()->getFlashdata('success')): ?>
-            console.log('Mensaje success recibido: <?= esc(session()->getFlashdata('success')) ?>');
+        <?php 
+        $success = session()->getFlashdata('success');
+        $error = session()->getFlashdata('error');
+        ?>
+        
+        <?php if(!empty($success)): ?>
+            console.log('Mensaje success recibido:', <?= json_encode($success) ?>);
             Swal.fire({
                 icon: 'success',
                 title: '¡Éxito!',
-                text: '<?= esc(session()->getFlashdata('success')) ?>',
+                text: <?= json_encode(html_entity_decode((string) $success, ENT_QUOTES, 'UTF-8')) ?>,
                 confirmButtonColor: '#2073AF',
                 timer: 4000,
                 timerProgressBar: true,
@@ -434,12 +439,12 @@
             });
         <?php endif; ?>
 
-        <?php if(session()->getFlashdata('error')): ?>
-            console.log('Mensaje error recibido: <?= esc(session()->getFlashdata('error')) ?>');
+        <?php if(!empty($error)): ?>
+            console.log('Mensaje error recibido:', <?= json_encode($error) ?>);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: '<?= esc(session()->getFlashdata('error')) ?>',
+                text: <?= json_encode(html_entity_decode((string) $error, ENT_QUOTES, 'UTF-8')) ?>,
                 confirmButtonColor: '#d33',
                 timer: 5000,
                 timerProgressBar: true,
