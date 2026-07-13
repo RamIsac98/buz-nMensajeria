@@ -110,35 +110,39 @@
         </div>
         
         <!-- ===== MENSAJES FLASH CON SWEETALERT2 ===== -->
-        <!-- Los mensajes flash son establecidos por el controlador Login en métodos como autenticar() o nuevaClave() -->
         <?php if (session()->getFlashdata('success') || session()->getFlashdata('error')): ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                <?php if(session()->getFlashdata('success')): ?>
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Éxito!',
-                        text: '<?= esc(session()->getFlashdata('success')) ?>',
-                        confirmButtonColor: '#2073AF',
-                        timer: 4000,
-                        timerProgressBar: true,
-                        showConfirmButton: false
-                    });
-                <?php endif; ?>
+            (function() {
+                // Escapamos los mensajes con json_encode para evitar errores de sintaxis y XSS
+                var successMsg = <?= json_encode(session()->getFlashdata('success'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+                var errorMsg   = <?= json_encode(session()->getFlashdata('error'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
-                <?php if(session()->getFlashdata('error')): ?>
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: '<?= esc(session()->getFlashdata('error')) ?>',
-                        confirmButtonColor: '#d33',
-                        timer: 5000,
-                        timerProgressBar: true,
-                        showConfirmButton: true
-                    });
-                <?php endif; ?>
-            });
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (successMsg) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Éxito!',
+                            text: successMsg,
+                            confirmButtonColor: '#2073AF',
+                            timer: 4000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        });
+                    }
+                    if (errorMsg) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMsg,
+                            confirmButtonColor: '#d33',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            showConfirmButton: true
+                        });
+                    }
+                });
+            })();
         </script>
         <?php endif; ?>
 

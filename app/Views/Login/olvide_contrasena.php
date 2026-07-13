@@ -133,20 +133,38 @@
     </div>
 
     <!-- ===== SWEETALERT2 PARA MENSAJES FLASH ===== -->
-    <?php if (session()->getFlashdata('error')): ?>
+    <?php if (session()->getFlashdata('error') || session()->getFlashdata('success')): ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: '<?= esc(session()->getFlashdata('error')) ?>',
-                    confirmButtonColor: '#d33',
-                    timer: 5000,
-                    timerProgressBar: true,
-                    showConfirmButton: true
+            (function() {
+                var errorMsg   = <?= json_encode(session()->getFlashdata('error'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+                var successMsg = <?= json_encode(session()->getFlashdata('success'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (errorMsg) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMsg,
+                            confirmButtonColor: '#d33',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            showConfirmButton: true
+                        });
+                    }
+                    if (successMsg) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Éxito!',
+                            text: successMsg,
+                            confirmButtonColor: '#2073AF',
+                            timer: 4000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        });
+                    }
                 });
-            });
+            })();
         </script>
     <?php endif; ?>
 
