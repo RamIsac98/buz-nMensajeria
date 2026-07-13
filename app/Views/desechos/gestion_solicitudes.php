@@ -250,7 +250,7 @@
                         <tr>
                             <th>TIPO SOLICITUD</th>
                             <th>USUARIO</th>
-                            <th>CENTRO / DEPARTAMENTO</th>
+                            <th>CENTRO</th>
                             <th>LABORATORIO</th>
                             <th>FECHA</th>
                             <th>ESTADO ACTUAL</th>

@@ -322,7 +322,7 @@ class Usuarios extends BaseController
             "Se cambió el estado de " . $usuario['username'] . " a " . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo')
         );
 
-        return redirect()->to(base_url('usuarios'))->with('success', "Estado modificado a '" . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo') . "' con éxito.");
+       return redirect()->to(base_url('usuarios'))->with('success', "Estado modificado a " . ($nuevoEstado == 1 ? 'Activo' : 'Inactivo') . " con éxito.");
     }   
 
     /**

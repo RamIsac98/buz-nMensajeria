@@ -96,9 +96,6 @@
 <div class="container-fluid px-4">
     <h2 class="main-title">Peso Trimestral de Desechos Biológicos</h2>
 
-    <!-- ===== MENSAJES FLASH CON SWEETALERT ===== -->
-    <!-- Los mensajes flash son generados por el controlador DashboardController -->
-    
     <!-- Total acumulado (datos del controlador) -->
     <div class="row">
         <div class="col-md-4">
@@ -200,7 +197,7 @@
                                 <?php endforeach; ?>
                             <?php endforeach; ?>
                             <tr class="bg-light fw-bold">
-                                <td colspan="3" class="text-end">TOTAL GENERAL</td>
+                                <td colspan="4" class="text-end">TOTAL GENERAL</td>
                                 <td class="text-end"><?= number_format($total_trimestres, 2) ?></td>
                             </tr>
                         <?php else: ?>
@@ -221,6 +218,8 @@
 <?= $this->section('scripts') ?>
 <!-- SweetAlert2 (por seguridad, aunque el layout ya lo incluya) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Chart.js (se carga explícitamente por si el layout no lo incluye) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
     // =============================================
@@ -261,8 +260,26 @@
         const ctx = document.getElementById('chartDesechos').getContext('2d');
         let chart;
 
+        // Los datos vienen del controlador ya como JSON (ej. ["Q1","Q2","Q3","Q4"] o [0,0,0,0])
+        // Se imprimen directamente sin volver a codificar.
+        const labels = <?= $labels ?>;
+        const values = <?= $values ?>;
+
+        // Función para renderizar el gráfico
         function renderChart(labels, values) {
+            // Validar que sean arrays y tengan datos
+            if (!Array.isArray(labels) || !Array.isArray(values) || labels.length === 0) {
+                // Mostrar mensaje en el canvas
+                ctx.font = '16px sans-serif';
+                ctx.fillStyle = '#999';
+                ctx.textAlign = 'center';
+                ctx.fillText('No hay datos para mostrar', ctx.canvas.width/2, ctx.canvas.height/2);
+                return;
+            }
+
+            // Si el chart ya existe, destruirlo para recrearlo
             if (chart) chart.destroy();
+
             chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -303,10 +320,9 @@
         }
 
         // Render inicial
-        const labels = <?= $labels ?>;
-        const values = <?= $values ?>;
         renderChart(labels, values);
 
+        // Evento para actualizar filtros
         document.getElementById('btnActualizar').addEventListener('click', function() {
             const anio = document.getElementById('selectAnio').value;
             const trimestre = document.getElementById('selectTrimestre').value;
