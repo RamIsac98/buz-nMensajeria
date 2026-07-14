@@ -136,4 +136,53 @@ Los controladores manejan la lógica de negocio, autenticación, gestión de ses
 
 ---
 
+# BackupController
+
+Controlador para gestión de respaldos de la base de datos.
+
+**Requisitos:** Autenticación + rol `administrador`. Depende del helper `backup`.
+
+---
+
+## Acciones
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `create()` | `POST /backup/create` | Genera un nuevo backup (AJAX). Mantiene solo 30 backups. |
+| `list()` | `GET /backup/list` | Devuelve lista de backups en JSON (AJAX). |
+| `download($filename)` | `GET /backup/download/(:any)` | Descarga el backup especificado o el más reciente. |
+| `delete($filename)` | `DELETE /backup/delete/(:any)` | Elimina un backup (AJAX). |
+| `index()` | `GET /backup` | Vista de gestión (no implementada en este proyecto). |
+
+---
+
+## Seguridad
+
+- Todas las acciones verifican `session('logged_in')` y `session('rol') === 'administrador'`.
+- Los nombres de archivo se validan con regex para evitar path traversal.
+- Las acciones `create`, `list` y `delete` solo aceptan peticiones AJAX.
+
+---
+
+## Dependencias
+
+- Helper `backup` (cargado en `__construct()`).
+
+---
+
+## Ejemplo de uso
+
+Desde el frontend (JavaScript):
+
+```javascript
+// Crear backup
+fetch('/backup/create', {
+  method: 'POST',
+  headers: { 'X-Requested-With': 'XMLHttpRequest' }
+})
+.then(response => response.json())
+.then(data => {
+  console.log(data.filename); // backup_2025-01-01_12-00-00.sql
+});
+
 *Última actualización: 2026-07-12*

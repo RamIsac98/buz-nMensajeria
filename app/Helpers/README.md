@@ -17,3 +17,12 @@ Sistema de respaldo de base de datos (MySQL/MariaDB) integrado en la vista de bi
 1. **Registrar el helper** en `app/Config/Autoload.php`:
    ```php
    public $helpers = ['backup'];
+
+2. Agregar rutas en app/Config/Routes.php:
+
+$routes->post('backup/create', 'BackupController::create');
+$routes->get('backup/list', 'BackupController::list');
+$routes->get('backup/download/(:any)', 'BackupController::download/$1');
+$routes->delete('backup/delete/(:any)', 'BackupController::delete/$1');
+
+3. Asegurar permisos en writable/backups/ (escritura).
