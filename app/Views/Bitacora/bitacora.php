@@ -114,6 +114,20 @@
         font-weight: bold;
         font-size: 0.95rem;
     }
+    /* Estilo para el botón de backup y dropdown */
+    .btn-backup-action {
+        transition: all 0.2s;
+    }
+    .btn-backup-action:active {
+        transform: scale(0.95);
+    }
+    #backupDropdown .dropdown-item {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+    #backupDropdown .dropdown-item .text-truncate {
+        max-width: 140px;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -168,6 +182,39 @@
                 <button type="button" class="btn btn-outline-danger p-1 border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPdf" title="Generar PDF">
                     <img src="<?= base_url('img/pdf.svg') ?>" alt="PDF" width="24">
                 </button>
+                <div class="vr mx-1"></div>
+
+                <!-- ===== NUEVO: BOTÓN BACKUP CON DROPDOWN ===== -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-success p-1 border-0 d-flex align-items-center btn-backup-action" id="btnBackup" title="Crear Backup" onclick="crearBackup()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-database-fill" viewBox="0 0 16 16">
+                            <path d="M3.904 1.777C4.978 1.289 6.427 1 8 1s3.022.289 4.096.777C13.125 2.245 14 2.993 14 4s-.875 1.755-1.904 2.223C11.022 6.711 9.573 7 8 7s-3.022-.289-4.096-.777C2.875 5.755 2 5.007 2 4s.875-1.755 1.904-2.223Z"/>
+                            <path d="M2 7v1c0 .753.666 1.424 1.755 1.89C4.829 10.355 6.278 10.5 8 10.5s3.171-.145 4.245-.61C13.334 9.424 14 8.753 14 8V7c0 .753-.666 1.424-1.755 1.89C11.171 9.355 9.722 9.5 8 9.5s-3.171-.145-4.245-.61C2.666 8.424 2 7.753 2 7Z"/>
+                            <path d="M2 11v1c0 .753.666 1.424 1.755 1.89C4.829 14.355 6.278 14.5 8 14.5s3.171-.145 4.245-.61C13.334 13.424 14 12.753 14 12v-1c0 .753-.666 1.424-1.755 1.89C11.171 13.355 9.722 13.5 8 13.5s-3.171-.145-4.245-.61C2.666 12.424 2 11.753 2 11Z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-outline-success p-1 border-0 d-flex align-items-center dropdown-toggle dropdown-toggle-split btn-backup-action" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Gestionar Backups</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" id="backupDropdown">
+                        <li><span class="dropdown-header text-primary"><strong>Gestión de Backups</strong></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li id="backupListItems">
+                            <span class="dropdown-item text-muted">Cargando backups...</span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-success" href="#" onclick="crearBackup(); return false;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                                Crear nuevo backup
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- ===== FIN BOTÓN BACKUP ===== -->
             </div>
         </form>
     </div>
@@ -349,6 +396,193 @@
                 showConfirmButton: true
             });
         <?php endif; ?>
+    });
+
+    // ===== FUNCIONES PARA BACKUP =====
+    function crearBackup() {
+        const btn = document.getElementById('btnBackup');
+        const originalHTML = btn.innerHTML;
+        
+        // Deshabilitar botón y mostrar spinner
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="visually-hidden">Cargando...</span>
+        `;
+        btn.style.opacity = '0.7';
+
+        fetch('<?= base_url('backup/create') ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restaurar botón
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            btn.style.opacity = '1';
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Backup creado',
+                    text: 'Archivo: ' + data.filename,
+                    confirmButtonColor: '#2073AF',
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+                // Recargar lista de backups en el dropdown
+                cargarListaBackups();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al crear backup',
+                    text: data.message,
+                    confirmButtonColor: '#d33'
+                });
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            btn.style.opacity = '1';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                text: error.message,
+                confirmButtonColor: '#d33'
+            });
+        });
+    }
+
+    function cargarListaBackups() {
+        const container = document.getElementById('backupListItems');
+        container.innerHTML = '<span class="dropdown-item text-muted">Cargando...</span>';
+
+        fetch('<?= base_url('backup/list') ?>')
+            .then(response => response.json())
+            .then(backups => {
+                if (backups.length === 0) {
+                    container.innerHTML = '<span class="dropdown-item text-muted">No hay backups disponibles</span>';
+                    return;
+                }
+
+                // Mostrar solo los 5 más recientes
+                const recent = backups.slice(0, 5);
+                container.innerHTML = recent.map(b => `
+                    <div class="dropdown-item d-flex justify-content-between align-items-center py-1">
+                        <div class="d-flex flex-column">
+                            <small class="text-truncate" style="max-width: 150px;">${b.filename}</small>
+                            <small class="text-muted">${formatBytes(b.size)} - ${b.created_at}</small>
+                        </div>
+                        <div>
+                            <a href="<?= base_url('backup/download') ?>/${b.filename}" 
+                               class="text-success me-2" 
+                               title="Descargar"
+                               onclick="event.stopPropagation();">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                            </a>
+                            <a href="#" 
+                               class="text-danger" 
+                               title="Eliminar"
+                               onclick="eliminarBackup('${b.filename}'); event.stopPropagation(); return false;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+
+                if (backups.length > 5) {
+                    container.innerHTML += `
+                        <div class="dropdown-item text-center text-muted small">
+                            + ${backups.length - 5} más...
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                container.innerHTML = '<span class="dropdown-item text-danger">Error al cargar backups</span>';
+                console.error('Error:', error);
+            });
+    }
+
+    function eliminarBackup(filename) {
+        Swal.fire({
+            title: '¿Eliminar backup?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('<?= base_url('backup/delete') ?>/' + filename, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        cargarListaBackups();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: error.message
+                    });
+                });
+            }
+        });
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Cargar lista de backups al abrir el dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdownToggle = document.querySelector('[data-bs-toggle="dropdown"]');
+        if (dropdownToggle) {
+            dropdownToggle.addEventListener('click', function() {
+                // Pequeño delay para que el dropdown se abra
+                setTimeout(cargarListaBackups, 100);
+            });
+        }
+        
+        // También cargar al cargar la página (para tener datos en caché)
+        cargarListaBackups();
     });
 </script>
 <?= $this->endSection() ?>

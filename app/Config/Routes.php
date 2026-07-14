@@ -77,3 +77,10 @@ $routes->get('desechos/obtenerPeso/(:num)', 'DesechosController::obtenerPeso/$1'
 $routes->post('desechos/actualizarPeso/(:num)', 'DesechosController::actualizarPeso/$1');
 
 $routes->get('dashboard', 'DashboardController::index');
+
+// ===== RUTAS PARA BACKUPS =====
+$routes->post('backup/create', 'BackupController::create');
+$routes->get('backup/list', 'BackupController::list');
+$routes->get('backup/download/(:any)', 'BackupController::download/$1');
+$routes->delete('backup/delete/(:any)', 'BackupController::delete/$1');
+$routes->get('backup/download', 'BackupController::download');
