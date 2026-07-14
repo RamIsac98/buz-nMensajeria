@@ -162,8 +162,8 @@
                 <input type="text" class="form-control readonly-field" value="<?= esc($usuario_data['username']) ?>" readonly>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Extensión Tel.</label>
-                <input type="text" name="ext_telefono" class="form-control" placeholder="Ej: 1234" required>
+                <label class="form-label">Extensión Telf</label>
+                <input type="number" name="ext_telefono" class="form-control" placeholder="Ej: 1234" required>
             </div>
         </div>
 

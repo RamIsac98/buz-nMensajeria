@@ -212,7 +212,7 @@
                         <input type="text" class="form-control input-readonly" value="<?= esc($usuario_data['nombre_laboratorio']) ?>" readonly>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label-custom">Resumen (Ext.)</label>
+                        <label class="form-label-custom">Extensión Telf</label>
                         <input type="number" name="ext_telefono" class="form-control" placeholder="Ext." required>
                     </div>
                 </div>
