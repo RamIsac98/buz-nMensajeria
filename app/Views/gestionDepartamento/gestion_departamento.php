@@ -348,11 +348,11 @@
         <form action="<?= base_url('gestion-departamento/editar-departamento') ?>?page_dept=<?= $pager_dept['actual'] ?>&page_lab=<?= $pager_lab['actual'] ?>" method="POST" class="modal-content border-0 shadow">
             <input type="hidden" name="id" id="editDeptoId">
             <div class="modal-header text-dark bg-warning">
-                <h5 class="modal-title fw-bold">Editar Departamento</h5>
+                <h5 class="modal-title fw-bold">Editar Centro</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <label class="form-label text-secondary small font-weight-bold text-uppercase">Nombre del Departamento</label>
+                <label class="form-label text-secondary small font-weight-bold text-uppercase">Nombre del Centro</label>
                 <input type="text" name="nombre" id="editDeptoNombre" class="form-control" required>
             </div>
             <div class="modal-footer bg-light p-2">
